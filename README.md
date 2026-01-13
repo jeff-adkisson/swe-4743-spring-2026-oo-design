@@ -19,9 +19,6 @@ Spring 2026
 
 - Coming soon
 
-
-
-
 ## Presentations
 
 #### 01. Course Introduction

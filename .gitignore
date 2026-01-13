@@ -1,0 +1,22 @@
+# macOS metadata files
+.DS_Store
+**/.DS_Store
+
+# PowerPoint locks and temp directories
+~$*.pptx
+~$*_html/
+
+# Python virtual environments
+.venv-pptxhtml/
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Office temp files
+~$*.pptx
+
+# Temp HTML output from Office lock files
+~$*_html/

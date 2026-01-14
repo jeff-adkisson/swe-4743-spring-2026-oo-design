@@ -21,18 +21,18 @@ Spring 2026
 
 ## Presentations
 
-#### 01. Course Introduction
-- [PowerPoint](presentations/01-course-introduction.pptx)
-- [PDF](presentations/01-course-introduction.pdf)
-- [HTML](presentations/01-course-introduction_html/index.html)
+#### 01.1. Course Introduction
+- [PowerPoint](presentations/01.1-course-introduction.pptx)
+- [PDF](presentations/01.1-course-introduction.pdf)
+- [HTML](presentations/01.1-course-introduction_html/index.html)
 
-#### 02. Why Design Matters
-- [PowerPoint](presentations/02-why-design-matters.pptx)
-- [PDF](presentations/02-why-design-matters.pdf)
-- [HTML](presentations/02-why-design-matters_html/index.html)
+#### 01.2. Why Design Matters
+- [PowerPoint](presentations/01.2-why-design-matters.pptx)
+- [PDF](presentations/01.2-why-design-matters.pdf)
+- [HTML](presentations/01.2-why-design-matters_html/index.html)
 
-#### 03. Object Oriented Foundations Review
-- [PowerPoint](presentations/03-object-oriented-foundations-review.pptx)
-- [PDF](presentations/03-object-oriented-foundations-review.pdf)
-- [HTML](presentations/03-object-oriented-foundations-review_html/index.html)
+#### 03. Oo Foundations Review
+- [PowerPoint](presentations/03-oo-foundations-review.pptx)
+- [PDF](presentations/03-oo-foundations-review.pdf)
+- [HTML](presentations/03-oo-foundations-review_html/index.html)
 

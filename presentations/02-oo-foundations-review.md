@@ -1,10 +1,14 @@
-# Summary from Recorded Transcript
+# Lecture 2 Summary - OO Foundations Review
 
 _This was summarized by ChatGPT from the recorded transcript_
 
 ## Loom Video of My Screen
 
 [https://www.loom.com/share/b54e52c10e0a4d11909f2adbefee5c14](https://www.loom.com/share/b54e52c10e0a4d11909f2adbefee5c14)
+
+## Example Code from Lecture 2
+
+[https://github.com/jeff-adkisson/swe-4743-spring-2026-oo-design/tree/main/demos/02-foundations-review](https://github.com/jeff-adkisson/swe-4743-spring-2026-oo-design/tree/main/demos/02-foundations-review)
 
 
 ## Why the OO review exists

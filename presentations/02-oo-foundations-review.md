@@ -4,7 +4,7 @@ _This was summarized by ChatGPT from the recorded transcript_
 
 ## Loom Video of My Screen
 
-https://www.loom.com/share/b54e52c10e0a4d11909f2adbefee5c14
+[https://www.loom.com/share/b54e52c10e0a4d11909f2adbefee5c14](https://www.loom.com/share/b54e52c10e0a4d11909f2adbefee5c14)
 
 
 ## Why the OO review exists

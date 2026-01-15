@@ -24,6 +24,7 @@ The following terms represent concepts, patterns, and principles that students a
 - **Dependency Inversion Principle (DIP)** - High-level modules should not depend on low-level modules; both depend on abstractions.
 - **Design Tradeoff** - A conscious decision balancing competing design forces.
 - **Domain Event** - A representation of something meaningful that occurred within the domain.
+- **Dynamic Dispatch** - Calling a method through a base reference and letting the runtime resolve the concrete implementation.
 - **Encapsulation** - Bundling data and behavior while restricting direct access to internals.
 - **Entity** - A domain object defined by identity rather than by value.
 - **Facade Pattern** - Provides a simplified interface to a complex subsystem.
@@ -36,32 +37,30 @@ The following terms represent concepts, patterns, and principles that students a
 - **Interface Segregation Principle (ISP)** - Clients should not depend on interfaces they do not use.
 - **Invariant** - A condition that must always hold true for an object or system.
 - **Liskov Substitution Principle (LSP)** - Subtypes must be substitutable for their base types without altering correctness.
-- **Model–View–Controller (MVC)** - An architectural pattern separating domain logic, presentation, and input handling.
 - **Module** - A cohesive unit of code with a clear responsibility boundary.
-- **Observer Pattern** - Defines a one-to-many dependency so dependents are notified of state changes.
 - **Open/Closed Principle (OCP)** - Software entities should be open for extension but closed for modification.
-- **ORM (Object-Relational Mapping)** - A technique for mapping objects to relational database tables.
-- **Orthogonality** - System components should be independent and decoupled, so changes in one concern do not affect unrelated parts of the object-oriented design.
-- **Persistence Boundary** - The separation between domain logic and data storage concerns.
 - **Polymorphism** - Treating related types uniformly through a common interface.
 - **Primitive Obsession** - Overuse of primitive types instead of meaningful domain abstractions.
-- **Proxy Pattern** - Controls access to another object, often adding behavior such as caching or laziness.
 - **Refactoring** - Improving internal structure without changing external behavior.
-- **Repository Pattern** - Provides a domain-facing abstraction over persistence mechanisms.
 - **Responsibility** - A specific reason for a module or class to change.
 - **Single Responsibility Principle (SRP)** - A module or class should have only one reason to change.
-- **Singleton Pattern** - Ensures a class has only one instance and provides global access to it.
-- **SOLID Principles** - A set of five principles guiding maintainable object-oriented design.
-- **State Pattern** - Encapsulates state-dependent behavior into separate state objects.
-- **Strategy Pattern** - Defines interchangeable algorithms behind a common interface.
-- **Template Method Pattern** - Defines an algorithm skeleton while allowing subclasses to override steps.
-- **Temporal Coupling** - A dependency based on timing or order of operations.
-- **Testability** - The ease with which code can be verified through automated tests.
-- **UML Class Diagram** - A diagram representing classes, attributes, methods, and relationships.
-- **Value Object** - An immutable object defined solely by its values, not identity.
-- **Visibility Boundary** - A deliberate limit on what parts of a system can access others.
-- **Volatility** - The likelihood that a part of the system will change over time.
-- **Web Controller (as Adapter)** - A component that translates HTTP concerns into application-level intentions.
+
+---
+
+## OO Foundations Terms (Lecture 2)
+
+- **Abstract Class** - A class that cannot be instantiated directly and is intended to be subclassed.
+- **Abstract Method** - A method without an implementation that must be overridden by subclasses.
+- **Base Type Reference** - A variable typed as an abstract class or interface that refers to a concrete object at runtime.
+- **Concrete Class** - A fully implemented class that can be instantiated.
+- **Constructor Chaining** - Invoking a base class constructor from a subclass constructor.
+- **Downcasting** - Casting from a general type to a more specific type to access additional behavior.
+- **Generics** - Type parameters enabling type-safe reuse (e.g., List<T>).
+- **Namespace** - A logical grouping mechanism used to organize types.
+- **Override** - Providing a subclass-specific implementation of a base method.
+- **Runtime Type** - The actual concrete type of an object during execution.
+- **Static Method** - A method associated with a class rather than an instance.
+- **Type Inference (`var`)** - Compiler inference of a variable’s static type from its initializer.
 
 ---
 

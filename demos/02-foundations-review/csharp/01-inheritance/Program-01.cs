@@ -7,10 +7,11 @@ namespace Demo.Main
             Entities.Publication item1 = new Entities.PaperbackBook("A Philosophy of Software Design", 183);
             Entities.Publication item2 = new Entities.Scroll("War Scroll / Dead Sea Collection", 8148);
 
-            List<Entities.Publication> myCollection = new List<Entities.Publication>() { item1, item2 };
+            List<Entities.Publication> myCollection = new List<Entities.Publication>() {
+                item1, item2 };
 
             Console.WriteLine("My Publication Collection [C#]:");
-            foreach (var item in myCollection)
+            foreach (Entities.Publication item in myCollection)
             {
                 Console.WriteLine($"* {item.GetDetails()}");
             }

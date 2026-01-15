@@ -19,20 +19,23 @@ Spring 2026
 
 - Coming soon
 
+
 ## Presentations
 
-#### 01.1. Course Introduction
-- [PowerPoint](presentations/01.1-course-introduction.pptx)
-- [PDF](presentations/01.1-course-introduction.pdf)
-- [HTML](presentations/01.1-course-introduction_html/index.html)
+#### 01_1. Course Introduction
+- [PowerPoint](presentations/01_1-course-introduction.pptx)
+- [PDF](presentations/01_1-course-introduction.pdf)
+- [HTML](presentations/01_1-course-introduction_html/index.html)
 
-#### 01.2. Why Design Matters
-- [PowerPoint](presentations/01.2-why-design-matters.pptx)
-- [PDF](presentations/01.2-why-design-matters.pdf)
-- [HTML](presentations/01.2-why-design-matters_html/index.html)
+#### 01_2. Why Design Matters
+- [PowerPoint](presentations/01_2-why-design-matters.pptx)
+- [PDF](presentations/01_2-why-design-matters.pdf)
+- [HTML](presentations/01_2-why-design-matters_html/index.html)
 
-#### 03. Oo Foundations Review
-- [PowerPoint](presentations/03-oo-foundations-review.pptx)
-- [PDF](presentations/03-oo-foundations-review.pdf)
-- [HTML](presentations/03-oo-foundations-review_html/index.html)
+#### 02. Oo Foundations Review
+- [PowerPoint](presentations/02-oo-foundations-review.pptx)
+- [PDF](presentations/02-oo-foundations-review.pdf)
+- [HTML](presentations/02-oo-foundations-review_html/index.html)
+- [Video of my screen](https://www.loom.com/share/b54e52c10e0a4d11909f2adbefee5c14)
+- [Summary from Video Transcript (AI generated)](presentations/02-oo-foundations-review.md)
 

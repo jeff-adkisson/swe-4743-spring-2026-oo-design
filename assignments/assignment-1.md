@@ -1,9 +1,9 @@
-# Assignment 1: 
+# Assignment 1 
 
-## Simplified Crazy 8’s
-## Console-Based Card Game
-
+## Simplified Crazy 8’s Console-Based Card Game
 #### OO Foundations Practice
+
+[KSU SWE 4743: Object-Oriented Design](../README.md)
 
 ---
 

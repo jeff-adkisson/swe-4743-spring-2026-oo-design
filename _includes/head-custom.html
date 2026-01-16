@@ -1,5 +1,5 @@
 <script type="module">
-  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.2/dist/mermaid.esm.min.mjs";
 
   mermaid.initialize({
     startOnLoad: false,
@@ -13,7 +13,7 @@
     },
   });
 
-  function renderMermaidFromCodeBlocks() {
+  async function renderMermaidFromCodeBlocks() {
     // Jekyll/Kramdown typically renders ```mermaid as:
     // <pre><code class="language-mermaid">...</code></pre>
     const blocks = document.querySelectorAll("pre > code.language-mermaid");
@@ -28,7 +28,7 @@
     });
 
     // Render all newly created .mermaid blocks
-    mermaid.run({ querySelector: ".mermaid" });
+    await mermaid.run({ querySelector: ".mermaid" });
   }
 
   if (document.readyState === "loading") {

@@ -1,0 +1,39 @@
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: "default",
+    themeVariables: {
+      background: "#ffffff",
+      primaryColor: "#ffffff",
+      primaryTextColor: "#000000",
+      lineColor: "#000000",
+      textColor: "#000000",
+    },
+  });
+
+  function renderMermaidFromCodeBlocks() {
+    // Jekyll/Kramdown typically renders ```mermaid as:
+    // <pre><code class="language-mermaid">...</code></pre>
+    const blocks = document.querySelectorAll("pre > code.language-mermaid");
+
+    blocks.forEach((code) => {
+      const pre = code.parentElement;
+      const container = document.createElement("div");
+      container.className = "mermaid";
+      container.textContent = code.textContent;
+
+      pre.replaceWith(container);
+    });
+
+    // Render all newly created .mermaid blocks
+    mermaid.run({ querySelector: ".mermaid" });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderMermaidFromCodeBlocks);
+  } else {
+    renderMermaidFromCodeBlocks();
+  }
+</script>

@@ -27,6 +27,19 @@ Your implementation should be clean, readable, and easy to reason about.
 - [Why Design Matters](../presentations/01_2-why-design-matters.pdf)
 - [OO Foundations Review](../presentations/02-oo-foundations-review.pdf)
 
+#### Related Code Examples
+
+The OO Foundations Review evolved a solution starting with inheritance and adding examples of polymorphism, encapsulation, dynamic dispatch, and namespacing.
+
+- Inheritance
+  [C#](../demos/02-foundations-review/csharp/01-inheritance/README.md) | [Java (also demonstrates Java namespacing)](../demos/02-foundations-review/java/README.md) 
+- Polymorphism
+  [C# 1](../demos/02-foundations-review/csharp/02-polymorphism-1/README.md) | [C# 2](../demos/02-foundations-review/csharp/03-polymorphism-2/README.md) | [C# 3](../demos/02-foundations-review/csharp/04-polymorphism-3/README.md)
+- Encapsulation
+  [C# 1](../demos/02-foundations-review/csharp/05-encapsulation-1/README.md) | [C# 2](../demos/02-foundations-review/csharp/06-encapsulation-2/README.md)
+- Namespaces
+  [C#](../demos/02-foundations-review/csharp/07-namespaces/README.md)
+
 ---
 
 ## Table of Contents

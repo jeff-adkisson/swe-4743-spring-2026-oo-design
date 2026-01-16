@@ -84,4 +84,4 @@ direction BT
     Jewelry ..|> IArtifact : "implements"
     Container ..|> IArtifact : "implements"
     Sculpture ..|> IArtifact : "implements"
-    ```
+```

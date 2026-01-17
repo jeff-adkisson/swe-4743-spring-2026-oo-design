@@ -1,9 +1,24 @@
+<!-- Pan/zoom support for Mermaid SVGs -->
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+
+<style>
+  /* Optional but recommended: gives diagrams a clean frame and prevents scrollbars fighting pan/zoom */
+  .mermaid {
+    border: 1px solid #444;
+    background: #fff;
+    padding: 0.5rem;
+    margin: 1rem 0;
+    overflow: hidden;
+  }
+</style>
+
 <script type="module">
   import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.2/dist/mermaid.esm.min.mjs";
 
   mermaid.initialize({
     startOnLoad: false,
     theme: "default",
+    flowchart: { useMaxWidth: false }, // prevents Mermaid from shrinking to fit width
     themeVariables: {
       background: "#ffffff",
       primaryColor: "#ffffff",
@@ -12,6 +27,23 @@
       textColor: "#000000",
     },
   });
+
+  function enablePanZoomOnMermaidSvgs() {
+    if (typeof window.svgPanZoom !== "function") return;
+
+    document.querySelectorAll(".mermaid svg").forEach((svg) => {
+      // Prevent double-initialization if this runs multiple times
+      if (svg.dataset.panZoomInitialized === "true") return;
+      svg.dataset.panZoomInitialized = "true";
+
+      window.svgPanZoom(svg, {
+        zoomEnabled: true,
+        controlIconsEnabled: true,
+        fit: true,
+        center: true,
+      });
+    });
+  }
 
   async function renderMermaidFromCodeBlocks() {
     // Jekyll/Kramdown typically renders ```mermaid as:
@@ -23,12 +55,14 @@
       const container = document.createElement("div");
       container.className = "mermaid";
       container.textContent = code.textContent;
-
       pre.replaceWith(container);
     });
 
     // Render all newly created .mermaid blocks
     await mermaid.run({ querySelector: ".mermaid" });
+
+    // After render, attach pan/zoom to the generated SVGs
+    enablePanZoomOnMermaidSvgs();
   }
 
   if (document.readyState === "loading") {

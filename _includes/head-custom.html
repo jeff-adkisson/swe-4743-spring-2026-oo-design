@@ -2,13 +2,60 @@
 <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
 
 <style>
-  /* Optional but recommended: gives diagrams a clean frame and prevents scrollbars fighting pan/zoom */
-  .mermaid {
+  /* Diagram container */
+  .mermaid-wrap {
+    position: relative;
     border: 1px solid #444;
     background: #fff;
     padding: 0.5rem;
     margin: 1rem 0;
-    overflow: hidden;
+    overflow: hidden; /* prevents scrollbars fighting pan/zoom */
+  }
+
+  /* Mermaid output block lives inside the wrap */
+  .mermaid {
+    margin: 0;
+  }
+
+  /* Controls */
+  .mermaid-copy,
+  .mermaid-reset {
+    font-size: 12px;
+    line-height: 1;
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid #666;
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+    user-select: none;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .mermaid-copy:hover,
+  .mermaid-reset:hover {
+    text-decoration: underline;
+  }
+
+  /* Top-left group: Copy Mermaid */
+  .mermaid-controls-left {
+    position: absolute;
+    left: 8px;
+    top: 6px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    z-index: 2;
+  }
+
+  /* Top-right reset */
+  .mermaid-reset {
+    position: absolute;
+    right: 8px;
+    top: 6px;
+    z-index: 2;
   }
 </style>
 
@@ -28,23 +75,45 @@
     },
   });
 
-  function enablePanZoomOnMermaidSvgs() {
+  // -----------------------------
+  // Pan/Zoom helpers
+  // -----------------------------
+  function enablePanZoomOnMermaidSvgs(root = document) {
     if (typeof window.svgPanZoom !== "function") return;
 
-    document.querySelectorAll(".mermaid svg").forEach((svg) => {
-      // Prevent double-initialization if this runs multiple times
+    root.querySelectorAll(".mermaid svg").forEach((svg) => {
+      // Prevent double-initialization
       if (svg.dataset.panZoomInitialized === "true") return;
       svg.dataset.panZoomInitialized = "true";
 
-      window.svgPanZoom(svg, {
+      const instance = window.svgPanZoom(svg, {
         zoomEnabled: true,
         controlIconsEnabled: true,
         fit: true,
         center: true,
       });
+
+      // Keep a reference for resets
+      svg.__panZoom = instance;
     });
   }
 
+  function resetSvgView(svg) {
+    if (!svg || !svg.__panZoom) return;
+    svg.__panZoom.resetZoom();
+    svg.__panZoom.resetPan();
+    svg.__panZoom.fit();
+    svg.__panZoom.center();
+  }
+
+  function resetDiagramView(wrap) {
+    const svg = wrap.querySelector(".mermaid svg");
+    resetSvgView(svg);
+  }
+
+  // -----------------------------
+  // Render Mermaid + add controls
+  // -----------------------------
   async function renderMermaidFromCodeBlocks() {
     // Jekyll/Kramdown typically renders ```mermaid as:
     // <pre><code class="language-mermaid">...</code></pre>
@@ -52,17 +121,84 @@
 
     blocks.forEach((code) => {
       const pre = code.parentElement;
+
+      // Wrapper provides relative positioning for control links
+      const wrap = document.createElement("div");
+      wrap.className = "mermaid-wrap";
+
+      // Mermaid container (Mermaid reads textContent)
       const container = document.createElement("div");
       container.className = "mermaid";
-      container.textContent = code.textContent;
-      pre.replaceWith(container);
+
+      const mermaidSource = (code.textContent || "").trimEnd();
+      container.textContent = mermaidSource;
+
+      // Top-left controls container
+      const leftControls = document.createElement("div");
+      leftControls.className = "mermaid-controls-left";
+
+      // Copy Mermaid control (top-left)
+      const copy = document.createElement("a");
+      copy.href = "#";
+      copy.className = "mermaid-copy";
+      copy.textContent = "Copy Mermaid";
+      copy.setAttribute("aria-label", "Copy Mermaid code to clipboard");
+      copy.dataset.mermaidSource = mermaidSource;
+
+      copy.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const text = copy.dataset.mermaidSource || "";
+
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            // Fallback for older browsers
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.left = "-9999px";
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+          }
+
+          const old = copy.textContent;
+          copy.textContent = "Copied!";
+          setTimeout(() => (copy.textContent = old), 1200);
+        } catch {
+          const old = copy.textContent;
+          copy.textContent = "Copy failed";
+          setTimeout(() => (copy.textContent = old), 1400);
+        }
+      });
+
+      leftControls.appendChild(copy);
+
+      // Reset control (top-right) — resets the original frame view
+      const reset = document.createElement("a");
+      reset.href = "#";
+      reset.className = "mermaid-reset";
+      reset.textContent = "Reset";
+      reset.setAttribute("aria-label", "Reset diagram view");
+      reset.addEventListener("click", (e) => {
+        e.preventDefault();
+        resetDiagramView(wrap);
+      });
+
+      wrap.appendChild(container);
+      wrap.appendChild(leftControls);
+      wrap.appendChild(reset);
+
+      pre.replaceWith(wrap);
     });
 
     // Render all newly created .mermaid blocks
     await mermaid.run({ querySelector: ".mermaid" });
 
-    // After render, attach pan/zoom to the generated SVGs
-    enablePanZoomOnMermaidSvgs();
+    // Attach pan/zoom to page diagrams
+    enablePanZoomOnMermaidSvgs(document);
   }
 
   if (document.readyState === "loading") {

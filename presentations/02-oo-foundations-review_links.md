@@ -1,0 +1,2 @@
+- [Video of my screen](https://www.loom.com/share/b54e52c10e0a4d11909f2adbefee5c14)
+- [Summary from Video Transcript (AI generated)](presentations/02-oo-foundations-review.md)

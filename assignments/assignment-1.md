@@ -287,7 +287,7 @@ crazy-eights/
 │       │   ├── ICard.cs
 │       │   ├── StandardCard.cs
 │       │
-│       ├── Players/
+│       ├── Player/
 │       │   ├── IPlayer.cs
 │       │   ├── PlayerBase.cs
 │       │   ├── HumanPlayer.cs
@@ -298,7 +298,7 @@ crazy-eights/
 │       │   ├── TurnContext.cs
 │       │   ├── TurnAction.cs
 │       │
-│       ├── Deck/
+│       ├── CardDeck/
 │       │   ├── Deck.cs
 │       │   ├── DiscardPile.cs
 │       │
@@ -312,11 +312,11 @@ crazy-eights/
 Recommended namespaces:
 
 ```
-CrazyEights.Cards
-CrazyEights.Players
-CrazyEights.Game
-CrazyEights.Deck
+CrazyEights.CardDeck
+CrazyEights.Card
 CrazyEights.Domain
+CrazyEights.Game
+CrazyEights.Player
 ```
 
 ---
@@ -334,7 +334,7 @@ my-crazy-eights/
 │       └── java/
 │           └── edu/
 │               └── kennesaw/
-│                   └── crazy8/
+│                   └── crazy8s/
 │                       │
 │                       ├── Main.java
 │                       │
@@ -342,7 +342,7 @@ my-crazy-eights/
 │                       │   ├── Card.java (interface)
 │                       │   ├── StandardCard.java
 │                       │
-│                       ├── players/
+│                       ├── player/
 │                       │   ├── Player.java (interface)
 │                       │   ├── PlayerBase.java
 │                       │   ├── HumanPlayer.java
@@ -353,7 +353,7 @@ my-crazy-eights/
 │                       │   ├── TurnContext.java
 │                       │   ├── TurnAction.java
 │                       │
-│                       ├── deck/
+│                       ├── cardDeck/
 │                       │   ├── Deck.java
 │                       │   ├── DiscardPile.java
 │                       │
@@ -387,7 +387,7 @@ flowchart TB
     L --> M{"Drawn Card Playable?"}
     M -- Yes --> K
     M -- No --> N["End Turn"]
-    K --> O{"Current Player Won?"}
+    K --> O{"Current Player Won (empty hand)?"}
     O -- Yes --> Z(["Announce Winner and End"])
     O -- No --> P{"Deck Empty?"}
     N --> P

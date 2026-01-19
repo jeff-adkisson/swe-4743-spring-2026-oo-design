@@ -16,8 +16,10 @@ public static class DeckInitializer
     {
         var cards = new List<ICard>();
         foreach (var suit in Suit.GetSuits())
-        foreach (var rank in Rank.GetRanks())
-            cards.Add(new Card(rank, suit));
+        {
+            foreach (var rank in Rank.GetRanks())
+                cards.Add(new Card(rank, suit));
+        }
 
         return cards;
     }

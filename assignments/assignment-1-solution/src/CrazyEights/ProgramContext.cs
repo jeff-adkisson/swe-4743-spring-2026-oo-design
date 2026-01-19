@@ -9,7 +9,7 @@ public class ProgramContext
         RandomNumberGenerator = randomSeed == 0 ? new Random() : new Random(randomSeed);
     }
 
-    public bool ShowAllHands { get; set; }
+    public bool ShowAllHands { get; }
 
     public int HandSize { get; }
 

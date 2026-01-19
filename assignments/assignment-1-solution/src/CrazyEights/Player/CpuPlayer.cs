@@ -26,7 +26,7 @@ public class CpuPlayer : PlayerBase
 
         //randomly select a card to play
         var randomCardIndex =
-            turnContext.RandomNumberGenerator.Next(0, playableCards.Count - 1);
+            turnContext.RandomNumberGenerator.Next(0, playableCards.Count);
         var selectedCard = playableCards[randomCardIndex].Card;
 
         return selectedCard;

@@ -7,7 +7,7 @@ public static class PlayerRegistration
     public static void Register(GameContext gameContext)
     {
         var defaultName = HumanPlayer.DefaultName;
-        Console.Write($"Enter your name (or press Enter for '{defaultName}'):");
+        Console.Write($"Enter your name (or press Enter for '{defaultName}'): ");
         var yourName = Console.ReadLine();
         yourName = string.IsNullOrEmpty(yourName) ? defaultName : yourName.Trim();
 

@@ -151,11 +151,177 @@ Anytime you start a new project, creating a strong mental model of the domain be
 
 ### Example Implementation
 
-![image-20260116143143826](assignment-1.assets/image-20260116143143826.png)
+```
+Enter your name (or press Enter for 'Player'): Jeff
 
-![image-20260116144053889](assignment-1.assets/image-20260116144053889.png)
+==================================================
+Crazy Eights (Simplified)
+==================================================
+Starting discard: Queen of Clubs ♣
 
-![image-20260116143356389](assignment-1.assets/image-20260116143356389.png)
+----- TURN 1 -----
+Top discard: Queen of Clubs ♣
+Deck remaining: 41 cards
+Jeff: 5 cards | CPU: 5 cards
+
+** JEFF'S TURN
+
+Jeff's hand
+  - Nine of Spades ♠
+  - Eight of Diamonds ♦
+  - Eight of Hearts ♥
+  - Four of Spades ♠
+  - Seven of Spades ♠
+
+Jeff's playable cards
+  [1] Eight of Diamonds ♦ (Wildcard!)
+  [2] Eight of Hearts ♥ (Wildcard!)
+Choose a card number to play or 0 to draw:
+1
+
+** Jeff selected Eight of Diamonds ♦
+
+Jeff, you played a wildcard! Choose a suit:
+  [H] Hearts
+  [D] Diamonds (current suit)
+  [C] Clubs
+  [S] Spades
+Enter the letter of your chosen suit: s
+
+** Jeff changed suit to Spades
+
+----- TURN 2 -----
+Top discard: Eight of Diamonds ♦ (Suit to match: Spades)
+Deck remaining: 41 cards
+Jeff: 4 cards | CPU: 5 cards
+
+** CPU'S TURN
+
+** CPU has no playable cards. Drawing one card...
+** CPU drew Six of Spades ♠
+Press Enter to continue...
+
+----- TURN 3 -----
+Top discard: Eight of Diamonds ♦ (Suit to match: Spades)
+Deck remaining: 40 cards
+Jeff: 4 cards | CPU: 6 cards
+
+** JEFF'S TURN
+
+Jeff's hand
+  - Nine of Spades ♠
+  - Eight of Hearts ♥
+  - Four of Spades ♠
+  - Seven of Spades ♠
+
+Jeff's playable cards
+  [1] Nine of Spades ♠ (Matches Suit)
+  [2] Eight of Hearts ♥ (Wildcard!)
+  [3] Four of Spades ♠ (Matches Suit)
+  [4] Seven of Spades ♠ (Matches Suit)
+Choose a card number to play or 0 to draw: 1
+
+** Jeff selected Nine of Spades ♠
+
+----- TURN 4 -----
+Top discard: Nine of Spades ♠
+Deck remaining: 40 cards
+Jeff: 3 cards | CPU: 6 cards
+
+** CPU'S TURN
+** CPU selected Six of Spades ♠
+
+----- TURN 5 -----
+Top discard: Six of Spades ♠
+Deck remaining: 40 cards
+Jeff: 3 cards | CPU: 5 cards
+
+** JEFF'S TURN
+
+Jeff's hand
+  - Eight of Hearts ♥
+  - Four of Spades ♠
+  - Seven of Spades ♠
+
+Jeff's playable cards
+  [1] Eight of Hearts ♥ (Wildcard!)
+  [2] Four of Spades ♠ (Matches Suit)
+  [3] Seven of Spades ♠ (Matches Suit)
+Choose a card number to play or 0 to draw: 2
+
+** Jeff selected Four of Spades ♠
+
+----- TURN 6 -----
+Top discard: Four of Spades ♠
+Deck remaining: 40 cards
+Jeff: 2 cards | CPU: 5 cards
+
+** CPU'S TURN
+
+** CPU has no playable cards. Drawing one card...
+** CPU drew Six of Clubs ♣
+Press Enter to continue...
+
+----- TURN 7 -----
+Top discard: Four of Spades ♠
+Deck remaining: 39 cards
+Jeff: 2 cards | CPU: 6 cards
+
+** JEFF'S TURN
+
+Jeff's hand
+  - Eight of Hearts ♥
+  - Seven of Spades ♠
+
+Jeff's playable cards
+  [1] Eight of Hearts ♥ (Wildcard!)
+  [2] Seven of Spades ♠ (Matches Suit)
+Choose a card number to play or 0 to draw: 2
+
+** Jeff selected Seven of Spades ♠
+
+----- TURN 8 -----
+Top discard: Seven of Spades ♠
+Deck remaining: 39 cards
+Jeff: 1 card | CPU: 6 cards
+
+** CPU'S TURN
+
+** CPU has no playable cards. Drawing one card...
+** CPU drew Ten of Diamonds ♦
+Press Enter to continue...
+
+----- TURN 9 -----
+Top discard: Seven of Spades ♠
+Deck remaining: 38 cards
+Jeff: 1 card | CPU: 7 cards
+
+** JEFF'S TURN
+
+Jeff's hand
+  - Eight of Hearts ♥
+
+Jeff's playable cards
+  [1] Eight of Hearts ♥ (Wildcard!)
+Choose a card number to play or 0 to draw: 1
+
+** Jeff selected Eight of Hearts ♥
+
+Jeff, you played a wildcard! Choose a suit:
+  [H] Hearts (current suit)
+  [D] Diamonds
+  [C] Clubs
+  [S] Spades
+Enter the letter of your chosen suit: d
+
+** Jeff changed suit to Diamonds
+
+***** Jeff wins the game! *****
+
+
+```
+
+
 
 #### Notes on Example Implementation
 

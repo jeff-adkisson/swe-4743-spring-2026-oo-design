@@ -18,7 +18,7 @@ public class GameContext
 
     public Random RandomNumberGenerator => _programContext.RandomNumberGenerator;
 
-    public bool ShowAllHands { get; set; }
+    public bool ShowAllHands { get; }
 
     public string GameTitle { get; } = "Crazy Eights (Simplified)";
 
@@ -34,6 +34,6 @@ public class GameContext
 
     public int IncrementTurn()
     {
-        return ++TurnNumber;
+        return TurnNumber += 1;
     }
 }

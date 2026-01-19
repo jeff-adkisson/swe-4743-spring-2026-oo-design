@@ -1,0 +1,23 @@
+# .NET Build outputs
+[Bb]in/
+[Oo]bj/
+
+# .NET user-specific files
+*.user
+*.userosscache
+*.suo
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+*.sln.DotSettings.user
+
+# Docker
+.dockerignore
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini

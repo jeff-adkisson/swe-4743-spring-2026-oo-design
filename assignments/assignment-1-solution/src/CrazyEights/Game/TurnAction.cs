@@ -30,15 +30,28 @@ public static class TurnAction
         SelectCard(gameContext, turnContext);
     }
 
-    private static void DrawCard(GameContext gameContext, TurnContext turnContext)
+    private static ICard DrawCard(GameContext gameContext, TurnContext turnContext)
     {
-        var newCard = gameContext.Deck.DrawCard();
-        var playerHand = turnContext.Hand;
-        playerHand.AddCard(newCard);
-        var name = turnContext.CurrentPlayer.Name;
+        var player = turnContext.CurrentPlayer;
+        var name = player.Name;
         ShowMessage($"{name} has no playable cards. Drawing one card...", true);
-        ShowMessage($"{name} drew {newCard.GetDescription()}");
+
+        var drawnCard = gameContext.Deck.DrawCard();
+        var playerHand = turnContext.Hand;
+        playerHand.AddCard(drawnCard);
+        ShowMessage($"{name} drew {drawnCard.GetDescription()}");
+
+        var canPlayDrawnCard = PlayableCardsSelector.CanPlayCard(
+            drawnCard,
+            turnContext.CurrentSuit,
+            turnContext.CurrentRank);
+        if (canPlayDrawnCard.CanPlay && player.WillPlayDrawnCard(turnContext, drawnCard))
+        {
+            return drawnCard;
+        }
+
         GameConsole.ReadLine("Press Enter to continue...");
+        return UnselectedCard.Instance;
     }
 
     private static void SelectCard(GameContext gameContext, TurnContext turnContext)
@@ -48,8 +61,9 @@ public static class TurnAction
 
         if (!selectedCard.IsSelectable)
         {
-            DrawCard(gameContext, turnContext);
-            return;
+            var drawnCard = DrawCard(gameContext, turnContext);
+            if (!drawnCard.IsSelectable) return;
+            selectedCard = drawnCard;
         }
 
         turnContext.Hand.RemoveCard(selectedCard);

@@ -24,4 +24,6 @@ public abstract class PlayerBase : IPlayer
     public abstract ICard SelectCard(TurnContext context);
 
     public abstract SuitType SelectSuit(GameContext gameContext, TurnContext turnContext);
+
+    public abstract bool WillPlayDrawnCard(TurnContext turnContext, ICard drawnCard);
 }

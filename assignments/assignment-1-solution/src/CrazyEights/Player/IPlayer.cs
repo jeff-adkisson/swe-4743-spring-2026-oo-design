@@ -17,4 +17,6 @@ public interface IPlayer
     public ICard SelectCard(TurnContext context);
 
     public SuitType SelectSuit(GameContext gameContext, TurnContext turnContext);
+
+    public bool WillPlayDrawnCard(TurnContext turnContext, ICard drawnCard);
 }

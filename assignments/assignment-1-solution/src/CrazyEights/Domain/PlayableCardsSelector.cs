@@ -23,7 +23,7 @@ public static class PlayableCardsSelector
         return playableCards.AsReadOnly();
     }
 
-    private static PlayableResult CanPlayCard(ICard card, SuitType currentSuitType, RankType currentRankType)
+    public static PlayableResult CanPlayCard(ICard card, SuitType currentSuitType, RankType currentRankType)
     {
         if (Rank.IsWildcardRank(card.Rank))
             return new PlayableResult(true, "Wildcard!");

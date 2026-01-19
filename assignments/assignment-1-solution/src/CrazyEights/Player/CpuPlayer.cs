@@ -40,4 +40,11 @@ public class CpuPlayer : PlayerBase
         var selectedSuit = suitValues[randomSuitIndex];
         return selectedSuit;
     }
+
+    public override bool WillPlayDrawnCard(TurnContext turnContext, ICard drawnCard)
+    {
+        var rng = turnContext.RandomNumberGenerator;
+        var playDrawnCard = rng.NextDouble() > 0.5;
+        return playDrawnCard;
+    }
 }

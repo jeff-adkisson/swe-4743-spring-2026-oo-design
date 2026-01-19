@@ -40,6 +40,7 @@ public static class GameConsole
             if (!isValidInput)
                 WriteLine("- Invalid choice! Please enter Y or N.");
         }
+
         return output == "y" || output == "yes";
     }
 

@@ -2,7 +2,14 @@ namespace CrazyEights;
 
 public class ProgramContext
 {
-    public ProgramContext(int randomSeed = 0, int handSize = 7, bool showAllHands = false)
+    public const int DefaultRandomSeed = 0;
+    public const int DefaultHandSize = 5;
+    public const bool DefaultShowAllHands = false;
+
+    public ProgramContext(
+        int randomSeed = DefaultRandomSeed,
+        int handSize = DefaultHandSize,
+        bool showAllHands = DefaultShowAllHands)
     {
         ShowAllHands = showAllHands;
         HandSize = handSize;

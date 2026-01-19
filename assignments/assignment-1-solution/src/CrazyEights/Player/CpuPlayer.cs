@@ -36,7 +36,7 @@ public class CpuPlayer : PlayerBase
     {
         var rng = turnContext.RandomNumberGenerator;
         var suitValues = Suit.GetSuits();
-        var randomSuitIndex = rng.Next(0, suitValues.Count - 1);
+        var randomSuitIndex = rng.Next(0, suitValues.Count);
         var selectedSuit = suitValues[randomSuitIndex];
         return selectedSuit;
     }

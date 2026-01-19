@@ -4,20 +4,19 @@ namespace CrazyEights;
 
 internal static class Program
 {
-    private const int DefaultRandomSeed = 0;
-    private const int DefaultCardsInHand = 5;
-    private const bool ShowAllHands = false;
-
     private static void Main(string[] args)
     {
-        var randomSeed = DefaultRandomSeed;
-        if (args.Length > 0) int.TryParse(args[0], out randomSeed);
+        var randomSeed = ProgramContext.DefaultRandomSeed;
+        if (args.Length > 0 && int.TryParse(args[0], out var parsedSeed))
+            randomSeed = parsedSeed;
 
-        var cardsInHand = DefaultCardsInHand;
-        if (args.Length > 1) int.TryParse(args[1], out cardsInHand);
+        var cardsInHand = ProgramContext.DefaultHandSize;
+        if (args.Length > 1 && int.TryParse(args[1], out var parsedHandSize) && parsedHandSize > 0)
+            cardsInHand = parsedHandSize;
 
-        var showAllHands = ShowAllHands;
-        if (args.Length > 2) bool.TryParse(args[2], out showAllHands);
+        var showAllHands = ProgramContext.DefaultShowAllHands;
+        if (args.Length > 2 && bool.TryParse(args[2], out var parsedShowAllHands))
+            showAllHands = parsedShowAllHands;
 
         var programContext = new ProgramContext(randomSeed, cardsInHand, showAllHands);
 

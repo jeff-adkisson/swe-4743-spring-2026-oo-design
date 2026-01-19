@@ -122,33 +122,7 @@ public class HumanPlayer : PlayerBase
     public override bool WillPlayDrawnCard(TurnContext turnContext, ICard drawnCard)
     {
         GameConsole.WriteLine();
-        var isValidInput = false;
-        var playDrawnCard = false;
-        while (!isValidInput)
-        {
-            var input = GameConsole.ReadLine("You drew a playable card. Play it now (Y/N): ");
-            if (string.IsNullOrWhiteSpace(input) || input.Length != 1)
-            {
-                GameConsole.WriteLine("- Invalid choice! Please try again.");
-                continue;
-            }
-
-            var selectedLetter = char.ToUpper(input[0]);
-            switch (selectedLetter)
-            {
-                case 'Y':
-                    playDrawnCard = true;
-                    isValidInput = true;
-                    break;
-                case 'N':
-                    isValidInput = true;
-                    break;
-                default:
-                    GameConsole.WriteLine("- Invalid choice! Please try again.");
-                    break;
-            }
-        }
-
+        var playDrawnCard = GameConsole.PromptYesNo("You drew a playable card. Play it now (Y/N): ");
         return playDrawnCard;
     }
 }

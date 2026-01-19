@@ -10,28 +10,18 @@ internal static class Program
 
     private static void Main(string[] args)
     {
+        var randomSeed = DefaultRandomSeed;
+        if (args.Length > 0) int.TryParse(args[0], out randomSeed);
 
-        int randomSeed = DefaultRandomSeed;
-        if (args.Length > 0)
-        {
-            int.TryParse(args[0], out randomSeed);
-        }
+        var cardsInHand = DefaultCardsInHand;
+        if (args.Length > 1) int.TryParse(args[1], out cardsInHand);
 
-        int cardsInHand = DefaultCardsInHand;
-        if (args.Length > 1)
-        {
-            int.TryParse(args[1], out cardsInHand);
-        }
+        var showAllHands = ShowAllHands;
+        if (args.Length > 2) bool.TryParse(args[2], out showAllHands);
 
-        bool showAllHands = ShowAllHands;
-        if (args.Length > 2)
-        {
-            bool.TryParse(args[2], out showAllHands);
-        }
+        var programContext = new ProgramContext(randomSeed, cardsInHand, showAllHands);
 
-        var gameContext = new ProgramContext(randomSeed, cardsInHand, showAllHands);
-
-        var gameEngine = new GameEngine(gameContext);
-        gameEngine.Start();
+        var gameController = new GameController(programContext);
+        gameController.Start();
     }
 }

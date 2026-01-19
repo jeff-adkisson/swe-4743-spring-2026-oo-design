@@ -18,7 +18,7 @@ public class GameEngine
             new Players());
     }
 
-    public void Start()
+    public void StartGame()
     {
         PlayerRegistration.Register(_gameContext);
         GameConsole.WriteSeparator();

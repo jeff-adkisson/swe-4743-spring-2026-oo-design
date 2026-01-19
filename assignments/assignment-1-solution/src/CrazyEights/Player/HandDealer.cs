@@ -11,9 +11,7 @@ public static class HandDealer
         var handSize = gameContext.HandSize;
 
         if (deck.CardCount < numberOfPlayers * handSize)
-        {
             throw new InvalidOperationException("Not enough cards in the deck to deal hands to all players.");
-        }
 
         for (var i = 0; i < numberOfPlayers; i++)
         {

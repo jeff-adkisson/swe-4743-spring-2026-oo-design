@@ -45,10 +45,7 @@ public static class TurnAction
             drawnCard,
             turnContext.CurrentSuit,
             turnContext.CurrentRank);
-        if (canPlayDrawnCard.CanPlay && player.WillPlayDrawnCard(turnContext, drawnCard))
-        {
-            return drawnCard;
-        }
+        if (canPlayDrawnCard.CanPlay && player.WillPlayDrawnCard(turnContext, drawnCard)) return drawnCard;
 
         GameConsole.ReadLine("Press Enter to continue...");
         return UnselectedCard.Instance;

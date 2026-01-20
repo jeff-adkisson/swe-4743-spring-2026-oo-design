@@ -29,11 +29,12 @@ From the root directory:
 
 ```bash
 cd src/CrazyEights
-docker build -t crazy-eights -f Dockerfile .
-docker run --rm crazy-eights
+docker build --no-cache -t crazy-eights .
+docker run --rm -it crazy-eights
 ```
 
 > Ensure Docker is installed and running on your system.
+> `-it` is required for console interactivity.
 
 ## Environment Requirements
 
@@ -45,6 +46,6 @@ docker run --rm crazy-eights
 
 ## Screenshots
 
-![image-20260119203248615](README.assets/image-20260119203248615.png)
+![image-20260119203248615](README.assets/screenshot.png)
 
-![image-20260119202952201](README.assets/image-20260119202952201.png)
+![image-20260119202952201](README.assets/screenshot-2.png)

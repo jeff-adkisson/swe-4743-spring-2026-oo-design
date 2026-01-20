@@ -29,9 +29,4 @@ public class Card : ICard
     {
         return GetDescription();
     }
-
-    public static string GetPluralCardLabel(int count)
-    {
-        return count == 1 ? "card" : "cards";
-    }
 }

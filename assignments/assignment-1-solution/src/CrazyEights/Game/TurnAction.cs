@@ -109,7 +109,7 @@ public static class TurnAction
     private static void ShowRemainingDeckCount(Deck deck)
     {
         var cardCount = deck.CardCount;
-        GameConsole.WriteLine($"Deck remaining: {cardCount} {Card.GetPluralCardLabel(cardCount)}");
+        GameConsole.WriteLine($"Deck remaining: {cardCount} {GetPluralCardLabel(cardCount)}");
     }
 
     public static void ShowTopCard(ICard topCard, SuitType currentSuit, string prefix = "Top discard: ")
@@ -130,9 +130,14 @@ public static class TurnAction
             var player = players.List[i];
             var name = player.Name;
             var cardCount = player.CardCount;
-            GameConsole.Write($"{name}: {cardCount} {Card.GetPluralCardLabel(cardCount)}");
+            GameConsole.Write($"{name}: {cardCount} {GetPluralCardLabel(cardCount)}");
         }
 
         GameConsole.WriteLine();
+    }
+
+    private static string GetPluralCardLabel(int count)
+    {
+        return count == 1 ? "card" : "cards";
     }
 }

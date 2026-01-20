@@ -1,6 +1,7 @@
 using CrazyEights.Cards;
 using CrazyEights.Domain;
 using CrazyEights.Game;
+using System.Collections.Generic;
 
 namespace CrazyEights.Player;
 
@@ -8,11 +9,15 @@ public interface IPlayer
 {
     public string Name { get; }
 
-    public Hand Hand { get; }
-
     public int CardCount { get; }
 
     public bool ShowHand { get; }
+
+    public void AddCard(ICard card);
+
+    public void RemoveCard(ICard card);
+
+    public IReadOnlyList<ICard> PeekHand();
 
     public ICard SelectCard(TurnContext context);
 

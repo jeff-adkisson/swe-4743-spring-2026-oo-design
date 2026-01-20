@@ -37,8 +37,7 @@ public static class TurnAction
         ShowMessage($"{name} has no playable cards. Drawing one card...", true);
 
         var drawnCard = gameContext.Deck.DrawCard();
-        var playerHand = turnContext.Hand;
-        playerHand.AddCard(drawnCard);
+        player.AddCard(drawnCard);
         ShowMessage($"{name} drew {drawnCard.GetDescription()}");
 
         var canPlayDrawnCard = PlayableCardsSelector.CanPlayCard(
@@ -63,7 +62,7 @@ public static class TurnAction
             selectedCard = drawnCard;
         }
 
-        turnContext.Hand.RemoveCard(selectedCard);
+        currentPlayer.RemoveCard(selectedCard);
         gameContext.DiscardPile.AddCard(selectedCard);
         var name = turnContext.CurrentPlayer.Name;
         ShowMessage($"{name} selected {selectedCard.GetDescription()}");
@@ -97,12 +96,12 @@ public static class TurnAction
     private static void ShowAllCardsInHand(TurnContext turnContext)
     {
         var name = turnContext.CurrentPlayer.Name;
-        var hand = turnContext.Hand;
+        var hand = turnContext.CurrentPlayer.PeekHand();
 
         Console.WriteLine();
         GameConsole.WriteLine($"{name}'s hand");
 
-        foreach (var card in hand.CardList) GameConsole.WriteLine($"  - {card.GetDescription()}");
+        foreach (var card in hand) GameConsole.WriteLine($"  - {card.GetDescription()}");
     }
 
     private static void ShowRemainingDeckCount(Deck deck)

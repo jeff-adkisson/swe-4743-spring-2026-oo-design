@@ -33,14 +33,14 @@ public class Players
 
     public int GetSmallestHandCardCount()
     {
-        return _players.Min(p => p.Hand.CardCount);
+        return _players.Min(p => p.CardCount);
     }
 
     public IReadOnlyList<IPlayer> GetPlayersWithLeastCards()
     {
         var smallestHandCount = GetSmallestHandCardCount();
         return _players
-            .Where(p => p.Hand.CardCount == smallestHandCount)
+            .Where(p => p.CardCount == smallestHandCount)
             .OrderBy(player => player.Name)
             .ToImmutableList();
     }

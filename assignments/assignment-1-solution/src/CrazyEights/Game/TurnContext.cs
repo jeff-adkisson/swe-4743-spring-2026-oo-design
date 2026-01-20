@@ -23,8 +23,6 @@ public class TurnContext
 
     public IPlayer CurrentPlayer { get; }
 
-    public Hand Hand => CurrentPlayer.Hand;
-
     public SuitType CurrentSuit { get; }
 
     public ICard TopCard { get; }

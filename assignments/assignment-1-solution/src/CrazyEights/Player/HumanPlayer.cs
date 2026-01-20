@@ -17,7 +17,7 @@ public class HumanPlayer : PlayerBase
     public override ICard SelectCard(TurnContext turnContext)
     {
         var playableCards =
-            turnContext.Hand.GetPlayableCards(turnContext.CurrentSuit, turnContext.CurrentRank);
+            Hand.GetPlayableCards(turnContext.CurrentSuit, turnContext.CurrentRank);
 
         //cannot select a card
         if (playableCards.Count == 0)

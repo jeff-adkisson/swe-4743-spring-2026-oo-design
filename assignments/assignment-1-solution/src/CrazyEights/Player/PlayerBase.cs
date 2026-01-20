@@ -37,6 +37,11 @@ public abstract class PlayerBase : IPlayer
         return Hand.CardList;
     }
 
+    public void TakeTurn(TurnContext context)
+    {
+        TurnAction.StartTurn(context.GameContext, context);
+    }
+
     public abstract ICard SelectCard(TurnContext context);
 
     public abstract SuitType SelectSuit(GameContext gameContext, TurnContext turnContext);

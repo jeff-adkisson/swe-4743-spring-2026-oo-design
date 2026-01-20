@@ -62,7 +62,7 @@ public class GameEngine
             var turnContext = GetTurnContext(_gameContext, discardPile, currentPlayer);
             GameConsole.WriteLine();
             TurnAction.ShowTurn(_gameContext, turnContext);
-            TurnAction.StartTurn(_gameContext, turnContext);
+            currentPlayer.TakeTurn(turnContext);
             currentPlayer = players.MoveToNextPlayer();
         }
     }
@@ -73,7 +73,7 @@ public class GameEngine
         var currentSuit = discardPile.ActiveSuit;
         var topCard = discardPile.TopCard;
 
-        var turnContext = new TurnContext(rng, currentPlayer, currentSuit, topCard);
+        var turnContext = new TurnContext(gameContext, rng, currentPlayer, currentSuit, topCard);
         return turnContext;
     }
 

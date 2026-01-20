@@ -38,7 +38,9 @@ public static class TurnAction
 
         var drawnCard = gameContext.Deck.DrawCard();
         player.AddCard(drawnCard);
-        ShowMessage($"{name} drew {drawnCard.GetDescription()}");
+
+        var cardDescription = player.ShowHand ? drawnCard.GetDescription() : "a card";
+        ShowMessage($"{name} drew {cardDescription}");
 
         var canPlayDrawnCard = PlayableCardsSelector.CanPlayCard(
             drawnCard,

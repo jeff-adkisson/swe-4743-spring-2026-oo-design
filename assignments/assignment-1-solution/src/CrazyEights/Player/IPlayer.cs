@@ -19,6 +19,8 @@ public interface IPlayer
 
     public IReadOnlyList<ICard> PeekHand();
 
+    public void TakeTurn(TurnContext context);
+
     public ICard SelectCard(TurnContext context);
 
     public SuitType SelectSuit(GameContext gameContext, TurnContext turnContext);

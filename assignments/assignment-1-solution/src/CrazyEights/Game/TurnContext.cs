@@ -7,17 +7,21 @@ namespace CrazyEights.Game;
 public class TurnContext
 {
     public TurnContext(
+        GameContext gameContext,
         Random randomNumberGenerator,
         IPlayer currentPlayer,
         SuitType currentSuit,
         ICard topCard)
     {
+        GameContext = gameContext;
         RandomNumberGenerator = randomNumberGenerator;
         CurrentPlayer = currentPlayer;
         CurrentSuit = currentSuit;
         TopCard = topCard;
         CurrentRank = TopCard.Rank;
     }
+
+    public GameContext GameContext { get; }
 
     public Random RandomNumberGenerator { get; set; }
 

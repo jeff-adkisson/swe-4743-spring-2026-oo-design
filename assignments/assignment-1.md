@@ -178,8 +178,7 @@ Jeff's hand
 Jeff's playable cards
   [1] Eight of Diamonds ♦ (Wildcard!)
   [2] Eight of Hearts ♥ (Wildcard!)
-Choose a card number to play or 0 to draw:
-1
+Choose a card number to play: 1
 
 ** Jeff selected Eight of Diamonds ♦
 
@@ -221,7 +220,7 @@ Jeff's playable cards
   [2] Eight of Hearts ♥ (Wildcard!)
   [3] Four of Spades ♠ (Matches Suit)
   [4] Seven of Spades ♠ (Matches Suit)
-Choose a card number to play or 0 to draw: 1
+Choose a card number to play: 1
 
 ** Jeff selected Nine of Spades ♠
 
@@ -249,7 +248,7 @@ Jeff's playable cards
   [1] Eight of Hearts ♥ (Wildcard!)
   [2] Four of Spades ♠ (Matches Suit)
   [3] Seven of Spades ♠ (Matches Suit)
-Choose a card number to play or 0 to draw: 2
+Choose a card number to play: 2
 
 ** Jeff selected Four of Spades ♠
 
@@ -278,7 +277,7 @@ Jeff's hand
 Jeff's playable cards
   [1] Eight of Hearts ♥ (Wildcard!)
   [2] Seven of Spades ♠ (Matches Suit)
-Choose a card number to play or 0 to draw: 2
+Choose a card number to play: 2
 
 ** Jeff selected Seven of Spades ♠
 
@@ -305,7 +304,7 @@ Jeff's hand
 
 Jeff's playable cards
   [1] Eight of Hearts ♥ (Wildcard!)
-Choose a card number to play or 0 to draw: 1
+Choose a card number to play: 1
 
 ** Jeff selected Eight of Hearts ♥
 

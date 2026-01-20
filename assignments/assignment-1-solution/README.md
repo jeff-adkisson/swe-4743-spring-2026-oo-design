@@ -43,6 +43,8 @@ docker run --rm crazy-eights
 - Compatible operating system: Windows, macOS, or Linux
 - Internet connection (for dependency downloads)
 
-## Screenshot
+## Screenshots
 
-![image-20260119195912483](README.assets/image-20260119195912483.png)
+![image-20260119203248615](README.assets/image-20260119203248615.png)
+
+![image-20260119202952201](README.assets/image-20260119202952201.png)

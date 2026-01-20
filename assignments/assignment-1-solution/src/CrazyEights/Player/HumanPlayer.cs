@@ -29,16 +29,15 @@ public class HumanPlayer : PlayerBase
         ICard selectedCard = UnselectedCard.Instance;
         while (!isValidInput)
         {
-            var input = GameConsole.ReadLine("Choose a card number to play or 0 to draw: ");
+            var input = GameConsole.ReadLine("Choose a card number to play: ");
             var isNumber = int.TryParse(input, out var selectedNumber);
-            if (!isNumber || selectedNumber < 0 || selectedNumber > playableCards.Count)
+            if (!isNumber || selectedNumber < 1 || selectedNumber > playableCards.Count)
             {
                 GameConsole.WriteLine("- Invalid choice! Please try again.");
                 continue;
             }
 
-            if (selectedNumber > 0)
-                selectedCard = playableCards[selectedNumber - 1].Card;
+            selectedCard = playableCards[selectedNumber - 1].Card;
             isValidInput = true;
         }
 

@@ -20,10 +20,6 @@ public class CpuPlayer : PlayerBase
         //cannot play a card
         if (playableCards.Count == 0) return UnselectedCard.Instance;
 
-        //select whether to play a card or not
-        var playACard = rng.NextDouble() > 0.5;
-        if (!playACard) return UnselectedCard.Instance;
-
         //randomly select a card to play
         var randomCardIndex =
             turnContext.RandomNumberGenerator.Next(0, playableCards.Count);

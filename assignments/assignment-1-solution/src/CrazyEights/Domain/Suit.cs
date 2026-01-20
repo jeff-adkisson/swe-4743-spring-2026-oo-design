@@ -2,6 +2,9 @@ using System.Collections.Immutable;
 
 namespace CrazyEights.Domain;
 
+/// <summary>
+/// Provides helpers for suit names, symbols, and lists.
+/// </summary>
 public static class Suit
 {
     public static string GetSuitSymbol(SuitType suit)

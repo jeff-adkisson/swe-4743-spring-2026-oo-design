@@ -2,6 +2,9 @@ using CrazyEights.Game;
 
 namespace CrazyEights.Player;
 
+/// <summary>
+/// Deals starting hands to players from the deck.
+/// </summary>
 public static class HandDealer
 {
     public static Hand[] Deal(GameContext gameContext, int numberOfPlayers)

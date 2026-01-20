@@ -2,6 +2,9 @@ using System.Collections.Immutable;
 
 namespace CrazyEights.Domain;
 
+/// <summary>
+/// Provides helpers for card ranks and wildcard logic.
+/// </summary>
 public static class Rank
 {
     private const RankType WildcardRank = RankType.Eight;

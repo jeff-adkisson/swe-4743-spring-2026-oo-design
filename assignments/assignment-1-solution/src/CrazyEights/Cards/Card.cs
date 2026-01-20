@@ -2,6 +2,9 @@ using CrazyEights.Domain;
 
 namespace CrazyEights.Cards;
 
+/// <summary>
+/// Represents a standard playing card with rank and suit.
+/// </summary>
 public class Card : ICard
 {
     public Card(RankType rankType, SuitType suitType)

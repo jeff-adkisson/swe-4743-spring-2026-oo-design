@@ -3,6 +3,9 @@ using CrazyEights.Player;
 
 namespace CrazyEights.Game;
 
+/// <summary>
+/// Holds shared game state and configuration values.
+/// </summary>
 public class GameContext
 {
     private readonly ProgramContext _programContext;

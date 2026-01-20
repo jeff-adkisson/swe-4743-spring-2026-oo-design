@@ -4,6 +4,9 @@ using CrazyEights.Game;
 
 namespace CrazyEights.Player;
 
+/// <summary>
+/// CPU-controlled player that makes random selections.
+/// </summary>
 public class CpuPlayer : PlayerBase
 {
     private const string CpuPlayerName = "CPU";

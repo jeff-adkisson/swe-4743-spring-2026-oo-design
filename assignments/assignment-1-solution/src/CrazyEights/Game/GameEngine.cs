@@ -3,6 +3,9 @@ using CrazyEights.Player;
 
 namespace CrazyEights.Game;
 
+/// <summary>
+/// Runs a single game session from setup through winner determination.
+/// </summary>
 public class GameEngine
 {
     private readonly GameContext _gameContext;

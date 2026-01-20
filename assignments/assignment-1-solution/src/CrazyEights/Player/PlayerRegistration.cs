@@ -2,6 +2,9 @@ using CrazyEights.Game;
 
 namespace CrazyEights.Player;
 
+/// <summary>
+/// Handles registering players for a new game.
+/// </summary>
 public static class PlayerRegistration
 {
     public static void Register(GameContext gameContext)

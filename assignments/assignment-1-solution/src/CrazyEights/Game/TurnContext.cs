@@ -4,6 +4,9 @@ using CrazyEights.Player;
 
 namespace CrazyEights.Game;
 
+/// <summary>
+/// Captures the state needed for a single player's turn.
+/// </summary>
 public class TurnContext
 {
     public TurnContext(

@@ -2,6 +2,9 @@ using CrazyEights.Cards;
 
 namespace CrazyEights.CardDeck;
 
+/// <summary>
+/// Represents a stack-based deck of cards to draw from.
+/// </summary>
 public class Deck
 {
     private readonly Stack<ICard> _cards;

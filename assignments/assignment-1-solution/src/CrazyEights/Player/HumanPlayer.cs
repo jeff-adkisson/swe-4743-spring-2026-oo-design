@@ -4,6 +4,9 @@ using CrazyEights.Game;
 
 namespace CrazyEights.Player;
 
+/// <summary>
+/// Human-controlled player that chooses cards via console input.
+/// </summary>
 public class HumanPlayer : PlayerBase
 {
     public const string DefaultName = "Player";

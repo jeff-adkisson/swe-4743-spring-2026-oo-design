@@ -2,6 +2,9 @@ using CrazyEights.Domain;
 
 namespace CrazyEights.Cards;
 
+/// <summary>
+/// Null-object card used when no card is selected.
+/// </summary>
 public class UnselectedCard : ICard
 {
     public static readonly UnselectedCard Instance = new();

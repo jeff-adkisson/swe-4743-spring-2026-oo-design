@@ -2,6 +2,9 @@ using CrazyEights.Cards;
 
 namespace CrazyEights.Domain;
 
+/// <summary>
+/// Determines which cards can be played given the current suit and rank.
+/// </summary>
 public static class PlayableCardsSelector
 {
     public static IReadOnlyList<PlayableCard> Get(

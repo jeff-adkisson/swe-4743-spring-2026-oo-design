@@ -1,5 +1,8 @@
 namespace CrazyEights;
 
+/// <summary>
+/// Holds startup configuration values for the game.
+/// </summary>
 public class ProgramContext
 {
     public const int DefaultRandomSeed = 0;

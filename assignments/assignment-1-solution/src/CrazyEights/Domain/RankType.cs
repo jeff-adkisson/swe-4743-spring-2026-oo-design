@@ -1,5 +1,8 @@
 namespace CrazyEights.Domain;
 
+/// <summary>
+/// Defines the possible ranks for a standard playing card.
+/// </summary>
 public enum RankType
 {
     NotSet = 0,

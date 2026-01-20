@@ -1,5 +1,8 @@
 namespace CrazyEights.Game;
 
+/// <summary>
+/// Coordinates the overall game session loop and restarts.
+/// </summary>
 public class GameController
 {
     private readonly ProgramContext _programContext;

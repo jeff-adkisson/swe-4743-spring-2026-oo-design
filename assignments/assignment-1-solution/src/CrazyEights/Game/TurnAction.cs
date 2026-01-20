@@ -5,6 +5,9 @@ using CrazyEights.Player;
 
 namespace CrazyEights.Game;
 
+/// <summary>
+/// Implements turn execution steps and game UI prompts.
+/// </summary>
 public static class TurnAction
 {
     public static void ShowTurn(GameContext gameContext, TurnContext turnContext)

@@ -3,6 +3,9 @@ using CrazyEights.Domain;
 
 namespace CrazyEights.Player;
 
+/// <summary>
+/// Represents a player's hand of cards.
+/// </summary>
 public class Hand
 {
     private readonly List<ICard> _cards = new();

@@ -3,6 +3,9 @@ using CrazyEights.Domain;
 
 namespace CrazyEights.CardDeck;
 
+/// <summary>
+/// Creates and shuffles a new deck for the game.
+/// </summary>
 public static class DeckInitializer
 {
     public static Deck CreateCardDeck(ProgramContext programContext)

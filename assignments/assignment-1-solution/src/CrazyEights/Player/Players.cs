@@ -2,6 +2,9 @@ using System.Collections.Immutable;
 
 namespace CrazyEights.Player;
 
+/// <summary>
+/// Manages the list of players and turn order.
+/// </summary>
 public class Players
 {
     private readonly List<IPlayer> _players = [];

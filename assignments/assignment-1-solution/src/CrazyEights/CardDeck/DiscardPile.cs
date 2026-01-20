@@ -3,6 +3,9 @@ using CrazyEights.Domain;
 
 namespace CrazyEights.CardDeck;
 
+/// <summary>
+/// Represents the discard pile and active suit state.
+/// </summary>
 public class DiscardPile
 {
     private readonly Stack<ICard> _discardedCards = [];

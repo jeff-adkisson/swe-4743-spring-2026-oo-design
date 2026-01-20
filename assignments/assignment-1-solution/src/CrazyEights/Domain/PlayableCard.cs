@@ -2,6 +2,9 @@ using CrazyEights.Cards;
 
 namespace CrazyEights.Domain;
 
+/// <summary>
+/// Wraps a card with the reason it is playable.
+/// </summary>
 public class PlayableCard
 {
     public PlayableCard(ICard card, string playableReason)

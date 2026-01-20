@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 namespace CrazyEights.Player;
 
+/// <summary>
+/// Base class that implements shared player behavior and hand management.
+/// </summary>
 public abstract class PlayerBase : IPlayer
 {
     protected PlayerBase(string name, Hand hand, bool showHand)

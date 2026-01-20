@@ -1,5 +1,8 @@
 namespace CrazyEights.Game;
 
+/// <summary>
+/// Provides console input and output helpers for the game.
+/// </summary>
 public static class GameConsole
 {
     private const char SeparatorChar = '=';

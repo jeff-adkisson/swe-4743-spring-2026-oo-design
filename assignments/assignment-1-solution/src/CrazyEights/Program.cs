@@ -2,6 +2,9 @@
 
 namespace CrazyEights;
 
+/// <summary>
+/// Entry point for the Crazy Eights console application.
+/// </summary>
 internal static class Program
 {
     private static void Main(string[] args)

@@ -1,5 +1,8 @@
 namespace CrazyEights.Domain;
 
+/// <summary>
+/// Represents the outcome of a playability check.
+/// </summary>
 public class IsPlayable
 {
     public IsPlayable(bool canPlay, string reason = "")

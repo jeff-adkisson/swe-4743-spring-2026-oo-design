@@ -104,7 +104,7 @@ You will implement a simplified **two-player** version of Crazy 8’s:
 
 - **Human Player vs Computer Player**
 - Standard **52-card deck**
-- Deal **7 cards** to each player
+- Deal **5 cards** to each player (usually 7, but this speeds up gameplay)
 - One card is placed face-up to start the discard pile
 
 ### On a turn
@@ -132,8 +132,10 @@ A player may:
   - If the drawn card is playable, it *may* be played immediately
   - Otherwise, the turn ends
 
-### Winning
-- The **first player to empty their hand wins**
+### Winning and Tieing
+- The first player to empty their hand wins, or
+- The player with the lowest number of cards when the deck is emptied wins, or
+- When multiple players have the same number of cards when the deck is emptied, show the players who tied.
 
 > Please do not implement additional rules (stacking, draw-twos, skips, reverses, etc.). 
 
@@ -149,7 +151,7 @@ This example is provided to help you understand the basic gameplay before you ge
 
 Anytime you start a new project, creating a strong mental model of the domain before you begin design and coding will help you produce better results with less refactoring and debugging.
 
-### Example Implementation
+### Example Implementation Console Output
 
 ```
 Enter your name (or press Enter for 'Player'): Jeff
@@ -349,7 +351,7 @@ The game engine must interact with cards and players **only through these interf
 - Interfaces must be **minimal** — include only what the game engine truly needs.
 - Interfaces define **behavior**, not implementation details.
 - **Do not expose internal state**:
-  - No public fields
+  - No public fields (properties/getters and setters are required)
   - No mutable collections (e.g., List<Card>)
 - Interfaces must **not contain UI logic** (no printing, no input handling).
 - Interfaces should represent **roles** (e.g., “can take a turn”), not concrete types.

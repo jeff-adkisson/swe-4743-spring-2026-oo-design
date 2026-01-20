@@ -42,3 +42,7 @@ docker run --rm crazy-eights
 - [Docker](https://www.docker.com/get-started) (optional, for containerized builds)
 - Compatible operating system: Windows, macOS, or Linux
 - Internet connection (for dependency downloads)
+
+## Screenshot
+
+![image-20260119195912483](README.assets/image-20260119195912483.png)

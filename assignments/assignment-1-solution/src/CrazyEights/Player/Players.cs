@@ -9,7 +9,16 @@ public class Players
 
     public IReadOnlyList<IPlayer> List => _players.AsReadOnly();
 
-    public IPlayer CurrentPlayer => _players[_currentPlayerIndex];
+    public IPlayer CurrentPlayer
+    {
+        get
+        {
+            if (_players.Count == 0)
+                throw new InvalidOperationException("No players are registered.");
+
+            return _players[_currentPlayerIndex];
+        }
+    }
 
     public void Add(IPlayer player)
     {

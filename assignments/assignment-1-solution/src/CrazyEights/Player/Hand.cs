@@ -25,6 +25,6 @@ public class Hand
 
     public IReadOnlyList<PlayableCard> GetPlayableCards(SuitType currentSuit, RankType currentRank)
     {
-        return PlayableCardsSelector.Get(this, currentSuit, currentRank);
+        return PlayableCardsSelector.Get(CardList, currentSuit, currentRank);
     }
 }

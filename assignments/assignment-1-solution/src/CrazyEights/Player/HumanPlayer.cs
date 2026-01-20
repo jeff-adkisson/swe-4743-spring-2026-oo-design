@@ -45,7 +45,7 @@ public class HumanPlayer : PlayerBase
         return selectedCard;
     }
 
-    private static void ShowPlayableCardsInHand(TurnContext turnContext, IEnumerable<PlayableCard> playableCards)
+    private static void ShowPlayableCardsInHand(TurnContext turnContext, IReadOnlyList<PlayableCard> playableCards)
     {
         var currentPlayer = turnContext.CurrentPlayer;
         var name = currentPlayer.Name;
@@ -53,10 +53,11 @@ public class HumanPlayer : PlayerBase
         GameConsole.WriteLine();
         GameConsole.WriteLine($"{name}'s playable cards");
 
-        foreach (var playableCard in playableCards)
+        for (var i = 0; i < playableCards.Count; i++)
         {
+            var playableCard = playableCards[i];
             var card = playableCard.Card;
-            var selector = playableCard.Selector;
+            var selector = i + 1;
             var cardDescription = card.GetDescription();
             var playableReason = playableCard.PlayableReason;
             GameConsole.WriteLine($"  [{selector}] {cardDescription} ({playableReason})");

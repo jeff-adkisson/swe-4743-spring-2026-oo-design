@@ -1,8 +1,8 @@
 namespace CrazyEights.Domain;
 
-public class PlayableResult
+public class IsPlayable
 {
-    public PlayableResult(bool canPlay, string reason = "")
+    public IsPlayable(bool canPlay, string reason = "")
     {
         CanPlay = canPlay;
         Reason = reason;

@@ -13,8 +13,6 @@ UML class diagrams are a **communication tool**, not a programming language. The
 - Support reasoning and discussion *before* code exists  
 - Document important architectural decisions
 
-Class diagrams are routinely used in education to teach
-
 In this course, UML class diagrams are used to support the **object-oriented design process** — not to produce a giant diagram with every class in your application.
 
 > A UML diagram can be *useful* even when it is incomplete, approximate, or later changed.

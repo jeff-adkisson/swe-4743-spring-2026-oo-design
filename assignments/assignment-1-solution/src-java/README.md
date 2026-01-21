@@ -17,9 +17,9 @@ java -cp out edu.kennesaw.crazy8s.Main [randomSeed] [handSize] [showAllHands]
 ```
 
 Arguments (optional):
-- `randomSeed` (int) - use 0 for a random seed.
-- `handSize` (int) - starting cards per player.
-- `showAllHands` (true/false) - reveal all hands.
+- `randomSeed`: Integer used to seed the random number generator for reproducible games, for example `42`. Default `0`
+- `handSize`: Integer for starting cards per player, for example `5`. Default `5`
+- `showAllHands`: Boolean-like flag to reveal all hands, use `true` to show or `false` to hide (example `true`). Default `false`
 
 ## Run (Docker)
 

@@ -21,33 +21,64 @@ In this course, UML class diagrams are used to support the **object-oriented des
 
 ## Structural vs Non-Structural Relationships
 
-Before learning UML arrows and symbols, it is essential to understand **what kind of relationships UML is describing**.
+Before learning UML arrows and symbols, it is essential to understand **what kind of relationships UML class diagrams describe**.
 
-We will explore these relationship types in detail later in this lecture.
+UML relationships differ along two important dimensions:
 
-### Non-Structural (Usage) Relationships
-- Exist only during method execution
-- Live on the call stack
-- Do **not** define an object’s state
-- Typically represented as **dependencies**
+- Whether they affect an object’s **runtime state**
+- Whether they define **type-level structure**
 
-> Mental model: *“Used briefly.”*
+We will explore individual relationship types in detail later in this lecture. 
+
+For now, the goal is to establish the **big picture categories**.
+
+---
 
 ### Structural Relationships
 
-- Represented by fields
-- Define an object’s long-term structure
-- Exist beyond a single method call
+Structural relationships describe **how a system is shaped**, either through type structure or object state.
 
-Structural relationships include:
-- Association
-- Aggregation
-- Composition
+#### Structural (Type-Level)
 
+These relationships affect the **type system**, not object state.
 
-> Mental model: *“Part of what this object is.”*
+- Define substitutability and contracts  
+- Exist at compile time  
+- Do not imply object ownership or lifetime  
 
-This distinction will guide **every UML relationship choice** you make.
+Examples include:
+- **Inheritance**
+- **Interface realization**
+
+> **Mental model:** *“Part of what this system *is*.”*
+
+#### Structural (State-Level)
+
+These relationships affect an object’s **runtime structure and lifetime**.
+
+- Represented by fields  
+- Exist beyond a single method call  
+- Define ownership, sharing, or lifetime semantics  
+
+Examples include:
+- **Association**
+- **Aggregation**
+- **Composition**
+
+---
+
+### Non-Structural (Usage) Relationships
+
+Non-structural relationships describe **temporary usage** between objects during execution.
+
+- Exist only during method execution  
+- Live on the call stack  
+- Do **not** define an object’s state  
+- Do **not** define type structure  
+
+In UML, these are typically represented as **dependencies**.
+
+> **Mental model:** *“Used briefly.”*
 
 ---
 

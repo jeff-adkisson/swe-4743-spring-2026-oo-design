@@ -1021,3 +1021,30 @@ There are three solutions available:
 - ["Bad" C# solution](assignment-1-solution/src-csharp-bad-example/README.md) - demonstrates poor coding practice achieving the solution (God classes, high coupling, lack of polymorphism, encapsulation, dynamic dispatch, etc.)
 
 [Visit the Assignment 1 solution folder](assignment-1-solution/README.md) for links to the source you wish to review.
+
+#### Executing Solutions from the CLI
+
+Each solution includes CLI commands to execute the solution using the appropriate language commands.
+
+#### **Executing Solutions Using Docker**
+
+You can also (and are encouraged to) run the solutions using Docker—especially if you are unfamiliar with Docker or do not have the required language tooling installed locally.
+
+Each solution includes a Dockerfile that:
+
+- defines a consistent runtime environment,
+- copies the source code into the container,
+- compiles the source into an executable, and
+- runs the compiled application.
+
+The primary advantage of Docker is **environment consistency**. Your host operating system (Windows, macOS, Linux) does not need the full language toolchain installed to run the application. For example, you can run C# code on a machine that does *not* have the .NET SDK installed.
+
+Docker also eliminates common setup problems such as:
+
+- mismatched language or runtime versions,
+- missing dependencies,
+- platform-specific configuration differences.
+
+All of these concerns are captured explicitly in the Dockerfile. This means that anyone can clone the repository, build the container, and run the application with predictable results—regardless of their local machine.
+
+In professional software development, Docker (and containerization in general) is widely used to ensure that applications run the same way in development, testing, and production environments. Using Docker here mirrors real-world practice and helps you focus on understanding the code rather than troubleshooting your local setup.

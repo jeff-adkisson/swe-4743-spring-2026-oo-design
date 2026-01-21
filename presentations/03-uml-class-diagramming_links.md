@@ -1,0 +1,1 @@
+- [Lecture Material](03-uml-class-diagramming.md)

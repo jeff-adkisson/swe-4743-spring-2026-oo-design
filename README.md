@@ -44,3 +44,8 @@ Spring 2026
 - [Video of my screen](https://www.loom.com/share/b54e52c10e0a4d11909f2adbefee5c14)
 - [Summary from Video Transcript (AI generated)](presentations/02-oo-foundations-review.md)
 
+#### 03. Uml Class Diagramming
+- [PowerPoint](presentations/03-uml-class-diagramming.pptx)
+- [PDF](presentations/03-uml-class-diagramming.pdf)
+- [HTML](presentations/03-uml-class-diagramming_html/index.html)
+- [Lecture Material](03-uml-class-diagramming.md)

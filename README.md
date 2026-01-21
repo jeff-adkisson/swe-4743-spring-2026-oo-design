@@ -48,4 +48,4 @@ Spring 2026
 - [PowerPoint](presentations/03-uml-class-diagramming.pptx)
 - [PDF](presentations/03-uml-class-diagramming.pdf)
 - [HTML](presentations/03-uml-class-diagramming_html/index.html)
-- [Lecture Material](03-uml-class-diagramming.md)
+- [Lecture Material](presentations/03-uml-class-diagramming.md)

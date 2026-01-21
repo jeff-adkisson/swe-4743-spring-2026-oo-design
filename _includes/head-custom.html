@@ -86,6 +86,8 @@
       if (svg.dataset.panZoomInitialized === "true") return;
       svg.dataset.panZoomInitialized = "true";
 
+      fitSvgToContent(svg, 16);
+
       const instance = window.svgPanZoom(svg, {
         zoomEnabled: true,
         controlIconsEnabled: true,
@@ -205,5 +207,32 @@
     document.addEventListener("DOMContentLoaded", renderMermaidFromCodeBlocks);
   } else {
     renderMermaidFromCodeBlocks();
+  }
+
+  function fitSvgToContent(svg, padding = 12) {
+    // Prefer the pan-zoom viewport group if present; else use the whole svg
+    const g =
+      svg.querySelector(".svg-pan-zoom_viewport") ||
+      svg.querySelector("g") ||
+      svg;
+
+    // getBBox() gives the tight bounds of rendered vector content
+    const bb = g.getBBox();
+
+    // Expand a little so strokes/text don’t sit on the edge
+    const x = bb.x - padding;
+    const y = bb.y - padding;
+    const w = bb.width + padding * 2;
+    const h = bb.height + padding * 2;
+
+    // Set a real viewBox so “height:auto” can work from aspect ratio
+    svg.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
+
+    // Let it be responsive, but sized correctly
+    svg.style.height = "auto";
+    svg.style.display = "block"; // avoids baseline/line-height quirks
+
+    // If Mermaid injected overflow:hidden, it will still clip; allow visible
+    svg.style.overflow = "visible";
   }
 </script>

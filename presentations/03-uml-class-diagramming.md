@@ -8,15 +8,171 @@
 
 UML class diagrams are a **communication tool**, not a programming language. Their purpose is to:
 
-- Express *design intent* clearly
-- Reveal structure, responsibility, and relationships
-- Support reasoning and discussion *before* code exists
+- Express *design intent* clearly  
+- Reveal structure, responsibility, and relationships  
+- Support reasoning and discussion *before* code exists  
 - Document important architectural decisions
 
-In this course, UML diagrams are used to **support OO thinking**, not to generate code.
+Class diagrams are routinely used in education to teach
+
+In this course, UML class diagrams are used to support the **object-oriented design process** — not to produce a giant diagram with every class in your application.
+
+> A UML diagram can be *useful* even when it is incomplete, approximate, or later changed.
+
+---
+
+## **Using UML Class Diagrams to Support The Design Process**
+
+UML class diagrams are most valuable **early**, when ideas are still flexible and design decisions are inexpensive to change.
+
+Rather than simply documenting *what you have already built* (which class diagrams can do), UML helps you reason about **what you should build**.
+
+When used correctly, class diagrams support the design process by helping you think, ask better questions, and communicate your ideas.
+
+----
+
+## Structural vs Non-Structural Relationships
+
+Before learning UML arrows and symbols, it is essential to understand **what kind of relationships UML is describing**.
+
+### Non-Structural (Usage) Relationships
+- Exist only during method execution
+- Live on the call stack
+- Do **not** define an object’s state
+
+> Mental model: *“Used briefly.”*
+
+### Structural Relationships
+- Represented by fields
+- Define an object’s long-term structure
+- Exist beyond a single method call
+
+> Mental model: *“Part of what this object is.”*
+
+This distinction will guide **every UML relationship choice** you make.
 
 
-Examples throughout this lecture are aligned with [**Assignment 1: Crazy Eights**](../assignments/assignment-1.md).
+---
+
+### **1. Clarifying Responsibilities**
+
+A class diagram forces you to confront responsibility boundaries.
+
+Each class box raises questions such as:
+
+- What does this class *know*?
+- What does this class *do*?
+- What should it *not* be responsible for?
+
+If a class diagram feels crowded or confusing, that is often a sign that responsibilities are poorly assigned — not that the diagram is wrong.
+
+UML helps expose these issues *before* they turn into tangled code.
+
+---
+
+### **2. Reasoning About Relationships Before Code Exists**
+
+UML makes relationships explicit in a way code often hides:
+
+- **Associations** reveal how objects collaborate
+- **Inheritance** prompts questions about substitutability and reuse
+- **Composition vs. aggregation** encourages thinking about ownership and lifecycle
+
+These relationships are design decisions, not implementation details.  
+They are much easier to discuss and revise in a diagram than after code has been written.
+
+---
+
+### **3. Exploring Design Alternatives**
+
+Class diagrams are **cheap to change**.
+
+They allow you to:
+- Sketch multiple approaches
+- Compare tradeoffs
+- Ask “what if?” questions
+
+For example:
+- *What if this method belonged to a different class?*
+- *What if we replaced inheritance with composition?*
+- *What happens if this dependency is removed?*
+
+UML supports experimentation without the cost of refactoring code.
+
+---
+
+### **4. Communicating Design Intent**
+
+A good class diagram communicates intent, not mechanics.
+
+It should help answer questions like:
+- What are the key concepts in this system?
+- How are responsibilities divided?
+- Where are the important abstractions?
+
+This makes UML especially useful for:
+- Team discussions
+- Design reviews
+- Explaining your reasoning to others
+- Making your thinking visible to your future self
+
+The goal is **shared understanding**, not syntactic completeness.
+
+---
+
+### **5. Focusing on What Matters**
+
+In this course, you are **not** expected to model every class, field, or method.
+
+Instead:
+- Model the *important* classes
+- Show relationships that influence design decisions
+- Omit details that do not add insight
+
+A good UML diagram is:
+- Selective
+- Purpose-driven
+- Easy to understand at a glance
+
+If a diagram becomes large or hard to read, it has likely stopped serving its purpose.
+
+---
+
+### **6. Documenting Object-Oriented Design Patterns**
+
+UML class diagrams are also commonly used to document **object-oriented design patterns**, such as **State**, **Strategy**, **Observer**, and **Factory**.
+
+In this context, the goal is not to show every class in your system, but to clearly illustrate:
+
+- The *roles* each class plays in the pattern  
+- The *collaboration structure* between those roles  
+- How responsibilities are distributed across the pattern  
+
+For example, a UML diagram of the **State pattern** highlights:
+- The `Context` class
+- The abstract `State` interface
+- Concrete state implementations
+- How behavior changes through delegation rather than conditionals
+
+These diagrams help communicate *why* a design was chosen, not just *how* it was implemented.
+
+Because design patterns rely on shared vocabulary, UML provides a visual shorthand that makes pattern-based designs easier to explain, review, and maintain.
+
+---
+
+## **Key Takeaways**
+
+UML class diagrams are a **thinking and communication tool**.
+
+They help you:
+- Design before you build
+- Explore alternatives and tradeoffs
+- Assign and refine responsibilities
+- Reason about relationships and collaboration
+- Communicate design intent clearly
+- Document important architectural decisions and design patterns
+
+A UML diagram is successful when it improves the quality of your design and your ability to explain it — not when it perfectly mirrors your code.
 
 ## **Table of Contents**
 
@@ -603,21 +759,7 @@ If you want to show execution order, use:
 
 ---
 
-### **Mistake 2: Assuming UML Enforces Rules Automatically**
-
-UML does not enforce:
-- Multiplicity
-- Ownership
-- Lifetime
-- Visibility
-
-> **Rule:** If it is not enforced by code, it is only documentation.
-
-This is why constructors, factories, and guard clauses matter.
-
----
-
-### **Mistake 3: Over-Specifying Relationships**
+### **Mistake 2: Over-Specifying Relationships**
 
 Students often feel pressure to choose the “most specific” arrow.
 
@@ -632,7 +774,7 @@ Plain association is often sufficient.
 
 ---
 
-### **Mistake 4: Modeling Everything in One Diagram**
+### **Mistake 3: Modeling Everything in One Diagram**
 
 Large, all-encompassing diagrams reduce clarity.
 
@@ -647,19 +789,7 @@ Create multiple diagrams for different concerns.
 
 ---
 
-### **Mistake 5: Treating UML as a Coding Language**
-
-UML is not source code.
-
-- UML does not compile
-- UML does not replace design thinking
-- UML should evolve as understanding evolves
-
-> **Correct framing:** UML is a **conversation aid**, not a blueprint.
-
----
-
-### **Mistake 6: Confusing Collections with Ownership**
+### **Mistake 4: Confusing Collections with Ownership**
 
 Collections do **not** imply composition.
 
@@ -676,7 +806,7 @@ Ownership comes from **creation and lifetime rules**, not containers.
 
 ---
 
-### **Mistake 7: Forgetting the Question UML Is Answering**
+### **Mistake 5: Forgetting the Question UML Is Answering**
 
 Every UML relationship answers a question:
 

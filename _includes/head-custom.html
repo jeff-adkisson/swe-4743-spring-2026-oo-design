@@ -1,6 +1,3 @@
-<!-- Pan/zoom support for Mermaid SVGs -->
-<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
-
 <style>
   /* Diagram container */
   .mermaid-wrap {
@@ -9,7 +6,6 @@
     background: #fff;
     padding: 0.5rem;
     margin: 1rem 0;
-    overflow: hidden; /* prevents scrollbars fighting pan/zoom */
   }
 
   /* Mermaid output block lives inside the wrap */
@@ -18,8 +14,7 @@
   }
 
   /* Controls */
-  .mermaid-copy,
-  .mermaid-reset {
+  .mermaid-copy {
     font-size: 12px;
     line-height: 1;
     padding: 4px 6px;
@@ -32,30 +27,11 @@
     user-select: none;
     display: inline-block;
     white-space: nowrap;
+    margin-top: 0.5rem;
   }
 
-  .mermaid-copy:hover,
-  .mermaid-reset:hover {
+  .mermaid-copy:hover {
     text-decoration: underline;
-  }
-
-  /* Top-left group: Copy Mermaid */
-  .mermaid-controls-left {
-    position: absolute;
-    left: 8px;
-    top: 6px;
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    z-index: 2;
-  }
-
-  /* Top-right reset */
-  .mermaid-reset {
-    position: absolute;
-    right: 8px;
-    top: 6px;
-    z-index: 2;
   }
 </style>
 
@@ -74,44 +50,6 @@
       textColor: "#000000",
     },
   });
-
-  // -----------------------------
-  // Pan/Zoom helpers
-  // -----------------------------
-  function enablePanZoomOnMermaidSvgs(root = document) {
-    if (typeof window.svgPanZoom !== "function") return;
-
-    root.querySelectorAll(".mermaid svg").forEach((svg) => {
-      // Prevent double-initialization
-      if (svg.dataset.panZoomInitialized === "true") return;
-      svg.dataset.panZoomInitialized = "true";
-
-      fitSvgToContent(svg, 16);
-
-      const instance = window.svgPanZoom(svg, {
-        zoomEnabled: true,
-        controlIconsEnabled: true,
-        fit: true,
-        center: true,
-      });
-
-      // Keep a reference for resets
-      svg.__panZoom = instance;
-    });
-  }
-
-  function resetSvgView(svg) {
-    if (!svg || !svg.__panZoom) return;
-    svg.__panZoom.resetZoom();
-    svg.__panZoom.resetPan();
-    svg.__panZoom.fit();
-    svg.__panZoom.center();
-  }
-
-  function resetDiagramView(wrap) {
-    const svg = wrap.querySelector(".mermaid svg");
-    resetSvgView(svg);
-  }
 
   // -----------------------------
   // Render Mermaid + add controls
@@ -135,11 +73,7 @@
       const mermaidSource = (code.textContent || "").trimEnd();
       container.textContent = mermaidSource;
 
-      // Top-left controls container
-      const leftControls = document.createElement("div");
-      leftControls.className = "mermaid-controls-left";
-
-      // Copy Mermaid control (top-left)
+      // Copy Mermaid control (below)
       const copy = document.createElement("a");
       copy.href = "#";
       copy.className = "mermaid-copy";
@@ -176,22 +110,8 @@
         }
       });
 
-      leftControls.appendChild(copy);
-
-      // Reset control (top-right) — resets the original frame view
-      const reset = document.createElement("a");
-      reset.href = "#";
-      reset.className = "mermaid-reset";
-      reset.textContent = "Reset";
-      reset.setAttribute("aria-label", "Reset diagram view");
-      reset.addEventListener("click", (e) => {
-        e.preventDefault();
-        resetDiagramView(wrap);
-      });
-
       wrap.appendChild(container);
-      wrap.appendChild(leftControls);
-      wrap.appendChild(reset);
+      wrap.appendChild(copy);
 
       pre.replaceWith(wrap);
     });
@@ -199,8 +119,6 @@
     // Render all newly created .mermaid blocks
     await mermaid.run({ querySelector: ".mermaid" });
 
-    // Attach pan/zoom to page diagrams
-    enablePanZoomOnMermaidSvgs(document);
   }
 
   if (document.readyState === "loading") {
@@ -209,30 +127,4 @@
     renderMermaidFromCodeBlocks();
   }
 
-  function fitSvgToContent(svg, padding = 12) {
-    // Prefer the pan-zoom viewport group if present; else use the whole svg
-    const g =
-      svg.querySelector(".svg-pan-zoom_viewport") ||
-      svg.querySelector("g") ||
-      svg;
-
-    // getBBox() gives the tight bounds of rendered vector content
-    const bb = g.getBBox();
-
-    // Expand a little so strokes/text don’t sit on the edge
-    const x = bb.x - padding;
-    const y = bb.y - padding;
-    const w = bb.width + padding * 2;
-    const h = bb.height + padding * 2;
-
-    // Set a real viewBox so “height:auto” can work from aspect ratio
-    svg.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
-
-    // Let it be responsive, but sized correctly
-    svg.style.height = "auto";
-    svg.style.display = "block"; // avoids baseline/line-height quirks
-
-    // If Mermaid injected overflow:hidden, it will still clip; allow visible
-    svg.style.overflow = "visible";
-  }
 </script>

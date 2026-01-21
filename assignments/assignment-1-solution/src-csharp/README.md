@@ -18,7 +18,7 @@ This assignment is not about game sophistication. It is explicitly about demonst
 From the root directory, use the following commands:
 
 ```bash
-cd src/CrazyEights
+cd CrazyEights
 dotnet run -- [randomSeed] [handSize] [showAllHands]
 ```
 
@@ -32,7 +32,7 @@ Arguments (optional):
 From the root directory:
 
 ```bash
-cd src/CrazyEights
+cd CrazyEights
 docker build --no-cache -t crazy-eights .
 docker run --rm -it crazy-eights [randomSeed] [handSize] [showAllHands]
 ```

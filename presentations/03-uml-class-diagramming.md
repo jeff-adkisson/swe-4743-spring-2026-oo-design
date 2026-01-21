@@ -15,7 +15,34 @@ UML class diagrams are a **communication tool**, not a programming language. The
 
 In this course, UML diagrams are used to **support OO thinking**, not to generate code.
 
-Examples throughout this lecture are aligned with **Assignment 1: Crazy Eights**.
+
+Examples throughout this lecture are aligned with [**Assignment 1: Crazy Eights**](../assignments/assignment-1.md).
+
+## **Table of Contents**
+
+- [1. Class Box Layout](#1-class-box-layout)
+- [2. Class Annotations](#2-class-annotations)
+- [3. Class Inheritance](#3-class-inheritance)
+- [4. Interface Realization](#4-interface-realization)
+- [5. Dependencies](#5-dependencies)
+- [6. Associations](#6-associations)
+- [7. Aggregation vs Composition](#7-aggregation-vs-composition)
+- [8. Access Modifiers](#8-access-modifiers)
+- [9. Abstract vs Concrete Classes](#9-abstract-vs-concrete-classes)
+- [10. Method Parameters and Return Types](#10-method-parameters-and-return-types)
+- [11. Representing Generic Types](#11-representing-generic-types)
+- [12. Representing Multiplicity](#12-representing-multiplicity)
+- [13. Adding Titles and Notes](#13-adding-titles-and-notes)
+- [14. Comments](#14-comments)
+- [15. Hiding Empty Members](#15-hiding-empty-members)
+- [16. Diagram Direction](#16-diagram-direction)
+- [17. UML Class Diagram Mistakes](#17-uml-class-diagram-mistakes)
+- [18. Scope and Realistic Usage of UML](#18-scope-and-realistic-usage-of-uml)
+- [19. Will a Developer Implement UML Exactly?](#19-will-a-developer-implement-uml-exactly)
+- [20. Why Mermaid for UML?](#20-why-mermaid-for-uml)
+- [21. Bad UML vs Good UML (Design Contrast)](#21-bad-uml-vs-good-uml-design-contrast)
+- [22. Relationship Summary](#22-relationship-summary)
+- [23. Student Exercise: Identify the Relationship](#23-student-exercise-identify-the-relationship)
 
 ## **1. Class Box Layout**
 
@@ -58,7 +85,7 @@ classDiagram
 
 ### **Enumerations**
 
-```c#
+```mermaid
 classDiagram
     class Suit {
         <<enumeration>>
@@ -123,9 +150,13 @@ public interface IPlayer
 
 ## **5. Dependencies**
 
+> **Important framing:** UML class diagrams describe **object structure**, not execution flow.
+>  
+> Dependencies exist precisely because no structural relationship exists.
+
 A **dependency** indicates that one class *uses* another temporarily.
 
-```
+```mermaid
 classDiagram
     CrazyEightsGame ..> IPlayer : uses
 ```
@@ -135,18 +166,107 @@ classDiagram
 - Dependencies often appear as **method parameters**
 - They do *not* imply ownership
 
+### **Code Examples**
+
+Before introducing associations, it is important to distinguish between **usage** and **structure**.
+
+- **Non-structural relationships** exist only during method execution
+- **Structural relationships** are part of an object’s state and survive method calls
+
+> **Rule:** If a relationship exists only on the call stack, it is **not structural**.
+
+## **Structural vs Non-Structural Relationships**
+
+### **Structural Relationship (Association)**
+
+```csharp
+public class CrazyEightsGame
+{
+    private readonly Deck _deck;
+
+    public CrazyEightsGame(Deck deck)
+    {
+        _deck = deck;
+    }
+
+    public void Run()
+    {
+        var card = _deck.Draw();
+    }
+}
+```
+
+**Why this is an association:**
+
+- `Deck` is stored as a **field**
+- The relationship exists for the lifetime of the game
+- The game’s structure depends on the deck
+- `Deck`'s lifetime ownership is external
+
+---
+
+### **Non-Structural Relationship (Dependency)**
+
+```csharp
+public class CrazyEightsGame
+{
+    public void Run(Deck deck)
+    {
+        var card = deck.Draw();
+    }
+}
+```
+
+**Why this is not an association:**
+
+- The deck is not part of the game’s state
+- The relationship exists only during method execution
+- The relationship disappears when the method returns
+
+---
+
+#### **Key Takeaway**
+
+> **A relationship is structural if it is represented by a field and defines part of the object’s state.**
+
+If the relationship only exists on the call stack, it is a **dependency**, not an association.
+
 ## **6. Associations**
 
-An **association** represents a *structural relationship* between two objects that exist at the same time.
+### **Association Hierarchy**
 
-- Neither object necessarily owns the other
-- Lifetime is independent
+In UML, **association** is the general relationship.  
+**Aggregation** and **composition** are *specialized forms* of association that add **lifetime and ownership semantics**.
+
+```
+Association (least specific structural relationship)
+├── Aggregation (weak ownership / shared lifetime)
+└── Composition (strong ownership / exclusive lifetime)
+```
+
+- Use **association** when you want to show that objects are structurally related.
+- Use **aggregation** when you want to emphasize that the related object is *retained but not owned*.
+- Use **composition** when you want to emphasize *exclusive ownership and shared lifetime*.
+
+> **Guideline:** All aggregations and compositions are associations, but not all associations need to specify ownership.
+
+> **Design note:** If ownership and lifetime semantics are not important to the discussion, a **plain association** is sufficient.
+>  
+> UML intentionally allows designers to omit ownership details unless they matter.
+
+An **association** represents a **structural relationship** between two objects that exist simultaneously.
+
+A relationship is *structural* when:
+
+- One object holds a reference to the other as part of its **state**
+- The relationship exists **beyond a single method call**
+- Neither object necessarily controls the other’s lifetime
 
 > **Mental model:** “These objects know about each other.”
 
 Associations represent a longer-lived relationship between objects.
 
-```
+```mermaid
 classDiagram
     CrazyEightsGame --> Deck
 ```
@@ -155,58 +275,61 @@ classDiagram
 
 - The game *has a* deck
 - The deck exists independently
+- The relationship is part of the game’s structure
 
 ## **7. Aggregation vs Composition**
+
+### **Decision Guide (Relationship Classification)**
+
+Use the following questions to classify the relationship:
+
+```
+Is the object only used as a method parameter?
+→ Dependency
+
+Is the object stored as a field?
+→ Association
+
+Was the object created internally?
+→ Composition
+
+Was the object supplied from outside?
+→ Aggregation
+```
 
 This is one of the **most misunderstood areas** of UML.
 
 Aggregation and composition are **about object lifetime**, *not collections*.
 
-### **Aggregation (shared lifetime)**
+### **Conceptual Meaning**
+
+**Aggregation (shared lifetime)**  
+- The object is retained but not owned  
+- The part may exist before or after the whole  
+- Lifetime is independent
+
+> **Mental model:** “I borrow it.”
+
+**Composition (owned lifetime)**  
+- The object is created and owned internally  
+- The part does not meaningfully exist on its own  
+- Lifetime is bound to the owner
+
+> **Mental model:** “If the owner dies, the parts die too.”
+
+### **UML Notation: Aggregation**
 
 ```mermaid
 classDiagram
     CrazyEightsGame o-- Deck
 ```
 
-- Open diamond
-- The game *uses* a deck
-- The deck can exist before or after the game
-
-> **Mental model:** “I borrow it.”
-
-### **Composition (owned lifetime)**
+### **UML Notation: Composition**
 
 ```mermaid
 classDiagram
     PlayerBase *-- "0..*" ICard
 ```
-
-- Filled diamond
-- Cards exist *only* as part of a player’s hand
-
-> **Mental model:** “If the owner dies, the parts die too.”
-
-### **Aggregation (shared lifetime)**
-
-```mermaid
-classDiagram
-    CrazyEightsGame o-- Deck
-```
-
-- Open diamond
-- Game uses a deck
-- Deck may exist without the game
-
-### **Composition (owned lifetime)**
-
-```mermaid
-classDiagram
-    PlayerBase *-- Hand
-```
-
-- Filled diamond
-- Hand does **not** exist without the player
 
 ## **Object Lifetime Demonstration (C#)**
 
@@ -256,7 +379,7 @@ classDiagram
 
 Abstract elements are *italicized* in UML.
 
-```
+```mermaid
 classDiagram
     class PlayerBase {
         <<abstract>>
@@ -277,7 +400,7 @@ public abstract class PlayerBase
 
 ## **10. Method Parameters and Return Types**
 
-```
+```mermaid
 classDiagram
     class Deck {
         +Draw() Card
@@ -305,7 +428,7 @@ Multiplicity expresses **design constraints**, not documentation trivia.
 
 > **Important:** UML multiplicity is meaningless unless it is **enforced by code**.
 
-```
+```mermaid
 classDiagram
     CrazyEightsGame "1" --> "2" IPlayer
     PlayerBase "1" *-- "0..*" ICard
@@ -340,7 +463,7 @@ classDiagram
     PlayerBase "1" *-- "0..*" ICard
 ```
 
-### **Enforcing Multiplicity in Code**
+### **Enforcing Multiplicity in Code #1**
 
 ```c#
 public class CrazyEightsGame
@@ -353,6 +476,36 @@ public class CrazyEightsGame
     }
 }
 ```
+
+### **Enforcing Bounded Required Multiplicity (1..3)**
+
+
+#### **Multiplicity: 1..3 (required, capped)**
+
+```mermaid
+classDiagram
+    Team "1..3" --> Player
+```
+
+```csharp
+public class Team
+{
+    private readonly List<Player> _players;
+
+    public Team(IEnumerable<Player> players)
+    {
+        var list = players.ToList();
+
+        if (list.Count < 1 || list.Count > 3)
+            throw new ArgumentException("A team must have between 1 and 3 players.");
+
+        _players = list;
+    }
+}
+```
+
+**Explanation:**  
+The constructor enforces the lower bound (at least one) and the upper bound (at most three).
 
 ## **13. Adding Titles and Notes**
 
@@ -428,7 +581,115 @@ classDiagram
 - TB – top to bottom
 - LR – left to right
 
-## **17. Scope and Realistic Usage of UML**
+## **17. UML Class Diagram Mistakes**
+
+UML class diagrams are a powerful communication tool, but they are frequently misunderstood or misused.  
+The mistakes below are common in both student work and industry diagrams.
+
+### **Mistake 1: Treating UML Arrows as Program Flow**
+
+UML class diagrams do **not** represent execution order or control flow.
+
+- Arrows do *not* mean “this runs first”
+- Arrows do *not* represent method calls
+- Arrows do *not* show runtime sequencing
+
+> **Correct mental model:** UML class diagrams describe **structure**, not behavior.
+
+If you want to show execution order, use:
+- Sequence diagrams
+- Activity diagrams
+- Flow charts
+
+---
+
+### **Mistake 2: Assuming UML Enforces Rules Automatically**
+
+UML does not enforce:
+- Multiplicity
+- Ownership
+- Lifetime
+- Visibility
+
+> **Rule:** If it is not enforced by code, it is only documentation.
+
+This is why constructors, factories, and guard clauses matter.
+
+---
+
+### **Mistake 3: Over-Specifying Relationships**
+
+Students often feel pressure to choose the “most specific” arrow.
+
+Common symptoms:
+- Using composition everywhere
+- Adding diamonds without lifetime justification
+- Treating aggregation as mandatory
+
+> **Better approach:** Use the *least specific* relationship that correctly communicates intent.
+
+Plain association is often sufficient.
+
+---
+
+### **Mistake 4: Modeling Everything in One Diagram**
+
+Large, all-encompassing diagrams reduce clarity.
+
+Common problems:
+- Too many classes
+- Too many relationships
+- Visual noise
+
+> **Guideline:** Diagram **5–10 closely related classes** at a time.
+
+Create multiple diagrams for different concerns.
+
+---
+
+### **Mistake 5: Treating UML as a Coding Language**
+
+UML is not source code.
+
+- UML does not compile
+- UML does not replace design thinking
+- UML should evolve as understanding evolves
+
+> **Correct framing:** UML is a **conversation aid**, not a blueprint.
+
+---
+
+### **Mistake 6: Confusing Collections with Ownership**
+
+Collections do **not** imply composition.
+
+```csharp
+List<Card> cards;
+```
+
+This alone says nothing about:
+- Who created the cards
+- Who owns their lifetime
+- Whether they are shared
+
+Ownership comes from **creation and lifetime rules**, not containers.
+
+---
+
+### **Mistake 7: Forgetting the Question UML Is Answering**
+
+Every UML relationship answers a question:
+
+- Inheritance → *Is-a?*
+- Realization → *Implements a contract?*
+- Dependency → *Uses briefly?*
+- Association → *Knows about?*
+- Aggregation → *Borrowed?*
+- Composition → *Owned for life?*
+
+If you cannot state the question being answered, the relationship is probably unnecessary.
+
+## **18. Scope and Realistic Usage of UML**
 
 UML class diagrams are **not meant to model your entire system at once**.
 
@@ -446,7 +707,30 @@ UML class diagrams are **not meant to model your entire system at once**.
 
 > **Mental model:** UML is a *conversation aid*, not a blueprint.
 
-## **18. Why Mermaid for UML?**
+## **19. Will a Developer Implement UML Exactly?**
+
+In most real-world teams, a UML class diagram is treated as a **communication artifact**, not a strict specification.
+
+Most developers can read class diagrams at a basic level (classes, inheritance, interfaces, associations), but **fine-grained distinctions**—especially **aggregation vs composition**—are often interpreted inconsistently or ignored, which can lead to an **implementation–design mismatch**.
+
+### **Why mismatches happen**
+
+- UML is rarely the single source of truth; code evolves faster than diagrams
+- Teams vary in UML fluency (especially around ownership and lifetime semantics)
+- Some UML concepts are intentionally underspecified (plain association is often “good enough”)
+- DI and modern architectures make “ownership” less visually obvious than older OO designs
+
+### **How to reduce mismatch risk**
+
+- Prefer **plain association** unless ownership/lifetime is essential to the discussion
+- When ownership matters, add **short labels** on relationships (e.g., `borrowed`, `owned`, `created internally`)
+- Reinforce multiplicity/ownership in **code** (constructors, factories, guard clauses)
+- Add **notes** where the diagram might be misread (“Game does not own Deck lifetime”)
+- Keep diagrams small (5–10 classes) and update them alongside meaningful design changes
+
+> **Practical rule:** If a relationship detail is important enough to be implemented correctly, it should be **enforced in code** or stated explicitly in a note.
+
+## **20. Why Mermaid for UML?**
 
 Mermaid offers significant advantages over traditional click/drag UML drawing tools:
 
@@ -467,7 +751,7 @@ Mermaid offers significant advantages over traditional click/drag UML drawing to
 
 > **Modern reality:** If your design cannot live in Git in close alignment with the codebase, it is unlikely to stay current.
 
-## **19. Bad UML vs Good UML (Design Contrast)**
+## **21. Bad UML vs Good UML (Design Contrast)**
 
 ### **Bad UML (Common Student Mistakes)**
 
@@ -543,7 +827,7 @@ classDiagram
 - Multiplicity communicates constraints
 - Responsibilities are separated
 
-## **20. Exam-Ready Relationship Summary**
+## **22. Relationship Summary**
 
 | **Relationship** | **UML Arrow**          | **Lifetime** | **Key Question** | **Code Signal**  |
 | ---- | ---- |  | ---- |  |
@@ -556,7 +840,7 @@ classDiagram
 
 > **Exam tip:** When unsure, ask *“Who controls the lifetime?”*
 
-## **21. Student Exercise: Identify the Relationship**
+## **23. Student Exercise: Identify the Relationship**
 
 For each scenario below:
 
@@ -588,6 +872,13 @@ A CpuPlayer implements IPlayer.
 ### **Scenario D**
 
 CrazyEightsGame.Run() accepts a TurnContext parameter.
+
+- Relationship: __________
+- Why: ______________________________________
+
+### Scenario E
+
+CrazyEightsGame.Run() accepts a TurnContext parameter. Run() stores TurnContext to a field in the CrazyEightsGame instance.
 
 - Relationship: __________
 - Why: ______________________________________

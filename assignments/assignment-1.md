@@ -78,6 +78,7 @@ The OO Foundations Review evolved a solution starting with inheritance and addin
 - [Encapsulation Examples](#encapsulation-examples)
 - [Final Advice](#final-advice)
 - [Submitting Your Assignment](#submitting-your-assignment)
+- [Solutions](#solutions)
 
 ---
 
@@ -1011,3 +1012,12 @@ I am happy to provide a detailed review of your assignment upon request. Reviews
 - your `README.md` includes clear console execution instructions.  
   
   > I will not run your assignment from an IDE, though I may review it there. Learning how to execute your applications outside of an IDE is an expected part of this course.
+
+## Solutions
+
+There are three solutions available:
+- [C# solution](assignment-1-solution/src-csharp/README.md) - manually written by Jeff Adkisson (and polished via AI code-review)
+- [Java solution](assignment-1-solution/src-java/README.md) - converted from the C# solution via AI using Codex and VS Code
+- ["Bad" C# solution](assignment-1-solution/src-csharp-bad-example/README.md) - demonstrates poor coding practice achieving the solution (God classes, high coupling, lack of polymorphism, encapsulation, dynamic dispatch, etc.)
+
+[Visit the Assignment 1 solution folder](assignment-1-solution/README.md) for links to the source you wish to review.

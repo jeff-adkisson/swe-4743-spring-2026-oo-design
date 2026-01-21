@@ -342,6 +342,8 @@ public interface IPlayer
 }
 ```
 
+![image-20260121174603983](03-uml-class-diagramming.assets/image-20260121174603983.png)
+
 ## **5. Dependencies**
 
 > **Important framing:** UML class diagrams describe **object structure**, not execution flow.
@@ -368,6 +370,8 @@ Before introducing associations, it is important to distinguish between **usage*
 - **Structural relationships** are part of an object’s state and survive method calls
 
 > **Rule:** If a relationship exists only on the call stack, it is **not structural**.
+
+![image-20260121174636864](03-uml-class-diagramming.assets/image-20260121174636864.png)
 
 ## **Structural vs Non-Structural Relationships**
 
@@ -448,6 +452,8 @@ Association (least specific structural relationship)
 >  
 > UML intentionally allows designers to omit ownership details unless they matter.
 
+![](03-uml-class-diagramming.assets/image-20260121174247525.png)
+
 An **association** represents a **structural relationship** between two objects that exist simultaneously.
 
 A relationship is *structural* when:
@@ -510,6 +516,8 @@ Aggregation and composition are **about object lifetime**, *not collections*.
 - Lifetime is bound to the owner
 
 > **Mental model:** “If the owner dies, the parts die too.”
+
+![image-20260121174405026](03-uml-class-diagramming.assets/image-20260121174405026.png)
 
 ### **UML Notation: Aggregation**
 
@@ -898,6 +906,8 @@ Most developers can read class diagrams at a basic level (classes, inheritance, 
 
 > **Practical rule:** If a relationship detail is important enough to be implemented correctly, it should be **enforced in code** or stated explicitly in a note.
 
+![image-20260121174922995](03-uml-class-diagramming.assets/image-20260121174922995.png)
+
 ## **20. Why Mermaid for UML?**
 
 Mermaid offers significant advantages over traditional click/drag UML drawing tools:
@@ -1007,6 +1017,8 @@ classDiagram
 | Composition      | Filled diamond         | Owned        | *Dies together?* | Created internally |
 
 > **Exam tip:** When unsure, ask *“Who controls the lifetime?”*
+
+![image-20260121174812129](03-uml-class-diagramming.assets/image-20260121174812129.png)
 
 ## **23. Student Exercise: Identify the Relationship**
 

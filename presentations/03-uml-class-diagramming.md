@@ -21,6 +21,38 @@ In this course, UML class diagrams are used to support the **object-oriented des
 
 ---
 
+## Structural vs Non-Structural Relationships
+
+Before learning UML arrows and symbols, it is essential to understand **what kind of relationships UML is describing**.
+
+We will explore these relationship types in detail later in this lecture.
+
+### Non-Structural (Usage) Relationships
+- Exist only during method execution
+- Live on the call stack
+- Do **not** define an object’s state
+- Typically represented as **dependencies**
+
+> Mental model: *“Used briefly.”*
+
+### Structural Relationships
+
+- Represented by fields
+- Define an object’s long-term structure
+- Exist beyond a single method call
+
+Structural relationships include:
+- Association
+- Aggregation
+- Composition
+
+
+> Mental model: *“Part of what this object is.”*
+
+This distinction will guide **every UML relationship choice** you make.
+
+---
+
 ## **Using UML Class Diagrams to Support The Design Process**
 
 UML class diagrams are most valuable **early**, when ideas are still flexible and design decisions are inexpensive to change.
@@ -28,29 +60,6 @@ UML class diagrams are most valuable **early**, when ideas are still flexible an
 Rather than simply documenting *what you have already built* (which class diagrams can do), UML helps you reason about **what you should build**.
 
 When used correctly, class diagrams support the design process by helping you think, ask better questions, and communicate your ideas.
-
-----
-
-## Structural vs Non-Structural Relationships
-
-Before learning UML arrows and symbols, it is essential to understand **what kind of relationships UML is describing**.
-
-### Non-Structural (Usage) Relationships
-- Exist only during method execution
-- Live on the call stack
-- Do **not** define an object’s state
-
-> Mental model: *“Used briefly.”*
-
-### Structural Relationships
-- Represented by fields
-- Define an object’s long-term structure
-- Exist beyond a single method call
-
-> Mental model: *“Part of what this object is.”*
-
-This distinction will guide **every UML relationship choice** you make.
-
 
 ---
 

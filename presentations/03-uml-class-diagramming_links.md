@@ -1,1 +1,1 @@
-- [Lecture Material](03-uml-class-diagramming.md)
+- [Lecture Material](presentations/03-uml-class-diagramming.md)

@@ -1,4 +1,4 @@
-# **UML Class Diagramming**
+# **Using UML Class Diagrams in OO Design**
 
 **Course:** SWE 4743 – Object-Oriented Design
 
@@ -212,7 +212,7 @@ They help you:
 
 A UML diagram is successful when it improves the quality of your design and your ability to explain it — not when it perfectly mirrors your code.
 
-## **Table of Contents**
+## **UML Class Diagram Syntax**
 
 - [1. Class Box Layout](#1-class-box-layout)
 - [2. Class Annotations](#2-class-annotations)

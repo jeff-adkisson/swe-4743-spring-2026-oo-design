@@ -212,7 +212,7 @@ They help you:
 
 A UML diagram is successful when it improves the quality of your design and your ability to explain it — not when it perfectly mirrors your code.
 
-## **UML Class Diagram Syntax**
+## **UML Class Diagram Fundamentals and Best Practices**
 
 - [1. Class Box Layout](#1-class-box-layout)
 - [2. Class Annotations](#2-class-annotations)

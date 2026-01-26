@@ -237,6 +237,8 @@ A UML diagram is successful when it improves the quality of your design and your
 - [21. Bad UML vs Good UML (Design Contrast)](#21-bad-uml-vs-good-uml-design-contrast)
 - [22. Relationship Summary](#22-relationship-summary)
 - [23. Student Exercise: Identify the Relationship](#23-student-exercise-identify-the-relationship)
+- [24. UML Class Pattern Demonstration: Strategy](#24-uml-class-pattern-demonstration-strategy)
+- [25. UML Class Pattern Demonstration: Strategy Implementation to vary Sort Algorithm Choices by Collection Size](#25-uml-class-pattern-demonstration-strategy-implementation-to-vary-sort-algorithm-choices-by-collection-size)
 
 ## **1. Class Box Layout**
 
@@ -1065,9 +1067,223 @@ CrazyEightsGame.Run() accepts a TurnContext parameter. Run() stores TurnContext 
 
 > These questions mirror how UML is tested **and** how design discussions happen in industry.
 
+## 24. UML Class Pattern Demonstration: Strategy
+
+This UML diagram shows how the Strategy Pattern uses interfaces and aggregation to decouple a context from multiple interchangeable algorithms, allowing behavior to vary without modifying the context.
+
+```mermaid
+classDiagram
+direction TB
+
+class Context {
+  +ContextInterface()
+}
+
+class Strategy {
+  <<interface>>
+  +AlgorithmInterface()
+}
+
+class ConcreteStrategyA {
+  +AlgorithmInterface()
+}
+class ConcreteStrategyB {
+  +AlgorithmInterface()
+}
+class ConcreteStrategyC {
+  +AlgorithmInterface()
+}
+
+Context o-- Strategy : strategy
+
+ConcreteStrategyA ..|> Strategy
+ConcreteStrategyB ..|> Strategy
+ConcreteStrategyC ..|> Strategy
+```
+
+### 1. What The Generic Strategy Diagram Communicates
+
+#### Encapsulation of Varying Behavior
+
+- The core purpose of the Strategy Pattern is to **encapsulate interchangeable algorithms**.
+- The `Context` does **not** implement the algorithm itself.
+- Instead, it **delegates behavior** to a `Strategy` object.
+
+#### Programming to an Interface
+
+- `Strategy` is explicitly marked as an `<<interface>>`.
+- `Context` depends on the **abstraction**, not on any concrete strategy.
+- This allows algorithm changes without modifying `Context`.
+
+#### Interchangeability
+
+- `ConcreteStrategyA`, `ConcreteStrategyB`, and `ConcreteStrategyC` all implement the same interface.
+- Any of these strategies can be substituted at runtime.
+- From the perspective of `Context`, all strategies are equivalent.
+
+#### Open–Closed Principle
+
+- New strategies can be added without changing existing code.
+- The `Context` remains stable while behavior evolves.
+
+---
+
+### 2. Understanding the UML Visual Vocabulary
+
+#### Classes and Interfaces
+
+- Rectangles represent types.
+- The `<<interface>>` stereotype explicitly identifies `Strategy` as an interface.
+- Methods listed indicate **public contracts**, not implementation details.
+
+---
+
+#### Realization (`..|>`) — “implements”
+
+```
+ConcreteStrategyA ..|> Strategy
+```
+
+- A dashed line with a hollow triangle indicates **realization**.
+- Read as: **ConcreteStrategyA implements Strategy**
+- This is a **type-level relationship**, not an object relationship.
+
+---
+
+#### Aggregation (`o--`) — “has-a”
+
+```
+Context o-- Strategy : strategy
+```
+
+- The open diamond indicates **aggregation**.
+- Read as: **Context has a Strategy**
+- This implies:
+  - The `Strategy` has an independent lifetime
+  - The strategy can be replaced at runtime
+  - The `Context` does not own the strategy’s lifecycle
+
+Aggregation is used instead of composition to emphasize **replaceability**.
+
+---
+
+#### Association Role Label
+
+```
+: strategy
+```
+
+- Names the role of the relationship.
+- Suggests how the relationship appears in code:
+
+```csharp
+private Strategy strategy;
+```
+
+---
+
+### 3. What the Diagram Emphasizes vs. Omits
+
+#### Emphasized
+
+- Structural dependencies
+- Dependency direction (Context → Strategy)
+- Abstraction over implementation
+- Interchangeable behavior
+
+#### Intentionally Omitted
+
+- Control flow
+- Object creation logic
+- Conditional selection logic
+- Algorithm details
+
+This reinforces that **class diagrams describe structure and intent, not execution**.
+
+---
+
+### 4. Summary
+
+- The most important dependency is **Context → Strategy**, not to concrete classes.
+- Interfaces are the **design anchor**.
+- `..|>` means *implements*.
+- `o--` means *has-a but does not own*.
+- Class diagrams communicate *why a design exists* more clearly than code alone.
+
+## 25. UML Class Pattern Demonstration: Strategy Implementation to vary Sort Algorithm Choices by Collection Size
+
+```mermaid
+classDiagram
+direction TB
+
+class SortContext {
+  -ISortStrategy strategy
+  +SortContext(strategy: ISortStrategy)
+  +SetStrategy(strategy: ISortStrategy)
+  +Sort(data: int[]) void
+}
+
+class ISortStrategy {
+  <<interface>>
+  +Sort(data: int[]) void
+}
+
+class InsertionSortStrategy {
+  +Sort(data: int[]) void
+}
+
+class HeapSortStrategy {
+  +Sort(data: int[]) void
+}
+
+class QuickSortStrategy {
+  +Sort(data: int[]) void
+}
+
+class SortStrategySelector {
+  +ChooseStrategy(dataCount: int) ISortStrategy
+}
+
+%% Relationships
+SortContext o-- ISortStrategy : strategy
+
+InsertionSortStrategy ..|> ISortStrategy
+HeapSortStrategy ..|> ISortStrategy
+QuickSortStrategy ..|> ISortStrategy
+
+SortStrategySelector ..> ISortStrategy : creates/returns
+SortStrategySelector ..> InsertionSortStrategy : for small
+SortStrategySelector ..> HeapSortStrategy : for large
+SortStrategySelector ..> QuickSortStrategy : for large
+SortStrategySelector ..> SortContext : configures
+```
+
+This diagram shows a **concrete, teaching-oriented example of the Strategy Pattern** applied to sorting algorithms.
+
+- **SortContext** represents the client that performs sorting.
+
+  It does not know *how* sorting is done; it only holds a reference to an **ISortStrategy** and delegates the Sort operation to it. The strategy can be set or changed at runtime.
+
+- **ISortStrategy** is the abstraction that defines the sorting contract.
+
+  All sorting algorithms expose the same Sort(data) method, making them interchangeable from the context’s point of view.
+
+- **InsertionSortStrategy****,** **HeapSortStrategy****, and** **QuickSortStrategy** are concrete implementations of the interface.
+
+  Each encapsulates a different algorithm, but all satisfy the same contract and can be substituted freely.
+
+- **SortStrategySelector** contains the decision logic for choosing an appropriate strategy based on data size. 
+
+  It depends on the abstraction (ISortStrategy) and creates concrete strategies internally, keeping that conditional logic out of SortContext.
+
+  > NOTE: The **SortStrategySelector** is not part of the strategy pattern. It is a simple (naive) factory to encapsulate the logic to demonstrate selecting the "best" concrete sort algorithm based on the size of the inbound data. In practice, this would likely be more sophisticated.
+
+The context is decoupled from specific sorting algorithms, algorithms are interchangeable, and the logic for *choosing* an algorithm is isolated in a separate class—clearly illustrating how the Strategy Pattern promotes flexibility, clarity, and separation of concerns.
+
+
 ## **Final Guidance**
 
-UML should help you:
+UML class diagramming should help you:
 
 - Think before coding
 - Communicate intent clearly

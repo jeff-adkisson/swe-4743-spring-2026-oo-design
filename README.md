@@ -41,17 +41,12 @@ Spring 2026
 - [PowerPoint](presentations/02-oo-foundations-review.pptx)
 - [PDF](presentations/02-oo-foundations-review.pdf)
 - [HTML](presentations/02-oo-foundations-review_html/index.html)
-- [Video of my screen](https://www.loom.com/share/b54e52c10e0a4d11909f2adbefee5c14)
-- [Summary from Video Transcript (AI generated)](presentations/02-oo-foundations-review.md)
+- [Lecture Summary 1 (AI generated)](02-oo-foundations-review.md)
+- [Lecture Summary 2 and Assignment 1 Review (AI generated)](02-lecture-2-conclusion-and-assignment1-summary.md)
 
 #### 03. Uml Class Diagramming
 - [PowerPoint](presentations/03-uml-class-diagramming.pptx)
 - [PDF](presentations/03-uml-class-diagramming.pdf)
 - [HTML](presentations/03-uml-class-diagramming_html/index.html)
 - [Lecture Material](presentations/03-uml-class-diagramming.md)
-- [Lecture Summary including Loom Video](03-lecture-summary.md)
-
-#### ~$03. Uml Class Diagramming
-- [PowerPoint](presentations/~$03-uml-class-diagramming.pptx)
-- [PDF](presentations/~$03-uml-class-diagramming.pdf)
-- [HTML](presentations/~$03-uml-class-diagramming_html/index.html)
+- [Lecture Summary (AI-generated) including Loom Video](03-lecture-summary.md)

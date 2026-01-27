@@ -1,2 +1,2 @@
-- [Video of my screen](https://www.loom.com/share/b54e52c10e0a4d11909f2adbefee5c14)
-- [Summary from Video Transcript (AI generated)](presentations/02-oo-foundations-review.md)
+- [Lecture Summary 1 (AI generated)](02-oo-foundations-review.md)
+- [Lecture Summary 2 and Assignment 1 Review (AI generated)](02-lecture-2-conclusion-and-assignment1-summary.md)

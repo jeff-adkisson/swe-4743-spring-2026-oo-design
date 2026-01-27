@@ -1,8 +1,10 @@
 # SWE 4743 — *OO Foundations Review (wrap-up) + Assignment 1 walkthrough*   
 **Reference links**  
 
-- Slides (PDF): https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/presentations/02-oo-foundations-review.pdf  
-- Assignment 1: https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/assignments/assignment-1.html  
+- Slides (PDF):  
+[https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/presentations/02-oo-foundations-review.pdf](https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/presentations/02-oo-foundations-review.pdf)
+- Assignment 1:  
+[https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/assignments/assignment-1.html](https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/assignments/assignment-1.html)
 
 ---
 

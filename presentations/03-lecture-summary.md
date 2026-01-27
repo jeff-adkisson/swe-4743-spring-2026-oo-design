@@ -9,13 +9,13 @@ It is intended as a **study and review guide**, not a replacement for the full m
 ## Primary References
 
 - **Slides (PDF):**  
-  https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/presentations/03-uml-class-diagramming.pdf
+  [https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/presentations/03-uml-class-diagramming.pdf](https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/presentations/03-uml-class-diagramming.pdf)
 
 - **Lecture Notes (HTML / Markdown):**  
-  https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/presentations/03-uml-class-diagramming.html
+  [https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/presentations/03-uml-class-diagramming.html](https://jeff-adkisson.github.io/swe-4743-spring-2026-oo-design/presentations/03-uml-class-diagramming.html)
   
 - **Loom Video (Jan 26, 2026):**  
-  https://www.loom.com/share/18b3c590eeb2499093f4d1d29dec254e
+  [https://www.loom.com/share/18b3c590eeb2499093f4d1d29dec254e](https://www.loom.com/share/18b3c590eeb2499093f4d1d29dec254e)
 
 ---
 

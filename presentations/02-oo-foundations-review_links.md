@@ -1,2 +1,2 @@
-- [Lecture Summary 1 (AI generated)](02-oo-foundations-review.md)
-- [Lecture Summary 2 and Assignment 1 Review (AI generated)](02-lecture-2-conclusion-and-assignment1-summary.md)
+- [Lecture Summary 1 (AI generated)](presentations/02-oo-foundations-review.md)
+- [Lecture Summary 2 and Assignment 1 Review (AI generated)](presentations/02-lecture-2-conclusion-and-assignment1-summary.md)

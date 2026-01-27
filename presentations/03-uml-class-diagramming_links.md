@@ -1,2 +1,2 @@
 - [Lecture Material](presentations/03-uml-class-diagramming.md)
-- [Lecture Summary (AI-generated) including Loom Video](03-lecture-summary.md)
+- [Lecture Summary (AI-generated) including Loom Video](presentations/03-lecture-summary.md)

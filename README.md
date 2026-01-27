@@ -49,3 +49,9 @@ Spring 2026
 - [PDF](presentations/03-uml-class-diagramming.pdf)
 - [HTML](presentations/03-uml-class-diagramming_html/index.html)
 - [Lecture Material](presentations/03-uml-class-diagramming.md)
+- [Lecture Summary including Loom Video](03-lecture-summary.md)
+
+#### ~$03. Uml Class Diagramming
+- [PowerPoint](presentations/~$03-uml-class-diagramming.pptx)
+- [PDF](presentations/~$03-uml-class-diagramming.pdf)
+- [HTML](presentations/~$03-uml-class-diagramming_html/index.html)

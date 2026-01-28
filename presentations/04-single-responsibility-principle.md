@@ -60,6 +60,7 @@
 - [SRP Code Smells (Red Flags)](#srp-code-smells-red-flags)
 - [Conclusion: SRP is a Strategy for Reducing Complexity and Enabling Change](#conclusion-srp-is-a-strategy-for-reducing-complexity-and-enabling-change)
 - [References](#references)
+- Supplemental Material
 
 ---
 
@@ -790,6 +791,10 @@ Models/
 A single feature change (e.g., “user registration”) requires edits across multiple namespaces.  
 This is low cohesion at the package level.
 
+> From Notebook LM - this is a visual representation of package-by-layer applied to the furniture in an office. The furniture is grouped like-with-like in each room. It is organized, but not in a way that provides useful organization for understanding the purpose of each room and using each room effectively.
+
+![image-20260128004131461](04-single-responsibility-principle.assets/image-20260128004131461.png)
+
 **SRP-compliant approach: Package-by-Feature**
 
 ```text
@@ -1212,6 +1217,14 @@ It allows additions and extensions while keeping modifications localized, preven
 - Martin Fowler — *Refactoring*
 
 ---
+
+## Single Responsibility Video
+
+> Produced by Google's NotebookLM to help explain some of the topics in this lecture.
+
+Many large codebases become difficult to work with not because they are poorly written, but because responsibilities are poorly organized. God objects, scattered feature logic, and over-engineered abstractions all stem from low cohesion and unhealthy coupling. This lecture explores how the Single Responsibility Principle (SRP) helps restore clarity by grouping code that changes for the same reason and separating code that changes for different reasons. By examining common architectural anti-patterns and contrasting package-by-layer structures with feature-first designs, the goal is to develop an instinct for recognizing responsibility boundaries and building architectures that clearly communicate their purpose and evolve safely over time.
+
+[**Watch the Video (AI-Generated)**](04-single-responsibility-video-notebooklm.mp4)
 
 ## Study Guide: Single Responsibility Principle (SRP)
 

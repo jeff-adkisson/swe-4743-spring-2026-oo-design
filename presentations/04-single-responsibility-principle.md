@@ -60,7 +60,7 @@
 - [SRP Code Smells (Red Flags)](#srp-code-smells-red-flags)
 - [Conclusion: SRP is a Strategy for Reducing Complexity and Enabling Change](#conclusion-srp-is-a-strategy-for-reducing-complexity-and-enabling-change)
 - [References](#references)
-- [Single Responsibility Video](#single-responsibility-video)
+- [Single Responsibility Videos](#single-responsibility-videos)
 - [Study Guide: Single Responsibility Principle (SRP)](#study-guide-single-responsibility-principle-srp)
 
 ---
@@ -92,6 +92,8 @@ It is about writing code that can **survive change over time**.
 - Architecture provides structure for **intentional change**
 - SOLID principles form that structure  
 - **The Single Responsibility Principle (SRP) is the cornerstone of SOLID** 
+
+![image-20260128015728832](04-single-responsibility-principle.assets/image-20260128015728832.png)
 
 ## SRP: The Cornerstone of SOLID
 
@@ -364,6 +366,8 @@ This refactor separates responsibilities according to **actors**, while still al
 
 Each class now has **one clear reason to change**.
 
+![image-20260128020026095](04-single-responsibility-principle.assets/image-20260128020026095.png)
+
 ---
 
 ### Coordination Is Isolated, Not Eliminated
@@ -479,6 +483,8 @@ Without SRP, a single change request can:
 > **Small, local changes trigger large, system-wide effects.**
 
 SRP exists specifically to minimize this effect by isolating reasons for change.
+
+![image-20260128015801190](04-single-responsibility-principle.assets/image-20260128015801190.png)
 
 ---
 
@@ -634,6 +640,8 @@ Duplication across actors is often safer than reuse across actors.
 
 > The decision to eliminate duplication must be guided first by *reasons for change*, not by surface similarity in code. DRY is most effective when applied *within* a single responsibility—where duplicated code is pulled by the same axis of change and owned by the same conceptual actor. When DRY is applied without regard to SRP boundaries, it can merge unrelated policies, amplify change, and turn a well-intentioned refactor into a long-term maintenance liability.
 
+![image-20260128020111819](04-single-responsibility-principle.assets/image-20260128020111819.png)
+
 ---
 
 ## Cohesion and Coupling: The Core Mechanism of SRP  
@@ -678,6 +686,8 @@ Goal:
 - Not zero coupling
 - But **meaningful boundaries**
 - Aligned with the domain
+
+![image-20260128020219663](04-single-responsibility-principle.assets/image-20260128020219663.png)
 
 
 ---
@@ -733,6 +743,8 @@ What changes is **what “thing” means** at each level, where levels include:
 - Namespace
 - Project/Module
 - Application
+
+![image-20260128020258877](04-single-responsibility-principle.assets/image-20260128020258877.png)
 
 ---
 
@@ -792,9 +804,7 @@ Models/
 A single feature change (e.g., “user registration”) requires edits across multiple namespaces.  
 This is low cohesion at the package level.
 
-> From Notebook LM - this is a visual representation of package-by-layer applied to the furniture in an office. The furniture is grouped like-with-like in each room. It is organized, but not in a way that provides useful organization for understanding the purpose of each room and using each room effectively.
-
-![image-20260128004131461](04-single-responsibility-principle.assets/image-20260128004131461.png)
+![image-20260128020338559](04-single-responsibility-principle.assets/image-20260128020338559.png)
 
 **SRP-compliant approach: Package-by-Feature**
 
@@ -908,7 +918,7 @@ In Uncle Bob's words...
 > *The architecture should scream the intent of the system.*  
 > — Robert C. Martin, *Clean Architecture*
 
-![image-20260128003718917](04-single-responsibility-principle.assets/image-20260128003718917.png)
+![image-20260128020414084](04-single-responsibility-principle.assets/image-20260128020414084.png)
 
 ---
 
@@ -1052,6 +1062,8 @@ flowchart BT
     style FEATURES fill:#FFCDD2
 ```
 
+![image-20260128020439053](04-single-responsibility-principle.assets/image-20260128020439053.png)
+
 ---
 
 ## Feature-First Layered Architecture
@@ -1103,6 +1115,10 @@ A key SRP benefit: **each feature folder becomes a unit that changes primarily f
         RoleRepository.cs
         PasswordPolicyService.cs
 ```
+
+![image-20260128020510389](04-single-responsibility-principle.assets/image-20260128020510389.png)
+
+---
 
 ## SRP Benefits at Multiple Levels
 
@@ -1168,6 +1184,10 @@ the forces it addresses are **organizational and temporal**, not immediately tec
 >
 > You (and every designer and developer that follows you) must be very disciplined when designing and coding to avoid mixing responsibilities, both at inception and over time.
 
+![image-20260128020537355](04-single-responsibility-principle.assets/image-20260128020537355.png)
+
+---
+
 ## SRP Code Smells (Red Flags)
 
 - One change requires touching many unrelated files
@@ -1183,7 +1203,7 @@ the forces it addresses are **organizational and temporal**, not immediately tec
 - Generic libraries with unclear ownership or responsibility
 - “Convenience” abstractions that accumulate options and flags in the method signature. For example, `SendMail` continues to grow as you add more and more functionality (and therefore, parameters)
 
-![image-20260128003835441](04-single-responsibility-principle.assets/image-20260128003835441.png)
+![image-20260128020635731](04-single-responsibility-principle.assets/image-20260128020635731.png)
 
 ---
 
@@ -1204,6 +1224,8 @@ Good architecture **enables terror-free change**.
 
 It allows additions and extensions while keeping modifications localized, preventing complexity from exploding and avoiding unintended defects across the system.
 
+![image-20260128003835441](04-single-responsibility-principle.assets/image-20260128003835441.png)
+
 
 ---
 
@@ -1217,13 +1239,15 @@ It allows additions and extensions while keeping modifications localized, preven
 
 ---
 
-## Single Responsibility Video
+## Single Responsibility Videos
 
 > Produced by Google's NotebookLM to help explain some of the topics in this lecture.
 
 Many large codebases become difficult to work with not because they are poorly written, but because responsibilities are poorly organized. God objects, scattered feature logic, and over-engineered abstractions all stem from low cohesion and unhealthy coupling. This lecture explores how the Single Responsibility Principle (SRP) helps restore clarity by grouping code that changes for the same reason and separating code that changes for different reasons. By examining common architectural anti-patterns and contrasting package-by-layer structures with feature-first designs, the goal is to develop an instinct for recognizing responsibility boundaries and building architectures that clearly communicate their purpose and evolve safely over time.
 
-[**Watch the Video (AI-Generated)**](04-single-responsibility-video-notebooklm.mp4)
+- [**Watch Video 1 (AI-Generated)**](04-single-responsibility-video1-notebooklm.mp4)
+
+- [**Watch Video 2 (AI-Generated)**](04-single-responsibility-video2-notebooklm.mp4)
 
 ## Study Guide: Single Responsibility Principle (SRP)
 

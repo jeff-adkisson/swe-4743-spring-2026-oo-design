@@ -171,6 +171,8 @@ Key clarifications:
 - Multiple people can belong to **one actor group** if they request the same kinds of changes
 - SRP is violated by **multiple reasons to change**, not by multiple users
 
+![image-20260128003513842](04-single-responsibility-principle.assets/image-20260128003513842.png)
+
 ---
 
 ### Actor as an Axis of Change
@@ -687,6 +689,8 @@ Goal:
 | **Poor Boundaries** | Low cohesion, low coupling |
 | **Destructive Decoupling** | Low cohesion, low coupling |
 
+![image-20260128003401937](04-single-responsibility-principle.assets/image-20260128003401937.png)
+
 
 ---
 
@@ -704,6 +708,10 @@ UserService --> Database
 UserService --> EmailServer
 UserService --> AuthAlgorithm
 ```
+
+![image-20260128003429942](04-single-responsibility-principle.assets/image-20260128003429942.png)
+
+![image-20260128003615070](04-single-responsibility-principle.assets/image-20260128003615070.png)
 
 
 ---
@@ -799,6 +807,8 @@ Each namespace now has one reason to change: modification of that feature.
 >
 > When using these frameworks for serious, professional-grade applications, it is important to consciously move beyond the default package-by-layer structure promoted by introductory documentation and examples, and reorganize the code around **features and reasons for change** to better support long-term adherence to the Single Responsibility Principle.
 
+![image-20260128003654177](04-single-responsibility-principle.assets/image-20260128003654177.png)
+
 ---
 
 ### SRP at the Package or Module Level
@@ -891,6 +901,8 @@ In Uncle Bob's words...
 
 > *The architecture should scream the intent of the system.*  
 > — Robert C. Martin, *Clean Architecture*
+
+![image-20260128003718917](04-single-responsibility-principle.assets/image-20260128003718917.png)
 
 ---
 
@@ -1166,6 +1178,8 @@ the forces it addresses are **organizational and temporal**, not immediately tec
 - Large or growing `Utils` / `Helpers` / `Common` / `Shared` folders
 - Generic libraries with unclear ownership or responsibility
 - “Convenience” abstractions that accumulate options and flags in the method signature. For example, `SendMail` continues to grow as you add more and more functionality (and therefore, parameters)
+
+![image-20260128003835441](04-single-responsibility-principle.assets/image-20260128003835441.png)
 
 ---
 

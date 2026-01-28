@@ -39,7 +39,11 @@
   - [Coupling](#coupling)
   - [Finding the Right Balance of Cohesion and Coupling](#finding-the-right-balance-of-cohesion-and-coupling)
   - [Cohesion & Coupling Archetypes](#cohesion--coupling-archetypes)
-  - [Visualizing a God Object](#visualizing-a-god-object)
+- [Visualizing Cohesion and Coupling Archetypes](#visualizing-cohesion-and-coupling-archetypes)
+  - [Visualizing a God Object: High Cohesion, High Coupling](#visualizing-a-god-object-high-cohesion-high-coupling)
+  - [Visualizing Destructive Decoupling: Low Cohesion, Low Coupling](#visualizing-destructive-decoupling-low-cohesion-low-coupling)
+  - [Visualizing Poor Boundaries: Low Cohesion, High Coupling](#visualizing-poor-boundaries-low-cohesion-high-coupling)
+  - [Visualizing an "Ideal" Solution: High Cohesion, Low Coupling](#visualizing-an-ideal-solution-high-cohesion-low-coupling)
 - [SRP Across Levels of Code Organization](#srp-across-levels-of-code-organization)
   - [SRP at the Class Level](#srp-at-the-class-level)
   - [SRP at the Namespace Level](#srp-at-the-namespace-level)
@@ -696,34 +700,207 @@ Goal:
 
 | Archetype | Characteristics |
 |---------|----------------|
-| **Ideal** | High cohesion, low coupling |
-| **God Object** | High cohesion, high coupling |
-| **Poor Boundaries** | Low cohesion, low coupling |
-| **Destructive Decoupling** | Low cohesion, low coupling |
+| **Ideal**<br> **✅** | **High cohesion, low coupling**<br>- *Each module has a clear purpose and does it completely, while depending on others only through narrow, stable contracts.*<br>*- Responsibilities align with natural boundaries (business, capability, or actor). Dependencies are explicit and intentional.* |
+| **God Object**<br> 🕸️ | **High cohesion, high coupling**<br>*- A single class/module that does make sense internally, but is involved in everything.*<br>*- Centralization feels efficient early. DRY and “reuse” overpower SRP. Authority accumulates faster than it can be redistributed.* |
+| **Destructive Decoupling**<br>🧩 | **Low cohesion, low coupling**<br>*- Things are technically independent, but conceptually meaningless. Components don’t depend on each other because they don’t cohere around anything real.*<br>*- Decoupling becomes a goal instead of a consequence. SRP is applied mechanically (“one method per class”) without a unifying responsibility.* |
+| **Poor Boundaries**<br>🔀 | **Low cohesion, high coupling**<br>*- Responsibilities are smeared across components, and those components are tangled together.*<br>*- Boundaries are drawn by convenience (folders, layers, frameworks) rather than responsibility. Architecture reflects workflow, not intent.* |
 
-![image-20260128003401937](04-single-responsibility-principle.assets/image-20260128003401937.png)
+![image-20260128110758775](04-single-responsibility-principle.assets/image-20260128110758775.png)
 
 
 ---
 
-## Visualizing a God Object
+## Visualizing Cohesion and Coupling Archetypes
+
+The following examples help illustrate cohesion and coupling archetypes.
+
+These are examples and are open to interpretation.
+
+### Visualizing a God Object: High Cohesion, High Coupling
 
 ```mermaid
 classDiagram
+direction LR
 class UserService {
   +registerUser()
   +authenticate()
   +saveUser()
   +sendWelcomeEmail()
 }
+
+class Database
+class EmailServer
+class AuthAlgorithm
+
 UserService --> Database
 UserService --> EmailServer
 UserService --> AuthAlgorithm
+
+note for UserService "High cohesion:<br>All user-related behavior lives in one place,<br>so the class is internally understandable.<br>Multiple reasons to change:<br>registration policy, auth policy,<br>persistence, messaging."
+note for UserService "High coupling:<br>This class depends directly<br>on multiple infrastructure and algorithm choices,<br>making it central and unavoidable."
+note for Database "Downstream dependency:<br>Changes here ripple outward<br>to many callers through UserService."
+note for EmailServer "Infrastructure concern:<br>Tightly bound to domain behavior<br>instead of hidden behind an abstraction."
+note for AuthAlgorithm "Algorithm choice exposed:<br>Security and policy details leak<br>into core application logic."
 ```
 
 ![image-20260128003429942](04-single-responsibility-principle.assets/image-20260128003429942.png)
 
 ![image-20260128003615070](04-single-responsibility-principle.assets/image-20260128003615070.png)
+
+### Visualizing Destructive Decoupling: Low Cohesion, Low Coupling
+
+```mermaid
+classDiagram
+direction LR
+
+class RegisterUser {
+  +execute()
+}
+class AuthenticateUser {
+  +execute()
+}
+class SaveUser {
+  +execute()
+}
+class SendWelcomeEmail {
+  +execute()
+}
+
+class App {
+  +register()
+}
+
+App --> RegisterUser
+App --> AuthenticateUser
+App --> SaveUser
+App --> SendWelcomeEmail
+
+note for App "Each class does one small thing (extreme/naive SRP),<br>but does not represent a complete responsibility."
+note for App "Low cohesion:<br>No single class explains<br>the full 'user registration' concept."
+note for App "Coordination is pushed upward into the caller.<br>The App client must know the correct order<br>and lifecycle of all operations."
+note for App "Low coupling is achieved,<br>but at the cost of meaning and clarity.<br>Behavior only emerges externally."
+```
+
+### Visualizing Poor Boundaries: Low Cohesion, High Coupling
+
+```mermaid
+classDiagram
+direction LR
+class UserWorkflow {
+  +registerUser()
+  +authenticate()
+  +saveUser()
+  +sendWelcomeEmail()
+}
+
+class Database {
+  +save()
+  +load()
+}
+class EmailServer {
+  +send()
+}
+class AuthAlgorithm {
+  +hash()
+  +verify()
+}
+
+class UserRepository {
+  +saveUser()
+  +loadUser()
+}
+class AuthManager {
+  +authenticate()
+  +resetPassword()
+}
+class EmailNotifier {
+  +sendWelcomeEmail()
+  +sendResetEmail()
+}
+
+%% Tangled, overlapping dependencies (high coupling)
+UserWorkflow --> UserRepository
+UserWorkflow --> AuthManager
+UserWorkflow --> EmailNotifier
+
+UserRepository --> Database
+AuthManager --> Database
+AuthManager --> AuthAlgorithm
+EmailNotifier --> EmailServer
+EmailNotifier --> Database
+
+%% Cross-boundary reach-through (poor boundaries)
+UserWorkflow --> Database
+UserWorkflow --> EmailServer
+UserRepository --> AuthAlgorithm
+EmailNotifier --> AuthAlgorithm
+
+note for UserWorkflow "Low cohesion:<br>Workflow mixes orchestration with implementation details."
+note for UserRepository "Boundary leak:<br>Repository reaches into auth concepts<br>instead of staying focused on persistence."
+note for EmailNotifier "Boundary leak:<br>Email concerns depend on database/auth,<br>creating ripple effects."
+note for AuthManager "High coupling:<br>Auth depends on multiple subsystems,<br>so changes propagate widely."
+note for Database "Shared dependency hotspot:<br>Many modules connect directly,<br>encouraging reach-through and shortcuts."
+```
+
+### Visualizing an "Ideal" Solution: High Cohesion, Low Coupling
+
+```mermaid
+classDiagram
+direction RL
+
+class UserRegistrationService {
+  +registerUser(request)
+}
+
+class IUserRepository {
+  <<interface>>
+  +save(user)
+  +existsByEmail(email)
+}
+
+class IAuthenticator {
+  <<interface>>
+  +hashPassword(password)
+}
+
+class IEmailSender {
+  <<interface>>
+  +sendWelcomeEmail(toAddress)
+}
+
+class User {
+  +email
+  +passwordHash
+}
+
+UserRegistrationService --> IUserRepository
+UserRegistrationService --> IAuthenticator
+UserRegistrationService --> IEmailSender
+UserRegistrationService --> User
+
+class SqlUserRepository {
+  +save(user)
+  +existsByEmail(email)
+}
+class PasswordHasher {
+  +hashPassword(password)
+}
+class SmtpEmailSender {
+  +sendWelcomeEmail(toAddress)
+}
+
+SqlUserRepository ..|> IUserRepository
+PasswordHasher ..|> IAuthenticator
+SmtpEmailSender ..|> IEmailSender
+
+note for UserRegistrationService "High cohesion:<br>Owns the single responsibility of registration.<br>Orchestrates steps via narrow contracts."
+note for IUserRepository "Stable contract:<br>Persistence details hidden behind an interface."
+note for IAuthenticator "Stable contract:<br>Authentication mechanics remain replaceable<br>without changing the service."
+note for IEmailSender "Stable contract:<br>Messaging infrastructure is isolated<br>from domain workflow."
+note for User "Domain concept:<br>Represents core state and invariants<br>without infrastructure dependencies."
+```
+
+
 
 
 ---

@@ -71,11 +71,11 @@
 
 ## Introducing SOLID
 
-**SOLID** is a set of five foundational design principles  
-popularized by **Robert C. Martin (Uncle Bob)** in the early 2000s.
+**SOLID** is an acronym for five foundational object-oriented design principles popularized by **Robert C. Martin (Uncle Bob)** in the early 2000s.
 
-The principles were distilled from decades of object-oriented practice  
-and are widely taught, debated, and applied across the software industry.
+> The acronym “SOLID” is commonly attributed to the software engineer and author **Michael Feathers**, emerging in the practitioner community after Martin’s 2000 paper, *Design Principles and Design Patterns*. That paper describes the principles themselves, but does not coin the acronym.
+
+The principles were distilled from decades of object-oriented practice and are widely taught, debated, and applied across the software industry.
 
 ### Why SOLID Matters
 
@@ -1435,7 +1435,7 @@ This study guide summarizes the key ideas, terminology, and mental models introd
 ### Core Definition
 
 - **Single Responsibility Principle (SRP)**  
-  A module should be responsible to **one, and only one, actor.
+  A module should be responsible to **one, and only one, actor.**
 
 - **Actor**  
   A conceptual source of change: a role, responsibility, or business concern that can independently request modifications to the code.

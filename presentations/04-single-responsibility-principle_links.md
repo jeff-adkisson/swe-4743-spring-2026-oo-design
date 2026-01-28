@@ -1,0 +1,1 @@
+- [Lecture Material](presentations/04-single-responsibility-principle.md)

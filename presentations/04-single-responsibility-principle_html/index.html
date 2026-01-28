@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04-single-responsibility-principle</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="slides-wrapper">
+            
+            <div class="slide active" data-slide="1">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 10.26%; 
+                                        top: 55.41%; 
+                                        width: 56.42%; 
+                                        height: 38.96%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Single Responsibility Principle (SRP)The 'S' in SOLIDCohesion, Coupling, and Responsibility</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.31%; 
+                                        top: 33.08%; 
+                                        width: 43.37%; 
+                                        height: 16.92%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>SWE 4743: Object-Oriented Design Jeff Adkisson</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="2">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Lecture Material</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        font-size: 21.0pt;
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                font-size: 21.0pt;
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>See 04-single-responsibility-principle.md in the Presentations folder for the detailed lecture material.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                font-size: 21.0pt;
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>This slide deck is a bare-bones AI-generated summary of the detailed source material.</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="3">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Introducing SOLID</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Foundational object-oriented design principles</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Popularized by Robert C. Martin</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Focus on managing long-term change</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="4">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Designing for Change</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Architecture exists to support change</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Code can run without architecture</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Good architecture reduces change friction</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="5">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">SRP: The Cornerstone of SOLID</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>SRP underpins all other SOLID principles</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Defines responsibility boundaries</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Focuses on why code changes</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="6">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">The Original Definition of SRP</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>One reason to change</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Simple but ambiguous</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Led to inconsistent interpretations</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="7">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Redefining Responsibility with Actors</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Actors represent sources of change</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Conceptual, not technical</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>One module serves one actor</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="8">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">The Real Risk of SRP Violations</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Hidden coupling</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Fragile code</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Unintended side effects</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="9">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Change Amplification</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Small changes cause widespread impact</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Multiple teams affected</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Indicates broken boundaries</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="10">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">SRP vs DRY</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>DRY reduces duplication</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>SRP isolates reasons to change</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Apply SRP before DRY</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="11">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Cohesion and Coupling</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>High cohesion groups related behavior</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Low coupling limits dependencies</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>SRP drives balance</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="12">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">SRP Across Levels of Code Organization</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Applies at all levels</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Classes to systems</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Fractal principle</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="13">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Screaming Architecture</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Architecture communicates intent</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Business features over frameworks</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Improves comprehension</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="14">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Feature-First Layered Architecture</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Organize by feature first</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Layer internally where useful</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Supports evolution</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="15">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Why SRP Is Hard to Apply</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Not visible in syntax</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Problems appear over time</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Requires judgment</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="16">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Conclusion</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>SRP manages change</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Aligns code with organization</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Enables sustainable systems</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+        </div>
+
+        <div class="controls">
+            <button id="prevBtn" class="nav-btn">← Previous</button>
+            <span class="slide-counter">
+                <span id="currentSlide">1</span> / <span id="totalSlides">16</span>
+            </span>
+            <button id="nextBtn" class="nav-btn">Next →</button>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

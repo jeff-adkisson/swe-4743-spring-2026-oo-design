@@ -50,3 +50,9 @@ Spring 2026
 - [HTML](presentations/03-uml-class-diagramming_html/index.html)
 - [Lecture Material](presentations/03-uml-class-diagramming.md)
 - [Lecture Summary (AI-generated) including Loom Video](presentations/03-lecture-summary.md)
+
+#### 04. Single Responsibility Principle
+- [PowerPoint](presentations/04-single-responsibility-principle.pptx)
+- [PDF](presentations/04-single-responsibility-principle.pdf)
+- [HTML](presentations/04-single-responsibility-principle_html/index.html)
+- [Lecture Material](presentations/04-single-responsibility-principle.md)

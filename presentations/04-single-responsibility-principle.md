@@ -60,7 +60,8 @@
 - [SRP Code Smells (Red Flags)](#srp-code-smells-red-flags)
 - [Conclusion: SRP is a Strategy for Reducing Complexity and Enabling Change](#conclusion-srp-is-a-strategy-for-reducing-complexity-and-enabling-change)
 - [References](#references)
-- Supplemental Material
+- [Single Responsibility Video](#single-responsibility-video)
+- [Study Guide: Single Responsibility Principle (SRP)](#study-guide-single-responsibility-principle-srp)
 
 ---
 

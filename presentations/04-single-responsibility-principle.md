@@ -1124,9 +1124,7 @@ A key SRP benefit: **each feature folder becomes a unit that changes primarily f
 #### Application Level (Microservice Architecture)
 
 - Applications align with distinct business capabilities
-
 - System boundaries reflect independent reasons to change
-
 - Microservices emerge naturally *if and when* independent deployment is justified
 
 ---

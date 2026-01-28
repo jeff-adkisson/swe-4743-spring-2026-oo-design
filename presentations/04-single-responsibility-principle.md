@@ -701,7 +701,7 @@ Goal:
 | Archetype | Characteristics |
 |---------|----------------|
 | **Ideal**<br> **✅** | **High cohesion, low coupling**<br>- *Each module has a clear purpose and does it completely, while depending on others only through narrow, stable contracts.*<br>*- Responsibilities align with natural boundaries (business, capability, or actor). Dependencies are explicit and intentional.* |
-| **God Object**<br> 🕸️ | **High cohesion, high coupling**<br>*- A single class/module that does make sense internally, but is involved in everything.*<br>*- Centralization feels efficient early. DRY and “reuse” overpower SRP. Authority accumulates faster than it can be redistributed.* |
+| **God Object**<br> 🕸️ | **High semantic cohesion, low change cohesion, high coupling**<br>*- Internally coherent around a feature or concept, but pulled by many independent reasons to change.*<br />*- Centralization feels efficient early; DRY and reuse override SRP, and change pressure accumulates faster than it can be redistributed.* |
 | **Destructive Decoupling**<br>🧩 | **Low cohesion, low coupling**<br>*- Things are technically independent, but conceptually meaningless. Components don’t depend on each other because they don’t cohere around anything real.*<br>*- Decoupling becomes a goal instead of a consequence. SRP is applied mechanically (“one method per class”) without a unifying responsibility.* |
 | **Poor Boundaries**<br>🔀 | **Low cohesion, high coupling**<br>*- Responsibilities are smeared across components, and those components are tangled together.*<br>*- Boundaries are drawn by convenience (folders, layers, frameworks) rather than responsibility. Architecture reflects workflow, not intent.* |
 
@@ -736,7 +736,7 @@ UserService --> Database
 UserService --> EmailServer
 UserService --> AuthAlgorithm
 
-note for UserService "High cohesion:<br>All user-related behavior lives in one place,<br>so the class is internally understandable.<br>Multiple reasons to change:<br>registration policy, auth policy,<br>persistence, messaging."
+note for UserService "High semantic (code) cohesion:<br>- All user-related behavior lives in one place,<br>so the class is internally understandable.<br>Low change cohesion:<br>- Multiple reasons to change (registration<br>policy, auth policy, persistence, messaging)."
 note for UserService "High coupling:<br>This class depends directly<br>on multiple infrastructure and algorithm choices,<br>making it central and unavoidable."
 note for Database "Downstream dependency:<br>Changes here ripple outward<br>to many callers through UserService."
 note for EmailServer "Infrastructure concern:<br>Tightly bound to domain behavior<br>instead of hidden behind an abstraction."

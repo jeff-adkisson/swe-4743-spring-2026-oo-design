@@ -19,6 +19,7 @@ Spring 2026
 
 - [**Assignment 1: OO Foundations Review**](assignments/assignment-1.md)<br>
   Design and implement a simplified Crazy 8’s console game in C# or Java that intentionally demonstrates inheritance, polymorphism, encapsulation, dynamic dispatch, interface realization, and sound object-oriented design principles.
+- [**Assignment 2: SRP, OCP, Strategy, and Decorator**](assignments/assignment-2.md)<br>*Work in progress...*
 
 ## Project
 
@@ -56,3 +57,14 @@ Spring 2026
 - [PDF](presentations/04-single-responsibility-principle.pdf)
 - [HTML](presentations/04-single-responsibility-principle_html/index.html)
 - [Lecture Material](presentations/04-single-responsibility-principle.md)
+
+#### 04_2. Strategy Pattern
+- [PowerPoint](presentations/04_2-strategy-pattern.pptx)
+- [PDF](presentations/04_2-strategy-pattern.pdf)
+- [HTML](presentations/04_2-strategy-pattern_html/index.html)
+
+#### 05. Open Closed Principle And Decorator
+- [PowerPoint](presentations/05-open-closed-principle-and-decorator.pptx)
+- [PDF](presentations/05-open-closed-principle-and-decorator.pdf)
+- [HTML](presentations/05-open-closed-principle-and-decorator_html/index.html)
+- [Lecture Material](presentations/05-open-closed-principle-and-decorator.md)

@@ -1,0 +1,1 @@
+- [Lecture Material](presentations/05-open-closed-principle-and-decorator.md)

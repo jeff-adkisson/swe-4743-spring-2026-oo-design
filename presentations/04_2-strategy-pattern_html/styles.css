@@ -1,0 +1,215 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: #1a1a1a;
+    color: #333;
+    overflow: hidden;
+}
+
+.presentation-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.slides-wrapper {
+    flex: 1;
+    width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.slide {
+    display: none;
+    width: 100%;
+    max-width: 1200px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    padding: 2rem;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.slide.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-canvas {
+    background: white;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 1.5rem;
+}
+
+.slide-content-positioned {
+    overflow: hidden;
+}
+
+.shape {
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+.shape-text {
+    color: #333;
+    line-height: 1.4;
+}
+
+.shape-text .paragraph {
+    display: flex;
+    align-items: flex-start;
+    line-height: 1.5;
+}
+
+.shape-title {
+    font-weight: bold;
+    font-size: 1.8em;
+    color: #2c3e50;
+}
+
+.shape-picture img {
+    display: block;
+}
+
+.slide-notes {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-left: 4px solid #3498db;
+    border-radius: 4px;
+}
+
+.slide-notes h3 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.slide-notes p {
+    color: #666;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    margin-bottom: 2rem;
+}
+
+.nav-btn {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.nav-btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.nav-btn:active {
+    transform: translateY(0);
+}
+
+.nav-btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.slide-counter {
+    font-size: 1.1rem;
+    color: #555;
+    font-weight: 500;
+    min-width: 80px;
+    text-align: center;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #3498db;
+    transition: width 0.3s ease;
+}
+
+/* Keyboard shortcuts hint */
+body::before {
+    content: "Use ← → keys or click buttons to navigate";
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #666;
+    z-index: 1000;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .slide {
+        padding: 1rem;
+    }
+
+    .shape-title {
+        font-size: 1.4em;
+    }
+
+    .controls {
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .nav-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    body::before {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+    }
+}

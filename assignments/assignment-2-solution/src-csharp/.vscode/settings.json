@@ -1,0 +1,4 @@
+{
+    "dotnet.defaultSolution": "TeaShop.sln",
+    "dotnet-test-explorer.testProjectPath": "TeaShop.UnitTest/TeaShop.UnitTest.csproj",
+}

@@ -28,8 +28,8 @@ public sealed class MinStarRatingFilterDecorator : InventoryQueryDecoratorBase
         => $"Filter: Star rating >= {_minRating}";
 
     /// <inheritdoc />
-    public override IReadOnlyList<InventoryItem> Execute()
+    protected override IReadOnlyList<InventoryItem> Decorate(IReadOnlyList<InventoryItem> items)
     {
-        return Inner.Execute().Where(i => i.StarRating.Rating >= _minRating).ToList().AsReadOnly();
+        return items.Where(i => i.StarRating.Rating >= _minRating).ToList().AsReadOnly();
     }
 }

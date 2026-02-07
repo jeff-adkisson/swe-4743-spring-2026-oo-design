@@ -18,5 +18,5 @@ public sealed class AllInventoryQuery(InventoryRepository repository) : IInvento
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<string> AppliedFiltersAndSorts { get; } = Array.Empty<string>();
+    public IReadOnlyList<string> AppliedFiltersAndSorts { get; } = [];
 }

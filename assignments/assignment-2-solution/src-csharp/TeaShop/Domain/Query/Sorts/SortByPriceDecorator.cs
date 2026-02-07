@@ -25,10 +25,8 @@ public sealed class SortByPriceDecorator : InventoryQueryDecoratorBase
         => $"Sort: Price ({_direction.ToString().ToLowerInvariant()})";
 
     /// <inheritdoc />
-    public override IReadOnlyList<InventoryItem> Execute()
+    protected override IReadOnlyList<InventoryItem> Decorate(IReadOnlyList<InventoryItem> items)
     {
-        var items = Inner.Execute();
-
         var sorted = _direction == SortDirection.Ascending
             ? items.OrderBy(i => i.Price)
             : items.OrderByDescending(i => i.Price);

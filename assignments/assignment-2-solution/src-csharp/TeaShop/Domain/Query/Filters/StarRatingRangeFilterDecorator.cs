@@ -46,13 +46,13 @@ public sealed class StarRatingRangeFilterDecorator : InventoryQueryDecoratorBase
     }
 
     /// <inheritdoc />
-    public override IReadOnlyList<InventoryItem> Execute()
+    protected override IReadOnlyList<InventoryItem> Decorate(IReadOnlyList<InventoryItem> items)
     {
-        IEnumerable<InventoryItem> items = Inner.Execute();
+        IEnumerable<InventoryItem> filtered = items;
 
-        if (_min is not null) items = items.Where(i => i.StarRating.Rating >= _min.Value);
-        if (_max is not null) items = items.Where(i => i.StarRating.Rating <= _max.Value);
+        if (_min is not null) filtered = filtered.Where(i => i.StarRating.Rating >= _min.Value);
+        if (_max is not null) filtered = filtered.Where(i => i.StarRating.Rating <= _max.Value);
 
-        return items.ToList().AsReadOnly();
+        return filtered.ToList().AsReadOnly();
     }
 }

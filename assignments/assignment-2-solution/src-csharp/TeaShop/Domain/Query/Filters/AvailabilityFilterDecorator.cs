@@ -35,9 +35,8 @@ public sealed class AvailabilityFilterDecorator : InventoryQueryDecoratorBase
     }
 
     /// <inheritdoc />
-    public override IReadOnlyList<InventoryItem> Execute()
+    protected override IReadOnlyList<InventoryItem> Decorate(IReadOnlyList<InventoryItem> items)
     {
-        var items = Inner.Execute();
         if (_isAvailable is null) return items;
 
         var filtered = _isAvailable.Value ? items.Where(i => i.IsAvailable) : items.Where(i => !i.IsAvailable);

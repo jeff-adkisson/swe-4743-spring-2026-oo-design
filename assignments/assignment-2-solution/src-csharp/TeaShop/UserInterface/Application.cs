@@ -54,7 +54,10 @@ public sealed class Application
             else
                 ProcessPurchase(output);
 
-            if (!ReadYesNo("Search for more tea? (Y/N, default Y): ", true)) break;
+            _output.WriteLine();
+            var searchForMore = ReadYesNo("Search for more tea? (Y/N, default Y): ", true);
+            if (!searchForMore) break;
+            _output.WriteLine();
         }
     }
 
@@ -72,20 +75,21 @@ public sealed class Application
 
         if (output.Items.Count == 0)
         {
-            _output.WriteLine("No items available to purchase.");
+            _output.WriteLine("!!! No items available to purchase.");
             return;
         }
 
         while (true)
         {
-            _output.Write($"Purchase an item? Enter item number (1-{output.Items.Count}) or 0 to continue (default): ");
+            var itemSelectionPrompt = $"1-{output.Items.Count} or 0 to continue (default)";
+            _output.Write($"Purchase an item? Enter item number {itemSelectionPrompt}: ");
             var input = _input.ReadLine();
 
             if (string.IsNullOrWhiteSpace(input)) return;
 
             if (!int.TryParse(input.Trim(), out var index) || index < 0 || index > output.Items.Count)
             {
-                _output.WriteLine("Invalid index. Try again.");
+                _output.WriteLine("!!! Invalid item number. Try again.");
                 continue;
             }
 
@@ -95,7 +99,7 @@ public sealed class Application
 
             if (selected.Quantity <= 0)
             {
-                _output.WriteLine($"Sorry, there is inventory available for {selected.Name}.");
+                _output.WriteLine($"!!! Sorry, there is inventory available for {selected.Name}.");
                 return;
             }
 
@@ -103,12 +107,12 @@ public sealed class Application
             var qtyInput = _input.ReadLine();
             if (!int.TryParse(qtyInput?.Trim(), out var quantity) || quantity < 1 || quantity > selected.Quantity)
             {
-                _output.WriteLine("Invalid quantity. Try again.");
+                _output.WriteLine("!!! Invalid quantity.");
                 continue;
             }
 
             var totalPrice = selected.Price * quantity;
-            _output.WriteLine($"Total Price: {totalPrice:C}");
+            _output.WriteLine($"*** Total Price: {totalPrice:C}");
 
             ProcessCheckout(selected, quantity);
             break;
@@ -117,7 +121,7 @@ public sealed class Application
 
     private void ProcessCheckout(QueriedInventoryItem item, int quantity)
     {
-        _output.WriteLine("Choose a payment method:");
+        _output.WriteLine("*** Choose a payment method:");
         for (var i = 0; i < _paymentMethods.Count; i++) _output.WriteLine($"{i + 1}. {_paymentMethods[i].Name}");
 
         _output.Write("Selection: ");
@@ -125,7 +129,7 @@ public sealed class Application
         var choice = _input.ReadLine();
         if (!int.TryParse(choice, out var index) || index < 1 || index > _paymentMethods.Count)
         {
-            _output.WriteLine("Invalid payment method selection. Checkout cancelled.");
+            _output.WriteLine("!!! Invalid payment method selection. Checkout cancelled.");
             return;
         }
 
@@ -135,7 +139,8 @@ public sealed class Application
         // Decrease inventory quantity (using negative value for decrease)
         _repository.UpdateQuantity(item.InventoryItemId, -1 * quantity);
 
-        _output.WriteLine("*** Purchase complete - your tea is on the way ***");
+        var purchaseDesc = $"{quantity} packages of {item.Name}";
+        _output.WriteLine($"*** Purchase complete. Your {purchaseDesc} is on the way ***");
     }
 
     private bool ReadYesNo(string prompt, bool defaultValue)

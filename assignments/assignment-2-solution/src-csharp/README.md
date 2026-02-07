@@ -61,11 +61,16 @@ dotnet test --logger "console;verbosity=detailed"
 
 ## Architecture Overview
 
+The project is divided into two main namespaces:
+
+- **Domain Namespace**: Contains the core business logic, entities, and rules that define the tea shop's operations. Detailed documentation can be found in the [Inventory](TeaShop/Domain/Inventory/README.md), [Payment Strategy](TeaShop/Domain/PaymentStrategy/README.md), and [Query](TeaShop/Domain/Query/README.md) sub-namespaces.
+- **[UserInterface Namespace](TeaShop/UserInterface/README.md)**: Manages user interactions, console I/O, and coordinates the application's flow.
+
 The project demonstrates object-oriented design patterns such as:
 
-- **Strategy Pattern**: Used for different payment methods.
-- **Decorator Pattern**: Used for building complex inventory queries with filters and sorts.
-- **Repository Pattern**: Naive implementation to query and modify the tea inventory.
+- **Strategy Pattern**: Used for different payment methods. See the [Payment Strategy Domain README](TeaShop/Domain/PaymentStrategy/README.md) for more details.
+- **Decorator Pattern**: Used for building complex inventory queries with filters and sorts. See the [Query Domain README](TeaShop/Domain/Query/README.md) for more details.
+- **Repository Pattern**: Naive implementation to query and modify the tea inventory. See the [Inventory Domain README](TeaShop/Domain/Inventory/README.md) for more details.
 - **Polymorphism and Dependency Injection**: For I/O handling and testability.
 
 ## SOLID Principles
@@ -74,18 +79,18 @@ The project demonstrates object-oriented design patterns such as:
   strictly separated from the `UserInterface`, and specific tasks like query construction (`QueryBuilder`), data
   access (`InventoryRepository`), and output formatting (`QueryOutputWriter`) are handled by dedicated classes.
 - **Open/Closed Principle (OCP)**: The system is designed to be easily extendable without modifying existing core logic.
-  New payment methods can be added by implementing `IPaymentStrategy`, and new inventory filters can be added by
-  creating new `InventoryQueryDecorator` subclasses, both without changing the `Application` or `InventoryRepository`
+  New payment methods can be added by implementing `IPaymentStrategyGenerator`, and new inventory filters can be added by
+  creating new `InventoryQueryDecoratorBase` subclasses, both without changing the `Application` or `InventoryRepository`
   classes.
 
 ## Design Patterns Summary
 
-| Pattern                  | Purpose in this Project                                                   | Key Classes                                                      |
-|:-------------------------|:--------------------------------------------------------------------------|:-----------------------------------------------------------------|
-| **Strategy**             | Decouples payment processing logic from the user interface.               | `IPaymentStrategy`, `CreditCardStrategy`                         |
-| **Decorator**            | Dynamically composes complex inventory queries at runtime.                | `IInventoryQuery`, `InventoryQueryDecorator`, `PriceRangeFilter` |
-| **Repository**           | Provides a clean API for data access, hiding the data source.             | `InventoryRepository` <br>(naive/simplistic implementation)      |
-| **Dependency Injection** | Injects `TextReader`/`TextWriter` and Repositories to enable testability. | `QueryBuilder`, `Application`                                    |
+| Pattern                  | Purpose in this Project                                                   | Key Classes                                                                  |
+|:-------------------------|:--------------------------------------------------------------------------|:-----------------------------------------------------------------------------|
+| **Strategy**             | Decouples payment processing logic from the user interface.               | `IPaymentStrategy`, `CreditCardStrategy`, `IPaymentStrategyGenerator`        |
+| **Decorator**            | Dynamically composes complex inventory queries at runtime.                | `IInventoryQuery`, `InventoryQueryDecoratorBase`, `PriceRangeFilterDecorator` |
+| **Repository**           | Provides a clean API for data access, hiding the data source.             | `InventoryRepository` <br>(naive/simplistic implementation)                  |
+| **Dependency Injection** | Injects `TextReader`/`TextWriter` and Repositories to enable testability. | `QueryBuilder`, `Application`                                                |
 
 ## What Goes in the Domain Namespace?
 
@@ -121,29 +126,12 @@ presented to the user or how data is stored.
 
 ## Extension Points: "How do I add..."
 
-The architecture is designed to be "Open for Extension, but Closed for Modification" (the Open/Closed Principle).
+The architecture is designed to be "Open for Extension, but Closed for Modification" (the Open/Closed Principle). For detailed instructions on extending the system, please refer to the following guides:
 
-### ...a New Inventory Filter?
-
-1. Create a new class in `Domain.Query.Filters` that inherits from `InventoryQueryDecorator`.
-2. Override the `Execute()` method to apply your logic to the results of the `Inner` query.
-3. Update `QueryBuilder` in the UI layer to prompt the user for the new filter criteria and wrap the query with your new
-   decorator.
-
-### ...a New Payment Method?
-
-1. **Domain Layer**: Create a new strategy class in `Domain.PaymentStrategy` implementing `IPaymentStrategy`.
-2. **UI Layer**: Create a new configuration class in `UserInterface.PaymentMethod` implementing
-   `IPaymentMethodConfiguration`.
-3. **Application**: Add an instance of your new configuration class to the list in `Program.cs` or the `Application`
-   constructor.
-
-### ...a New Data Source?
-
-The `InventoryRepository` currently uses a hardcoded list. To support a database or file:
-
-1. Update `InventoryRepository` to accept a data source or implement an interface (e.g., `IInventoryRepository`) that
-   can be swapped out via Dependency Injection.
+- **[Adding a New Inventory Filter or Sort](TeaShop/Domain/Query/README.md#implementing-a-new-filter-or-sort-decorator)**: Learn how to create new query decorators to extend search capabilities.
+- **[Adding a New Payment Method](TeaShop/UserInterface/README.md#adding-a-new-payment-method)**: Follow this guide to implement both the UI and Domain components for new payment strategies.
+- **[Implementing a New Payment Strategy](TeaShop/Domain/PaymentStrategy/README.md#implementing-a-new-payment-strategy)**: Detailed domain-level instructions for the Strategy Pattern.
+- **[Evolving the Data Source](TeaShop/Domain/Inventory/README.md#inventory-repository-notes)**: Considerations for moving beyond the simple in-memory repository.
 
 ## Class Diagrams
 
@@ -158,10 +146,12 @@ classDiagram
         +Main()$
     }
     class Application {
+        -TextReader _input
+        -TextWriter _output
         -InventoryRepository _repository
         -QueryBuilder _queryBuilder
         -QueryOutputWriter _queryOutputWriter
-        -IReadOnlyList~IPaymentMethodConfiguration~ _paymentMethodConfigs
+        -IReadOnlyList~IPaymentStrategyGenerator~ _paymentMethods
         +Run()
     }
     class InventoryRepository {
@@ -215,30 +205,31 @@ classDiagram
         class AllInventoryQuery {
             +Execute()
         }
-        class InventoryQueryDecorator {
+        class InventoryQueryDecoratorBase {
             <<abstract>>
             -IInventoryQuery Inner
             +Execute()
+            #Decorate()
         }
-        class NameContainsFilter { }
-        class PriceRangeFilter { }
-        class SortByPrice { }
-        class AvailabilityFilter { }
-        class SortByDecorator { }
-        class SortByStarRating { }
+        class NameContainsFilterDecorator { }
+        class PriceRangeFilterDecorator { }
+        class SortByPriceDecorator { }
+        class AvailabilityFilterDecorator { }
+        class SortByStarRatingDecorator { }
+        class StarRatingRangeFilterDecorator { }
     }
 
     QueryBuilder ..> IInventoryQuery : creates
     IInventoryQuery <|.. AllInventoryQuery
-    IInventoryQuery <|.. InventoryQueryDecorator
-    InventoryQueryDecorator o-- IInventoryQuery : wraps
+    IInventoryQuery <|.. InventoryQueryDecoratorBase
+    InventoryQueryDecoratorBase o-- IInventoryQuery : wraps
     
-    InventoryQueryDecorator <|-- NameContainsFilter
-    InventoryQueryDecorator <|-- PriceRangeFilter
-    InventoryQueryDecorator <|-- AvailabilityFilter
-    InventoryQueryDecorator <|-- SortByDecorator
-    SortByDecorator <|-- SortByPrice
-    SortByDecorator <|-- SortByStarRating
+    InventoryQueryDecoratorBase <|-- NameContainsFilterDecorator
+    InventoryQueryDecoratorBase <|-- PriceRangeFilterDecorator
+    InventoryQueryDecoratorBase <|-- AvailabilityFilterDecorator
+    InventoryQueryDecoratorBase <|-- SortByPriceDecorator
+    InventoryQueryDecoratorBase <|-- SortByStarRatingDecorator
+    InventoryQueryDecoratorBase <|-- StarRatingRangeFilterDecorator
 ```
 
 #### Payment Method Strategy
@@ -248,7 +239,7 @@ The application uses the Strategy pattern to decouple the payment processing log
 To maintain a clean separation of concerns, the design uses a "Bridge" of sorts between the User Interface and the
 Domain logic:
 
-1. **`IPaymentMethodConfiguration` (UI Layer)**: This interface is responsible for the user-interactive part of
+1. **`IPaymentStrategyGenerator` (UI Layer)**: This interface is responsible for the user-interactive part of
    selecting a payment method. It handles prompting the user for details (like credit card numbers or wallet addresses)
    via `TextReader`/`TextWriter`. Once the data is collected, it instantiates the appropriate domain strategy.
 2. **`IPaymentStrategy` (Domain Layer)**: This interface defines the actual execution of the payment (the `Checkout`
@@ -267,14 +258,14 @@ config:
 classDiagram
     direction LR
     namespace UserInterface {
-        class IPaymentMethodConfiguration {
+        class IPaymentStrategyGenerator {
             <<interface>>
             +Name : string
             +CreateStrategy(TextReader, TextWriter) IPaymentStrategy
         }
-        class CreditCardPaymentMethodConfiguration
-        class ApplePayPaymentMethodConfiguration
-        class CryptoCurrencyPaymentMethodConfiguration
+        class CreditCardPaymentStrategyGenerator
+        class ApplePayPaymentStrategyGenerator
+        class CryptoCurrencyPaymentStrategyGenerator
     }
 
     namespace Domain {
@@ -288,18 +279,18 @@ classDiagram
         class CryptoCurrencyStrategy
     }
     
-    IPaymentMethodConfiguration <|.. CreditCardPaymentMethodConfiguration
-    IPaymentMethodConfiguration <|.. ApplePayPaymentMethodConfiguration
-    IPaymentMethodConfiguration <|.. CryptoCurrencyPaymentMethodConfiguration
+    IPaymentStrategyGenerator <|.. CreditCardPaymentStrategyGenerator
+    IPaymentStrategyGenerator <|.. ApplePayPaymentStrategyGenerator
+    IPaymentStrategyGenerator <|.. CryptoCurrencyPaymentStrategyGenerator
     
     IPaymentStrategy <|.. PaymentStrategyBase
     PaymentStrategyBase <|-- CreditCardStrategy
     PaymentStrategyBase <|-- ApplePayStrategy
     PaymentStrategyBase <|-- CryptoCurrencyStrategy
     
-    CreditCardPaymentMethodConfiguration ..> CreditCardStrategy : creates
-    ApplePayPaymentMethodConfiguration ..> ApplePayStrategy : creates
-    CryptoCurrencyPaymentMethodConfiguration ..> CryptoCurrencyStrategy : creates
+    CreditCardPaymentStrategyGenerator ..> CreditCardStrategy : creates
+    ApplePayPaymentStrategyGenerator ..> ApplePayStrategy : creates
+    CryptoCurrencyPaymentStrategyGenerator ..> CryptoCurrencyStrategy : creates
 ```
 
 ## I/O Abstraction for Testing and Polymorphism
@@ -349,6 +340,7 @@ public class QueryBuilder
 public void QueryBuilder_Build_ReturnsConfiguredQuery()
 {
     // Arrange
+    // Simulations: Green (name contains), Y (is available), 10 (min price), 20 (max price), 4 (min rating), 5 (max rating), D (sort by price), A (sort by rating)
     var input = new StringReader("Green\nY\n10\n20\n4\n5\nD\nA");
     var output = new StringWriter();
     var builder = new QueryBuilder(repository, input, output);
@@ -358,7 +350,7 @@ public void QueryBuilder_Build_ReturnsConfiguredQuery()
 
     // Assert
     Assert.Contains("Green", query.AppliedFiltersAndSorts[0]);
-    Assert.Contains("Enter Tea name contains:", output.ToString());
+    Assert.Contains("Tea name contains", output.ToString());
 }
 ```
 

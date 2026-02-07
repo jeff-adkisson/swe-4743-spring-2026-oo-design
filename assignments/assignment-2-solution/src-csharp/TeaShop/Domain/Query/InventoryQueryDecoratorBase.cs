@@ -19,7 +19,7 @@ public abstract class InventoryQueryDecoratorBase : IInventoryQuery
     /// <summary>
     ///     Gets the inner query being decorated.
     /// </summary>
-    protected IInventoryQuery Inner { get; }
+    private IInventoryQuery Inner { get; }
 
     /// <summary>
     ///     Gets the description of the filter or sort applied by this decorator.
@@ -27,7 +27,18 @@ public abstract class InventoryQueryDecoratorBase : IInventoryQuery
     protected virtual string? AppliedDescription => null;
 
     /// <inheritdoc />
-    public abstract IReadOnlyList<InventoryItem> Execute();
+    public IReadOnlyList<InventoryItem> Execute()
+    {
+        var items = Inner.Execute();
+        return Decorate(items);
+    }
+
+    /// <summary>
+    ///     Applies the decorator's specific logic (filtering or sorting) to the results of the inner query.
+    /// </summary>
+    /// <param name="items">The items returned by the inner query.</param>
+    /// <returns>the decorated (filtered or sorted) list of items.</returns>
+    protected abstract IReadOnlyList<InventoryItem> Decorate(IReadOnlyList<InventoryItem> items);
 
     /// <inheritdoc />
     public IReadOnlyList<string> AppliedFiltersAndSorts

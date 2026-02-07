@@ -25,9 +25,8 @@ public sealed class NameContainsFilterDecorator : InventoryQueryDecoratorBase
         => string.IsNullOrWhiteSpace(_substring) ? null : $"Filter: Name contains \"{_substring}\"";
 
     /// <inheritdoc />
-    public override IReadOnlyList<InventoryItem> Execute()
+    protected override IReadOnlyList<InventoryItem> Decorate(IReadOnlyList<InventoryItem> items)
     {
-        var items = Inner.Execute();
         if (string.IsNullOrWhiteSpace(_substring))
             return items;
 

@@ -62,6 +62,28 @@ public IReadOnlyList<InventoryItem> Execute()
 
 By making `Execute()` final (non-virtual) and requiring concrete decorators to implement the `Decorate()` method, the base class ensures that the inner query is always processed before the current decorator's logic is applied. This prevents a common pitfall in the Decorator pattern where a decorator might accidentally execute its own logic before the inner component, which would reverse the intended execution flow (the decorator stack) and lead to confusing results, especially when combining multiple filters and sorts.
 
+#### Composing a Query
+
+The following example demonstrates how to compose a query by wrapping the base `AllInventoryQuery` with multiple decorators, matching the structure shown in the sequence diagram below:
+
+```csharp
+// 1. Start with the base query 
+//    (the inner-most concrete component to be decorated)
+IInventoryQuery query = new AllInventoryQuery();
+
+// 2. Wrap with the first filter decorator (Inner-most)
+query = new AvailabilityFilterDecorator(query, isAvailable: true);
+
+// 3. Wrap with the second filter decorator (Inner)
+query = new MinStarRatingFilterDecorator(query, minRatingInclusive: 4);
+
+// 4. Wrap with the sort decorator (Outer-most)
+query = new SortByPriceDecorator(query, SortDirection.Ascending);
+
+// 5. Execute the entire chain
+IReadOnlyList<InventoryItem> results = query.Execute();
+```
+
 #### Sequence Diagram
 
 ```mermaid

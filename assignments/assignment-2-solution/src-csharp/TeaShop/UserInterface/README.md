@@ -75,6 +75,71 @@ classDiagram
 - **`QueryBuilder`**: Decouples the UI logic for gathering search criteria from the domain's query execution. It progressively wraps the `IInventoryQuery` with decorators based on user input.
 - **`IPaymentStrategyGenerator`**: Bridges the UI and Domain layers. It captures UI-specific input needed for a payment method and instantiates the corresponding Domain-level `IPaymentStrategy`.
 
+
+## UI vs. Domain Separation: `IPaymentStrategyGenerator`
+
+A key design goal of this application is the strict separation of **User Interface concerns** from **Domain concerns**. This is primarily achieved through the `IPaymentStrategyGenerator` interface.
+
+### The "Why": Clean Domain Logic
+
+In a well-architected system, the Domain layer (Business Logic) should be "pure." It should not know about:
+- How to prompt a user for input (`Console.ReadLine()`).
+- How to display messages to a user (`Console.WriteLine()`).
+- Which specific UI framework is being used (CLI, Web, Mobile).
+
+If we put UI logic (like asking for a credit card number) directly inside a `CreditCardStrategy.Checkout()` method, the Domain would become tethered to the Console. This makes the code harder to test, reuse in a web application, or modify without breaking business rules.
+
+### The "How": The Generator Pattern
+
+The `IPaymentStrategyGenerator` acts as a **bridge**:
+
+1.  **UI Layer (The Generator)**: Classes like `CreditCardPaymentStrategyGenerator` live in the `UserInterface` layer. They handle all the messy details of talking to the user, validating input formats, and re-prompting if necessary.
+2.  **Handoff**: Once the generator has collected all necessary data (e.g., a validated card number), it instantiates a concrete **Domain Strategy**.
+3.  **Domain Layer (The Strategy)**: The resulting `IPaymentStrategy` (e.g., `CreditCardStrategy`) lives in the `Domain` layer. It is a "pure" object that contains the logic for processing the payment using the data it was given.
+
+### Architecture Diagram
+
+The following diagram shows how the Generator pattern maintains a clear boundary between the UI and Domain layers:
+
+```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: true
+---
+classDiagram
+    namespace UserInterface {
+        class Application
+        class IPaymentStrategyGenerator {
+            <<interface>>
+            +Name: string
+            +CreateStrategy(input, output) IPaymentStrategy
+        }
+        class CreditCardPaymentStrategyGenerator
+    }
+
+    namespace Domain {
+        class IPaymentStrategy {
+            <<interface>>
+            +Checkout(item, quantity, output)
+        }
+        class CreditCardStrategy
+    }
+
+    %% Relationships
+    Application --> IPaymentStrategyGenerator : asks to create strategy
+    Application --> IPaymentStrategy : executes checkout
+    
+    CreditCardPaymentStrategyGenerator ..|> IPaymentStrategyGenerator : implements
+    CreditCardPaymentStrategyGenerator ..> CreditCardStrategy : creates
+    
+    CreditCardStrategy ..|> IPaymentStrategy : implements
+    
+    %% Explicit Layering
+    note for IPaymentStrategyGenerator "Handles I/O and user interaction"
+    note for IPaymentStrategy "Handles business logic and invariants"
+```
+
 ## More Realistic Generic Architecture
 
 In a production-ready application, the User Interface layer would likely be more complex:

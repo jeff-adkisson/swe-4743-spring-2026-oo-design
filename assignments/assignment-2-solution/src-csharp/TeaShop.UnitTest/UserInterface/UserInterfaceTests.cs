@@ -1,6 +1,6 @@
 using Assignment2Solution.Domain.Inventory;
-using Assignment2Solution.UserInterface.PaymentMethodGenerator;
-using Assignment2Solution.UserInterface.Query;
+using Assignment2Solution.UserInterface.PaymentBuilder;
+using Assignment2Solution.UserInterface.QueryBuilder;
 
 namespace TeaShop.UnitTest.UserInterface;
 
@@ -25,7 +25,7 @@ public class UserInterfaceTests
         };
         var input = new StringReader(string.Join(Environment.NewLine, inputLines));
         var output = new StringWriter();
-        var builder = new QueryBuilder(repository, input, output);
+        var builder = new InventoryQueryBuilder(repository, input, output);
 
         // Act
         var query = builder.Build();
@@ -45,7 +45,7 @@ public class UserInterfaceTests
     public void ApplePayPaymentMethod_CreateStrategy_ReturnsStrategy()
     {
         // Arrange
-        var method = new ApplePayPaymentStrategyGenerator();
+        var method = new ApplePayPaymentBuilder();
         var input = new StringReader("user@example.com" + Environment.NewLine);
         var output = new StringWriter();
 
@@ -64,7 +64,7 @@ public class UserInterfaceTests
     public void CreditCardPaymentMethod_CreateStrategy_ReturnsStrategy()
     {
         // Arrange
-        var method = new CreditCardPaymentStrategyGenerator();
+        var method = new CreditCardPaymentBuilder();
         var input = new StringReader("1234567890123456" + Environment.NewLine);
         var output = new StringWriter();
 
@@ -80,7 +80,7 @@ public class UserInterfaceTests
     public void CryptoCurrencyPaymentMethod_CreateStrategy_ReturnsStrategy()
     {
         // Arrange
-        var method = new CryptoCurrencyPaymentStrategyGenerator();
+        var method = new CryptoCurrencyPaymentBuilder();
         var input = new StringReader("0x123" + Environment.NewLine + "sig123" + Environment.NewLine);
         var output = new StringWriter();
 

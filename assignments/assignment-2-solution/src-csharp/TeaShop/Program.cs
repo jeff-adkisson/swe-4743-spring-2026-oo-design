@@ -9,6 +9,8 @@ public static class Program
 {
     /// <summary>
     ///     The main method which starts the application.
+    ///     Console.In and Console.Out are passed to the application to enable
+    ///     easier testing and separation of concerns.
     /// </summary>
     public static void Main()
     {

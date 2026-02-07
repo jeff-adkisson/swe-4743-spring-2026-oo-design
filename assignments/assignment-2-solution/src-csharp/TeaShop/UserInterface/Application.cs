@@ -1,7 +1,7 @@
 using Assignment2Solution.Domain.Inventory;
-using Assignment2Solution.Domain.Query;
-using Assignment2Solution.UserInterface.PaymentMethodGenerator;
-using Assignment2Solution.UserInterface.Query;
+using Assignment2Solution.Domain.InventoryQuery;
+using Assignment2Solution.UserInterface.PaymentBuilder;
+using Assignment2Solution.UserInterface.QueryBuilder;
 
 namespace Assignment2Solution.UserInterface;
 
@@ -11,11 +11,11 @@ namespace Assignment2Solution.UserInterface;
 public sealed class Application
 {
     private readonly TextReader _input;
-    private readonly TextWriter _output;
-    private readonly IReadOnlyList<IPaymentStrategyGenerator> _paymentMethods;
 
-    private readonly QueryBuilder _queryBuilder;
-    private readonly QueryOutputWriter _queryOutputWriter;
+    private readonly InventoryQueryBuilder _inventoryQueryBuilder;
+    private readonly InventoryQueryOutputWriter _inventoryQueryOutputWriter;
+    private readonly TextWriter _output;
+    private readonly IReadOnlyList<IPaymentBuilder> _paymentMethods;
     private readonly InventoryRepository _repository;
 
     /// <summary>
@@ -29,10 +29,10 @@ public sealed class Application
         _output = output ?? throw new ArgumentNullException(nameof(output));
 
         _repository = new InventoryRepository();
-        _queryBuilder = new QueryBuilder(_repository, _input, _output);
-        _queryOutputWriter = new QueryOutputWriter(_output);
+        _inventoryQueryBuilder = new InventoryQueryBuilder(_repository, _input, _output);
+        _inventoryQueryOutputWriter = new InventoryQueryOutputWriter(_output);
 
-        _paymentMethods = PaymentStrategyGeneratorListFactory.Get();
+        _paymentMethods = PaymentBuilderListFactory.Get();
     }
 
     /// <summary>
@@ -44,9 +44,9 @@ public sealed class Application
 
         while (true)
         {
-            var query = _queryBuilder.Build();
-            var output = QueryOutput.From(query);
-            _queryOutputWriter.Write(output);
+            var query = _inventoryQueryBuilder.Build();
+            var output = InventoryQueryOutput.From(query);
+            _inventoryQueryOutputWriter.Write(output);
             _output.WriteLine();
 
             if (output.Items.Count == 0)
@@ -69,7 +69,7 @@ public sealed class Application
         _output.WriteLine();
     }
 
-    private void ProcessPurchase(QueryOutput output)
+    private void ProcessPurchase(InventoryQueryOutput output)
     {
         ArgumentNullException.ThrowIfNull(output);
 

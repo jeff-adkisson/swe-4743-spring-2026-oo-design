@@ -1,5 +1,5 @@
 using Assignment2Solution.Domain.Inventory;
-using Assignment2Solution.Domain.PaymentStrategy;
+using Assignment2Solution.Domain.Payment;
 
 namespace TeaShop.UnitTest.Domain.PaymentStrategy;
 

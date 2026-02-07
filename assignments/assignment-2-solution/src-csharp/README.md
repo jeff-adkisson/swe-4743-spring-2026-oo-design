@@ -63,34 +63,44 @@ dotnet test --logger "console;verbosity=detailed"
 
 The project is divided into two main namespaces:
 
-- **Domain Namespace**: Contains the core business logic, entities, and rules that define the tea shop's operations. Detailed documentation can be found in the [Inventory](TeaShop/Domain/Inventory/README.md), [Payment Strategy](TeaShop/Domain/PaymentStrategy/README.md), and [Query](TeaShop/Domain/Query/README.md) sub-namespaces.
-- **[UserInterface Namespace](TeaShop/UserInterface/README.md)**: Manages user interactions, console I/O, and coordinates the application's flow.
+- **Domain Namespace**: Contains the core business logic, entities, and rules that define the tea shop's operations.
+  Detailed documentation can be found in
+  the [Inventory](TeaShop/Domain/Inventory/README.md), [Payment Strategy](TeaShop/Domain/Payment/README.md),
+  and [Inventory Query](TeaShop/Domain/InventoryQuery/README.md) sub-namespaces.
+- **[UserInterface Namespace](TeaShop/UserInterface/README.md)**: Manages user interactions, console I/O, and
+  coordinates the application's flow.
 
 The project demonstrates object-oriented design patterns such as:
 
-- **Strategy Pattern**: Used for different payment methods. See the [Payment Strategy Domain README](TeaShop/Domain/PaymentStrategy/README.md) for more details.
-- **Decorator Pattern**: Used for building complex inventory queries with filters and sorts. See the [Query Domain README](TeaShop/Domain/Query/README.md) for more details.
-- **Repository Pattern**: Naive implementation to query and modify the tea inventory. See the [Inventory Domain README](TeaShop/Domain/Inventory/README.md) for more details.
+- **Strategy Pattern**: Used for different payment methods. See
+  the [Payment Domain README](TeaShop/Domain/Payment/README.md) for more details.
+- **Decorator Pattern**: Used for building complex inventory queries with filters and sorts. See
+  the [Inventory Query Domain README](TeaShop/Domain/InventoryQuery/README.md) for more details.
+- **Repository Pattern**: Naive implementation to query and modify the tea inventory. See
+  the [Inventory Domain README](TeaShop/Domain/Inventory/README.md) for more details.
 - **Polymorphism and Dependency Injection**: For I/O handling and testability.
 
 ## SOLID Principles
 
 - **Single Responsibility Principle (SRP)**: Each class has a well-defined purpose. For example, the `Domain` logic is
-  strictly separated from the `UserInterface`, and specific tasks like query construction (`QueryBuilder`), data
-  access (`InventoryRepository`), and output formatting (`QueryOutputWriter`) are handled by dedicated classes.
+  strictly separated from the `UserInterface`, and specific tasks like query construction (`InventoryQueryBuilder` in
+  `UserInterface.QueryBuilder`), data
+  access (`InventoryRepository`), and output formatting (`InventoryQueryOutputWriter` in `UserInterface.QueryBuilder`)
+  are handled by dedicated classes.
 - **Open/Closed Principle (OCP)**: The system is designed to be easily extendable without modifying existing core logic.
-  New payment methods can be added by implementing `IPaymentStrategyGenerator`, and new inventory filters can be added by
-  creating new `InventoryQueryDecoratorBase` subclasses, both without changing the `Application` or `InventoryRepository`
+  New payment methods can be added by implementing `IPaymentBuilder`, and new inventory filters can be added by
+  creating new `InventoryQueryDecoratorBase` subclasses, both without changing the `Application` or
+  `InventoryRepository`
   classes.
 
 ## Design Patterns Summary
 
-| Pattern                  | Purpose in this Project                                                   | Key Classes                                                                  |
-|:-------------------------|:--------------------------------------------------------------------------|:-----------------------------------------------------------------------------|
-| **Strategy**             | Decouples payment processing logic from the user interface.               | `IPaymentStrategy`, `CreditCardStrategy`, `IPaymentStrategyGenerator`        |
+| Pattern                  | Purpose in this Project                                                   | Key Classes                                                                   |
+|:-------------------------|:--------------------------------------------------------------------------|:------------------------------------------------------------------------------|
+| **Strategy**             | Decouples payment processing logic from the user interface.               | `IPaymentStrategy`, `CreditCardStrategy`, `IPaymentBuilder`                   |
 | **Decorator**            | Dynamically composes complex inventory queries at runtime.                | `IInventoryQuery`, `InventoryQueryDecoratorBase`, `PriceRangeFilterDecorator` |
-| **Repository**           | Provides a clean API for data access, hiding the data source.             | `InventoryRepository` <br>(naive/simplistic implementation)                  |
-| **Dependency Injection** | Injects `TextReader`/`TextWriter` and Repositories to enable testability. | `QueryBuilder`, `Application`                                                |
+| **Repository**           | Provides a clean API for data access, hiding the data source.             | `InventoryRepository` <br>(naive/simplistic implementation)                   |
+| **Dependency Injection** | Injects `TextReader`/`TextWriter` and Repositories to enable testability. | `InventoryQueryBuilder`, `Application`                                        |
 
 ## What Goes in the Domain Namespace?
 
@@ -112,9 +122,10 @@ presented to the user or how data is stored.
       the 1–5 range, preventing "impossible" data from entering the system.
 
 * **Non-Domain Logic (Outside `Domain`):**
-    * **User Interface (`UserInterface`):** Anything related to how the user interacts with the system. This includes
+    * **User Interface (`UserInterface`, `UserInterface.QueryBuilder`, `UserInterface.PaymentBuilder`):** Anything
+      related to how the user interacts with the system. This includes
       `Console.WriteLine` calls, parsing user input strings, and managing the flow of the CLI application (e.g.,
-      `Application`, `QueryBuilder`).
+      `Application`, `InventoryQueryBuilder`).
     * **Infrastructure/External Concerns:** Code that deals with specific databases, file systems, or network protocols.
       While this project uses a simple in-memory `InventoryRepository`, in a larger system, the implementation details
       of data persistence would live in an `Infrastructure` layer.
@@ -126,12 +137,19 @@ presented to the user or how data is stored.
 
 ## Extension Points: "How do I add..."
 
-The architecture is designed to be "Open for Extension, but Closed for Modification" (the Open/Closed Principle). For detailed instructions on extending the system, please refer to the following guides:
+The architecture is designed to be "Open for Extension, but Closed for Modification" (the Open/Closed Principle). For
+detailed instructions on extending the system, please refer to the following guides:
 
-- **[Adding a New Inventory Filter or Sort](TeaShop/Domain/Query/README.md#implementing-a-new-filter-or-sort-decorator)**: Learn how to create new query decorators to extend search capabilities.
-- **[Adding a New Payment Method](TeaShop/UserInterface/README.md#adding-a-new-payment-method)**: Follow this guide to implement both the UI and Domain components for new payment strategies.
-- **[Implementing a New Payment Strategy](TeaShop/Domain/PaymentStrategy/README.md#implementing-a-new-payment-strategy)**: Detailed domain-level instructions for the Strategy Pattern.
-- **[Evolving the Data Source](TeaShop/Domain/Inventory/README.md#inventory-repository-notes)**: Considerations for moving beyond the simple in-memory repository.
+-
+    *
+*[Adding a New Inventory Filter or Sort](TeaShop/Domain/InventoryQuery/README.md#implementing-a-new-filter-or-sort-decorator)
+**: Learn how to create new query decorators to extend search capabilities.
+- **[Adding a New Payment Method](TeaShop/UserInterface/README.md#adding-a-new-payment-method)**: Follow this guide to
+  implement both the UI and Domain components for new payment strategies.
+- **[Implementing a New Payment Strategy](TeaShop/Domain/Payment/README.md#implementing-a-new-payment-strategy)**:
+  Detailed domain-level instructions for the Strategy Pattern.
+- **[Evolving the Data Source](TeaShop/Domain/Inventory/README.md#inventory-repository-notes)**: Considerations for
+  moving beyond the simple in-memory repository.
 
 ## Class Diagrams
 
@@ -149,26 +167,26 @@ classDiagram
         -TextReader _input
         -TextWriter _output
         -InventoryRepository _repository
-        -QueryBuilder _queryBuilder
-        -QueryOutputWriter _queryOutputWriter
-        -IReadOnlyList~IPaymentStrategyGenerator~ _paymentMethods
+        -InventoryQueryBuilder _inventoryQueryBuilder
+        -InventoryQueryOutputWriter _inventoryQueryOutputWriter
+        -IReadOnlyList~IPaymentBuilder~ _paymentMethods
         +Run()
     }
     class InventoryRepository {
         +Get() IReadOnlyList~InventoryItem~
         +UpdateQuantity(Guid, int)
     }
-    class QueryBuilder {
+    class InventoryQueryBuilder {
         +Build() IInventoryQuery
     }
-    class QueryOutputWriter {
-        +Write(QueryOutput)
+    class InventoryQueryOutputWriter {
+        +Write(InventoryQueryOutput)
     }
 
     Program ..> Application : instantiates
     Application --> InventoryRepository
-    Application --> QueryBuilder
-    Application --> QueryOutputWriter
+    Application --> InventoryQueryBuilder
+    Application --> InventoryQueryOutputWriter
 ```
 
 #### Query Decorator
@@ -176,10 +194,12 @@ classDiagram
 The query system utilizes the Decorator pattern to dynamically compose filtering and sorting logic at runtime. Similar
 to the payment strategy, the construction of these queries is separated from the core domain logic:
 
-1. **`QueryBuilder` (UI Layer)**: This class handles the user-interactive process of gathering search criteria (name,
+1. **`InventoryQueryBuilder` (UI Layer - `UserInterface.QueryBuilder`)**: This class handles the user-interactive
+   process of gathering search criteria (name,
    price range, etc.) via `TextReader`/`TextWriter`. It then "decorates" a base `AllInventoryQuery` with multiple filter
    and sort decorators based on the user's input.
-2. **`IInventoryQuery` (Domain Layer)**: The core interface and its implementations (decorators) handle the actual
+2. **`IInventoryQuery` (Domain Layer - `Domain.InventoryQuery`)**: The core interface and its implementations (
+   decorators) handle the actual
    execution of the query against the inventory data.
 
 ```mermaid
@@ -190,13 +210,13 @@ config:
 ---
 classDiagram
     direction TB
-    namespace UserInterface {
-        class QueryBuilder {
+    namespace UserInterface_QueryBuilder {
+        class InventoryQueryBuilder {
             +Build() IInventoryQuery
         }
     }
 
-    namespace Domain {
+    namespace Domain_InventoryQuery {
         class IInventoryQuery {
             <<interface>>
             +AppliedFiltersAndSorts : IReadOnlyList~string~
@@ -219,7 +239,7 @@ classDiagram
         class StarRatingRangeFilterDecorator { }
     }
 
-    QueryBuilder ..> IInventoryQuery : creates
+    InventoryQueryBuilder ..> IInventoryQuery : creates
     IInventoryQuery <|.. AllInventoryQuery
     IInventoryQuery <|.. InventoryQueryDecoratorBase
     InventoryQueryDecoratorBase o-- IInventoryQuery : wraps
@@ -239,10 +259,12 @@ The application uses the Strategy pattern to decouple the payment processing log
 To maintain a clean separation of concerns, the design uses a "Bridge" of sorts between the User Interface and the
 Domain logic:
 
-1. **`IPaymentStrategyGenerator` (UI Layer)**: This interface is responsible for the user-interactive part of
+1. **`IPaymentBuilder` (UI Layer - `UserInterface.PaymentBuilder`)**: This interface is responsible for the
+   user-interactive part of
    selecting a payment method. It handles prompting the user for details (like credit card numbers or wallet addresses)
    via `TextReader`/`TextWriter`. Once the data is collected, it instantiates the appropriate domain strategy.
-2. **`IPaymentStrategy` (Domain Layer)**: This interface defines the actual execution of the payment (the `Checkout`
+2. **`IPaymentStrategy` (Domain Layer - `Domain.Payment`)**: This interface defines the actual execution of the
+   payment (the `Checkout`
    method). It is "pure" in the sense that it doesn't know how the payment details were gathered; it only knows how to
    process the transaction with the data it was given at construction.
 
@@ -257,18 +279,18 @@ config:
 ---
 classDiagram
     direction LR
-    namespace UserInterface {
-        class IPaymentStrategyGenerator {
+    namespace UserInterface_PaymentBuilder {
+        class IPaymentBuilder {
             <<interface>>
             +Name : string
             +CreateStrategy(TextReader, TextWriter) IPaymentStrategy
         }
-        class CreditCardPaymentStrategyGenerator
-        class ApplePayPaymentStrategyGenerator
-        class CryptoCurrencyPaymentStrategyGenerator
+        class CreditCardPaymentBuilder
+        class ApplePayPaymentBuilder
+        class CryptoCurrencyPaymentBuilder
     }
 
-    namespace Domain {
+    namespace Domain_Payment {
         class IPaymentStrategy {
             <<interface>>
             +Checkout(InventoryItem, int, TextWriter)
@@ -279,18 +301,18 @@ classDiagram
         class CryptoCurrencyStrategy
     }
     
-    IPaymentStrategyGenerator <|.. CreditCardPaymentStrategyGenerator
-    IPaymentStrategyGenerator <|.. ApplePayPaymentStrategyGenerator
-    IPaymentStrategyGenerator <|.. CryptoCurrencyPaymentStrategyGenerator
+    IPaymentBuilder <|.. CreditCardPaymentBuilder
+    IPaymentBuilder <|.. ApplePayPaymentBuilder
+    IPaymentBuilder <|.. CryptoCurrencyPaymentBuilder
     
     IPaymentStrategy <|.. PaymentStrategyBase
     PaymentStrategyBase <|-- CreditCardStrategy
     PaymentStrategyBase <|-- ApplePayStrategy
     PaymentStrategyBase <|-- CryptoCurrencyStrategy
     
-    CreditCardPaymentStrategyGenerator ..> CreditCardStrategy : creates
-    ApplePayPaymentStrategyGenerator ..> ApplePayStrategy : creates
-    CryptoCurrencyPaymentStrategyGenerator ..> CryptoCurrencyStrategy : creates
+    CreditCardPaymentBuilder ..> CreditCardStrategy : creates
+    ApplePayPaymentBuilder ..> ApplePayStrategy : creates
+    CryptoCurrencyPaymentBuilder ..> CryptoCurrencyStrategy : creates
 ```
 
 ## I/O Abstraction for Testing and Polymorphism
@@ -309,15 +331,15 @@ This approach provides several key benefits:
 3. **Separation of Concerns**: The domain logic and UI builders remain agnostic of the specific I/O device, making the
    code more flexible and easier to maintain.
 
-#### Example: Injecting I/O in `QueryBuilder`
+#### Example: Injecting I/O in `InventoryQueryBuilder`
 
 ```csharp
-public class QueryBuilder
+public class InventoryQueryBuilder
 {
     private readonly TextReader _input;
     private readonly TextWriter _output;
 
-    public QueryBuilder(InventoryRepository repository, TextReader input, TextWriter output)
+    public InventoryQueryBuilder(InventoryRepository repository, TextReader input, TextWriter output)
     {
         _repository = repository;
         _input = input;
@@ -337,13 +359,13 @@ public class QueryBuilder
 
 ```csharp
 [Fact]
-public void QueryBuilder_Build_ReturnsConfiguredQuery()
+public void InventoryQueryBuilder_Build_ReturnsConfiguredQuery()
 {
     // Arrange
     // Simulations: Green (name contains), Y (is available), 10 (min price), 20 (max price), 4 (min rating), 5 (max rating), D (sort by price), A (sort by rating)
     var input = new StringReader("Green\nY\n10\n20\n4\n5\nD\nA");
     var output = new StringWriter();
-    var builder = new QueryBuilder(repository, input, output);
+    var builder = new InventoryQueryBuilder(repository, input, output);
 
     // Act
     var query = builder.Build();

@@ -1,10 +1,10 @@
 using Assignment2Solution.Domain.Inventory;
-using Assignment2Solution.Domain.Query;
-using Assignment2Solution.Domain.Query.Filters;
-using Assignment2Solution.Domain.Query.Sorts;
+using Assignment2Solution.Domain.InventoryQuery;
+using Assignment2Solution.Domain.InventoryQuery.Filters;
+using Assignment2Solution.Domain.InventoryQuery.Sorts;
 using Moq;
 
-namespace TeaShop.UnitTest.Domain.Query;
+namespace TeaShop.UnitTest.Domain.InventoryQuery;
 
 public class QueryTests
 {

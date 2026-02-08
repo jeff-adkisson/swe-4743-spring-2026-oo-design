@@ -90,11 +90,13 @@ By completing this assignment, you will demonstrate that you can:
 
 Your tea shop must support **filtering**, **sorting**, and **purchasing**.
 
-> Note: These are user requirements - not technical design - so the material here is focused on *what* the application will do, not *how*. The *how* is detailed after this section.
+> Note: These are user requirements - not technical design - so the material here is focused on *what* the application will do, not *how*. The *how* is detailed later in this document.
 
 ### Inventory and Search
 
 - Store a **pre-defined inventory** of teas (at least 12 items).
+
+  > There are example inventory lists written in C# and Java in the FAQ section. Whether you use these or make your own, ensure you have a variety of names, prices, quantities (including 0), and star ratings to thoroughly test your solution. 
 - Users must be able to search and refine results using prompts.
 
 Each tea item must include the following fields:

@@ -870,6 +870,8 @@ Docker is optional but recommended if you do not have the required tooling insta
 
 ---
 
+# Appendix
+
 ## NotebookLM Summary Material
 
 The following was auto-generated from this assignment and the related lectures by NotebookLM / Gemini.

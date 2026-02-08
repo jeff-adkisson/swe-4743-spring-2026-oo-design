@@ -1,0 +1,18 @@
+# Maven build output
+target/
+
+# Java artifacts
+*.class
+hs_err_pid*
+*.log
+
+# IDEs
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# OS files
+.DS_Store

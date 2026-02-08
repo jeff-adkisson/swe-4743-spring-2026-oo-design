@@ -61,7 +61,11 @@ Your implementation should be clean, readable, and easy to reason about.
 - [Final Advice](#final-advice)
 - [Submitting Your Assignment](#submitting-your-assignment)
 - [Solutions](#solutions)
+
+#### Appendix
+
 - [NotebookLM Summary Material](#notebooklm-summary-material)
+- [Suggestions for Filtering and Querying Collections](#suggestions-for-filtering-and-querying-collections)
 
 ---
 
@@ -84,7 +88,7 @@ By completing this assignment, you will demonstrate that you can:
 
 ## Application Requirements
 
-Your tea shop must support **searching**, **filtering**, **sorting**, and **purchasing**.
+Your tea shop must support **filtering**, **sorting**, and **purchasing**.
 
 > Note: These are user requirements - not technical design - so the material here is focused on *what* the application will do, not *how*. The *how* is detailed after this section.
 
@@ -350,6 +354,8 @@ You must implement inventory queries using the **Decorator Pattern**:
 - Each filter/sort wraps another `IInventoryQuery`.
 - Decorators must override a single method that applies their specific logic.
 - The final query is executed by calling `Execute()` once.
+
+> **Note:** If you are unfamiliar with C#’s LINQ or Java’s Streams, review the [appendix entry on declarative querying](#suggestions-for-filtering-and-querying-collections). These mechanisms are strongly recommended for implementing filters and sorts in a clear, composable, and idiomatic way. Generally, your code will be shorter and easier to read.
 
 ---
 
@@ -873,5 +879,129 @@ The following was auto-generated from this assignment and the related lectures b
 
 ![image-20260207201409624](assignment-2.assets/image-20260207201409624.png)
 
+## Suggestions for Filtering and Querying Collections
 
+When implementing inventory queries, **consider declarative querying mechanisms** over manual `for` or `foreach` loops.
+
+Using language-supported query abstractions leads to code that is:
+
+- Easier to read and reason about
+- More composable (especially when combined with the Decorator pattern)
+- Less error-prone than manual loop-and-accumulate logic
+- More aligned with professional, idiomatic C# and Java codebases
+
+Manual loops are not *wrong*, but they tend to obscure intent and make it harder to see *what* a query is doing versus *how* it is implemented.
+
+---
+
+### C#: LINQ (`System.Linq`)
+
+In C#, **Language Integrated Query (LINQ)** provides a fluent, expressive way to filter, sort, and project collections.
+
+#### Required Namespace
+
+```csharp
+using System.Linq;
+```
+
+#### After (Preferred: Declarative LINQ)
+
+```csharp
+var results = items
+    .Where(t => t.Quantity > 0)
+    .Where(t => t.StarRating.Value >= 3)
+    .OrderBy(t => t.Price)
+    .ThenByDescending(t => t.StarRating.Value);
+```
+
+#### Before (Imperative Loop-Based Filtering)
+
+```csharp
+var results = new List<InventoryItem>();
+
+foreach (var item in items)
+{
+    if (item.Quantity > 0 && item.StarRating.Value >= 3)
+    {
+        results.Add(item);
+    }
+}
+
+results.Sort((a, b) =>
+{
+    var priceCompare = a.Price.CompareTo(b.Price);
+    return priceCompare != 0
+        ? priceCompare
+        : b.StarRating.Value.CompareTo(a.StarRating.Value);
+});
+```
+
+---
+
+### Java: Streams (`java.util.stream`)
+
+In Java, **Streams** provide a functional-style API for processing collections.
+
+#### Required Imports
+
+```java
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
+import java.util.Comparator;
+```
+
+#### After (Preferred: Stream Pipeline)
+
+```java
+var results = items.stream()
+    .filter(t -> t.getQuantity() > 0)
+    .filter(t -> t.getStarRating().getValue() >= 3)
+    .sorted(
+        Comparator.comparing(InventoryItem::getPrice)
+            .thenComparing(
+                t -> t.getStarRating().getValue(),
+                Comparator.reverseOrder()
+            )
+    )
+    .collect(Collectors.toList());
+```
+
+#### Before (Imperative Loop-Based Filtering)
+
+```java
+List<InventoryItem> results = new ArrayList<>();
+
+for (InventoryItem item : items) {
+    if (item.getQuantity() > 0 && item.getStarRating().getValue() >= 3) {
+        results.add(item);
+    }
+}
+
+results.sort((a, b) -> {
+    int priceCompare = Double.compare(a.getPrice(), b.getPrice());
+    return priceCompare != 0
+        ? priceCompare
+        : Integer.compare(
+            b.getStarRating().getValue(),
+            a.getStarRating().getValue()
+        );
+});
+```
+
+---
+
+### Design Guidance
+
+- Filtering and sorting logic belongs in the **Domain layer**, not the UI
+- Prefer **query composition** over branching logic
+- Avoid building intermediate lists inside loops
+- Declarative queries align naturally with **SRP**, **OCP**, and the **Decorator pattern**
+
+#### And a Friendly Warning...
+
+LINQ and Java Streams can feel like magic, but they are still abstractions over iteration. The underlying computational complexity remains the same, even when the code appears simpler. In some cases, these mechanisms can also increase allocations. 
+
+They improve expressiveness, not performance, and used carelessly can hide repeated enumeration, unnecessary sorting, or excessive data traversal.
+
+I highly recommend learning the techniques, but do not overlook what these mechanisms can also hide.
 

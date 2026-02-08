@@ -61,6 +61,7 @@ Your implementation should be clean, readable, and easy to reason about.
 - [Final Advice](#final-advice)
 - [Submitting Your Assignment](#submitting-your-assignment)
 - [Solutions](#solutions)
+- [NotebookLM Summary Material](#notebooklm-summary-material)
 
 ---
 
@@ -858,3 +859,19 @@ You can also run the solutions using Docker. Each solution includes a Dockerfile
 - runs the compiled application.
 
 Docker is optional but recommended if you do not have the required tooling installed locally.
+
+---
+
+## NotebookLM Summary Material
+
+The following was auto-generated from this assignment and the related lectures by NotebookLM / Gemini.
+
+- [Presentation (PDF)](assignment-2-presentation-notebooklm.pdf)
+- [Video](assignment-2-video-notebooklm.mp4)
+
+#### Infographic
+
+![image-20260207201409624](assignment-2.assets/image-20260207201409624.png)
+
+
+

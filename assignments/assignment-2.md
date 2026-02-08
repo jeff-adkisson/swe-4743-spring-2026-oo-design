@@ -35,7 +35,7 @@ Your implementation should be clean, readable, and easy to reason about.
 - [Input Handling and Defaults](#input-handling-and-defaults)
 - [Example Implementation Console Output](#example-implementation-console-output)
 - [Required Design Architecture](#required-design-architecture)
-- [Domain vs UserInterface (Required)](#domain-vs-userinterface-required)
+- [Domain vs UserInterface Namespace (Required)](#domain-vs-userinterface-namespace-required)
 - [Interfaces (Required)](#interfaces-required)
 - [Abstract Classes (Required)](#abstract-classes-required)
 - [Concrete Classes (Examples)](#concrete-classes-examples)
@@ -239,7 +239,7 @@ Search for more tea? (Y/N, default Y):
 
 ## Required Design Architecture
 
-### Domain vs UserInterface (Required)
+### Domain vs UserInterface Namespace (Required)
 
 Your solution must separate **Domain logic** from **User Interface logic**.
 
@@ -337,8 +337,7 @@ You must implement payment processing using the **Strategy Pattern**:
 - Each strategy must encapsulate its own checkout logic.
 - Do **not** use `if/else` or `switch` statements on payment type.
 
-Note: Payment processing is **simulated** by printing output to the console. You are not building real payment
-integrations for this assignment.
+Note: Payment processing is **simulated** by printing output to the console. You are not building real payment integrations for this assignment.
 
 ---
 
@@ -556,6 +555,8 @@ If you choose to write tests:
 - Tests should **not** require interactive console input.
 - Update your `README.md` with test execution instructions.
 
+>  Note: If you find writing tests against your UI logic too challenging, limit your unit tests to your domain logic only. It is better to have limited unit test coverage than no coverage.
+
 ---
 
 ## README.md Requirements (Mandatory)
@@ -601,8 +602,6 @@ Including Docker execution instructions really simplifies clone-and-go trials of
 ### 4. Tests (Optional)
 
 - If you implemented unit tests, include how to run them.
-
-> Note: If you find running tests against your UI logic too challenging, limit your tests to your domain logic only. It is better to have limited unit test coverage than no coverage.
 
 ---
 
@@ -703,9 +702,13 @@ public class Main {
 ## FAQ
 
 ## 1. "Can I put all logic in `Application` and refactor later?"
-**This is a bad approach. Layout your project according to the guidelines in this document, then attempt to get it working one step at a time. If you cannot get the decorator working, get the query prompts working, then refactor into the decorator pattern. But do not write a monolithic solution in Application, then try to split a thousand lines of code into the appropriate places.**
+**This is not a good approach for a non-trivial solution.** 
 
-This assignment is about **design**, not refactoring.
+Layout your project according to the guidelines in this document, then attempt to get it working one step at a time. If you cannot get the decorator working, get the query prompts working, then refactor into the decorator pattern. Break the problem down, but do not do it all in a single file. Divide the code you are writing by responsibility... that will help you determine where the logic goes.
+
+Do not try to get it perfect in the first pass. Get it working, then evolve it toward your final submission. Stop trying to produce perfect code in a single pass (but also avoid writing long, highly procedural code as well).
+
+This assignment is about **design thinking and intentional coding**, not refactoring.
 
 ---
 
@@ -728,6 +731,7 @@ If you are having trouble understanding how to implement the patterns, create an
 - Decorator Pattern
 - Encapsulation
 - Polymorphism and dynamic dispatch
+- Thoughtful naming
 
 ---
 

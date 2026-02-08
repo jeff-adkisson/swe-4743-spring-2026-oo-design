@@ -30,6 +30,6 @@ public record StarRating
     /// <returns>A string with the rating value and a star character.</returns>
     public override string ToString()
     {
-        return $"{Rating}★";
+        return $"{Rating}{new string('*', Rating)}";
     }
 }

@@ -23,25 +23,9 @@ This assignment is **not about UI polish**. It is explicitly about demonstrating
 
 Your implementation should be clean, readable, and easy to reason about.
 
-## Learning Objectives
-
-By completing this assignment, you will demonstrate that you can:
-
-- Design software around **principles and patterns** instead of ad-hoc conditionals
-- Apply **SRP** by keeping classes focused on a single responsibility
-- Apply **OCP** by extending behavior without modifying core logic
-- Use the **Strategy Pattern** to encapsulate payment behavior
-- Use the **Decorator Pattern** to compose filters and sorts at runtime
-- Separate **Domain** logic from **User Interface** logic
-- Use **polymorphism and dynamic dispatch** instead of type checking
-- Protect internal state via **encapsulation**
-- Organize a medium-sized console application into cohesive classes
-- Document a console application using a clear, professional `README.md`
-
----
-
 ## Table of Contents
 
+- [Learning Objectives](#learning-objectives)
 - [Application Requirements](#application-requirements)
 - [Inventory and Search](#inventory-and-search)
 - [Query Filters and Sorts](#query-filters-and-sorts)
@@ -77,6 +61,23 @@ By completing this assignment, you will demonstrate that you can:
 - [Final Advice](#final-advice)
 - [Submitting Your Assignment](#submitting-your-assignment)
 - [Solutions](#solutions)
+
+---
+
+## Learning Objectives
+
+By completing this assignment, you will demonstrate that you can:
+
+- Design software around **principles and patterns** instead of ad-hoc conditionals
+- Apply **SRP** by keeping classes focused on a single responsibility
+- Apply **OCP** by extending behavior without modifying core logic
+- Use the **Strategy Pattern** to encapsulate payment behavior
+- Use the **Decorator Pattern** to compose filters and sorts at runtime
+- Separate **Domain** logic from **User Interface** logic
+- Use **polymorphism and dynamic dispatch** instead of type checking
+- Protect internal state via **encapsulation**
+- Organize a medium-sized console application into cohesive classes
+- Document a console application using a clear, professional `README.md`
 
 ---
 
@@ -228,7 +229,7 @@ Quantity for "Green Tea" (1-50): 2
 2. Apple Pay
 3. CryptoCurrency
 Selection: 1
-Enter Card Number: 1234567890123456
+Enter Credit Card Number: 1234567890123456
 *** Purchase complete. Your 2 packages of Green Tea is on the way ***
 
 Search for more tea? (Y/N, default Y):
@@ -253,6 +254,7 @@ At minimum:
 - C# `IInventoryQuery`
   Java `InventoryQuery`
   > This is your decorator interface for querying and sorting the tea repository.
+  
 - C# `IPaymentStrategy`
   Java `PaymentStrategy`
   > This is your strategy interface for accepting payment via various payment processors.
@@ -362,6 +364,7 @@ You must implement inventory queries using the **Decorator Pattern**:
 
 ## Polymorphism & Dynamic Dispatch
 
+- Payment methods will be executed through the `IPaymentStrategy` interface.
 - Payment selection must execute the simulated payment operation without knowing the concrete type.
 - Queries must be built and executed as `IInventoryQuery`, not concrete decorators.
 
@@ -478,6 +481,8 @@ Note the careful separation of domain logic and UI logic. The UI references the 
 
 The following diagram visually demonstrates how to separate user interface concerns (console logic) from domain concerns. Your implementation does not have to match this, but it should demonstrate the same concepts.
 
+> Reminder: Builders (mechanisms that collect the input required by domain logic) live in the **User Interface** layer, while strategies and queries live in the **Domain** layer.
+
 ```mermaid
 sequenceDiagram
     box "Human (or Unit Test)"
@@ -487,7 +492,7 @@ sequenceDiagram
     box "User Interface"
         participant App as Application
         participant QueryBuilder as InventoryQueryBuilder
-        participant PaymentBuilder as IPaymentBuilder
+        participant PaymentBuilder
     end
 
     box "Domain"
@@ -580,6 +585,10 @@ java edu.kennesaw.teashop.Main
 
 (Maven or Gradle acceptable if clearly documented)
 
+#### Docker
+
+Including Docker execution instructions really simplifies clone-and-go trials of your application. This is excellent experience and highly recommended. See the C# solution README for an example.
+
 ### 3. Screenshot
 
 - Include at least one screenshot of the running application.
@@ -592,6 +601,8 @@ java edu.kennesaw.teashop.Main
 ### 4. Tests (Optional)
 
 - If you implemented unit tests, include how to run them.
+
+> Note: If you find running tests against your UI logic too challenging, limit your tests to your domain logic only. It is better to have limited unit test coverage than no coverage.
 
 ---
 
@@ -692,7 +703,7 @@ public class Main {
 ## FAQ
 
 ## 1. "Can I put all logic in `Application` and refactor later?"
-**This is a bad approach. Layout your project according to the guidelines in this doucment, then attempt to get it working one step at a time. If you cannot get the decorator working, get the query prompts working, then refactor into the decorator pattern. But do not write a monolithic solution in Application, then try to split a thousand lines of code into the appropriate places.**
+**This is a bad approach. Layout your project according to the guidelines in this document, then attempt to get it working one step at a time. If you cannot get the decorator working, get the query prompts working, then refactor into the decorator pattern. But do not write a monolithic solution in Application, then try to split a thousand lines of code into the appropriate places.**
 
 This assignment is about **design**, not refactoring.
 

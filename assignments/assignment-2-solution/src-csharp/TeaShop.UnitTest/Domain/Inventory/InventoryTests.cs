@@ -79,7 +79,7 @@ public class InventoryTests
         var rating = new StarRating(4);
 
         // Act & Assert
-        Assert.Equal("4★", rating.ToString());
+        Assert.Equal("4****", rating.ToString());
     }
 
     [Fact]

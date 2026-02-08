@@ -4,4 +4,4 @@ Each solution has separate build and execution instructions. Open the appropriat
 
 ## Links
 - C# solution: [src-csharp/README.md](src-csharp/README.md)
-- Java solution: src-java/README.md - Converted C# to Java Codex AI
+- Java solution: [src-java/README.md](src-java/README.md) - Converted C# to Java via Codex AI

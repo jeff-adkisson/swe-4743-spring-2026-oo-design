@@ -349,8 +349,6 @@ public class OrderProcessor
 
 public class TestOrderProcessor : OrderProcessor
 {
-public class TestOrderProcessor : OrderProcessor
-{
     public override bool Process(Order order)
     {
         // intentionally skips persistence
@@ -446,7 +444,7 @@ Ask these questions:
 - Does it remove guarantees?
 - Does client code need `if (x is SubType)`?
 
-If yes → LSP is violated.
+If yes, then LSP is likely violated.
 
 ---
 

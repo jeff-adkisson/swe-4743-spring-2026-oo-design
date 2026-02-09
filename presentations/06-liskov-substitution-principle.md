@@ -26,10 +26,10 @@ When they do not, inheritance becomes a source of bugs and surprises rather than
 - [The Original Definition of LSP](#the-original-definition-of-lsp)
 - [What LSP Is Really About](#what-lsp-is-really-about)
 - [LSP as a Contract, Not Inheritance](#lsp-as-a-contract-not-inheritance)
-- [Bait-and-Switch as an LSP Metaphor](#bait-and-switch-as-an-lsp-metaphor)
 - [Classic Bad Example: Rectangle / Square](#classic-bad-example-rectangle--square)
 - [Why the Rectangle Example Fails](#why-the-rectangle-example-fails)
 - [A Corrected Design](#a-corrected-design)
+- [Bait-and-Switch as an LSP Metaphor](#bait-and-switch-as-an-lsp-metaphor)
 - [Behavioral Subtyping Rules](#behavioral-subtyping-rules)
 - [Preconditions, Postconditions, and Invariants](#preconditions-postconditions-and-invariants)
 - [Strengthening Preconditions (Bad)](#strengthening-preconditions-bad)
@@ -126,51 +126,6 @@ note for SubType "Must honor all expectations"
 The compiler checks signatures to validate type compatibility. The compiler cannot *not* prevent LSP violations.
 
 **Only design discipline enforces LSP.** 
-
----
-
-## **Bait-and-Switch as an LSP Metaphor**
-
-In a bait-and-switch:
-
-- The seller **advertises** one thing, and
-
-- The buyer **forms plans** based on that promise, and
-
-- The seller **delivers something else**, and
-
-- When challenged, the defense is:
-
-  > “It’s basically the same thing.”
-
-#### The Legal Expert's View of LSP
-
-An attorney would call this **misrepresentation**.
-
-- One party makes a **representation of fact**, and
-- The other party **reasonably relies** on it, and
-- The reality **does not match the representation**, and
-- Harm occurs because of that reliance.
-
-------
-
-### **Mapping Directly to Code**
-
-- **The reservation description** → Method or interface contract
-- **The sedan category** → Base class or interface
-- **The weird car-shaped thing** → Subclass or implementation
-- **“You shouldn’t take it on the highway”** → Hidden preconditions
-- **“It still drives”** → Signature compatibility without behavioral compatibility
-
-Nothing *crashes* immediately — but the client is forced to add checks:
-
-> “Is this *really* a sedan?”
-
-> “Can I safely do the thing I always do?”
-
-Once clients have to ask those questions, substitutability is gone.
-
-> **LSP violations aren’t about objects that don’t work — they’re about objects that work differently enough to break client assumptions.**
 
 ---
 
@@ -282,6 +237,31 @@ Now:
 > Key idea: Be very careful applying DRY in a base class. You must make sure it preserves substitutability across all subtypes. 
 
 ![image-20260209013904918](06-liskov-substitution-principle.assets/image-20260209013904918.png)
+
+---
+
+## **Bait-and-Switch as an LSP Metaphor**
+
+In a bait-and-switch:
+
+- The seller **advertises** one thing, and
+
+- The buyer **forms plans** based on that promise, and
+
+- The seller **delivers something else**, and
+
+- When challenged, the defense is:
+
+  > “It’s basically the same thing.”
+
+#### The Legal Expert's View of LSP
+
+An attorney would call this **misrepresentation**.
+
+- One party makes a **representation of fact**, and
+- The other party **reasonably relies** on it, and
+- The reality **does not match the representation**, and
+- Harm occurs because of that reliance.
 
 ---
 

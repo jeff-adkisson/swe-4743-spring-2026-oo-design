@@ -45,11 +45,12 @@ When they do not, inheritance becomes a source of bugs and surprises rather than
   - [LSP Video Overview (NotebookLM)](#lsp-video-overview)
   - [ Semantic Promise Example](#semantic-promise-example)
   - [Prevent LSP-Unsafe Subtypes by Forbidding Inheritance ](#prevent-lsp-unsafe-subtypes-by-forbidding-inheritance)
-  - [Liskov Substitution Principle Study Guide](#liskov-substitution-principle-study-guide)
+  - [Naming Is Part of the LSP Contract](#naming-is-part-of-the-lsp-contract)
 
-- Appendix 2
+- Appendix 2 (outside scope of course)
   - [Covariance and Contravariance](#covariance-and-contravariance)
 
+- [Liskov Substitution Principle Study Guide](#liskov-substitution-principle-study-guide)
 
 ---
 
@@ -849,177 +850,185 @@ These small design choices significantly reduce the risk of LSP violations:
 
 > **LSP is preserved not by clever overrides, but by limiting what can be overridden.**
 
-## Liskov Substitution Principle Study Guide
+---
 
-### What LSP Is About
-- LSP is about **substitutability**.
-- If code works with a base type, it must work *correctly* with any subtype.
-- LSP is fundamentally about **trust in abstractions**.
+## Naming Is Part of the LSP Contract
 
-> If a subtype surprises client code, LSP is violated.
+> "**There are only two hard things in Computer Science: cache invalidation and naming things**"
+> *Phil Karlton*
+>
+> "**Programs are meant to be read by humans and only incidentally for computers to execute.**"
+> *Donald Knuth*
+>
+> "**Any fool can write code that a computer can understand. Good programmers write code that humans can understand.**"
+> *Martin Fowler*
+>
+> "**Great engineers are great communicators.**"
+> *Jeff Adkisson lol*
+
+LSP is usually taught as “a subtype must be usable anywhere its base type is expected.” In practice, that expectation is carried less by inheritance diagrams and more by *words*: class names, interface names, method names, parameter names, and return types. Those names are the only “contract language” many consumers ever read.
+
+Attorneys learn to draft contracts because tiny wording choices create (or remove) obligations. Developers get told “use good names,” then we act surprised when a subtype technically compiles but semantically violates what callers *reasonably believed* they were promised. If callers must constantly “read the implementation” to know what a type *really* does, the contract has already failed.
+
+This section provides a practical naming guide to help keep Liskov Substitution Principle (LSP) **semantically true over time**, even as teams, features, and years change.
 
 ---
 
-### Key Definition
-- **Liskov Substitution Principle:** Subtypes must be usable anywhere their base type is expected *without altering correct program behavior*.
+### 1. Name the Guarantee, Not the Mechanism
+
+Good names encode promises. If a name implies a guarantee, every implementation (including subtypes) must uphold it.
+
+Examples:
+- `OrderRepository.Save(order)` implies persistence.
+- `Cache.Get(key)` implies retrieval, not persistence.
+- `Encrypt(data)` implies cryptographic guarantees; `Scramble(data)` does not.
+
+**Guideline:** If a name would feel misleading in documentation, it is misleading in code.
 
 ---
 
-### Semantic Promises
-- A **semantic promise** is what client code reasonably expects based on:
-  - Type name
-  - Method names
-  - Parameters
-  - Return values
-- Clients rely on *meaning*, not implementation.
+### 2. Put the Strongest Semantic Claims in the Type System
 
-#### Examples of Semantic Promises
-- `Save()` implies persistence
-- `Withdraw()` implies balance reduction
-- `Get()` implies retrievable state
+Names matter, but types enforce behavior.
 
-> See Appendix 1 for a detailed [semantic promise example](#semantic-promise-example).
+#### Separate “maybe” from “must”
+- Use `TryGetX(out X value)`, `X? GetXOrDefault()`, or result/option types when absence is normal.
+- Use `GetX()` only when the value is guaranteed or absence is exceptional.
 
----
+If a base method is named `Get`, but subtypes commonly return `null` or throw during normal execution, substitutability is already broken.
 
-### LSP Is Not About
-- Method signatures
-- Inheritance syntax
-- Code reuse
-- Avoiding duplication
+#### Use domain-specific types to prevent reinterpretation
+Avoid generic primitives when meaning matters.
 
-LSP *is* about:
-- Behavior
-- Guarantees
-- Expectations over time
+Prefer:
+- `Money`, `EmailAddress`, `CustomerId`
+
+Over:
+- `decimal`, `string`, `Guid`
+
+Stronger types reduce the chance that subtypes reinterpret parameter meaning.
 
 ---
 
-### Behavioral Subtyping Rules
-A subtype must:
+### 3. Avoid Names That Smuggle Policy Variations Into One Contract
 
-1. **Not strengthen preconditions**
-2. **Not weaken postconditions**
-3. **Preserve invariants**
+A frequent LSP failure is a single method representing multiple behaviors.
 
-These rules define **behavioral compatibility**.
+**Smell:** Boolean or enum mode parameters
 
----
+```csharp
+Process(order, persist: true)
+```
 
-### Preconditions
-- What must be true *before* a method runs
-- A subtype must not require *more* than the base type
+This invites subtypes to partially support or ignore modes.
 
-#### Violation Example
-- Base allows `null`
-- Subtype throws when given `null`
+**Better approaches:**
+- Use distinct methods: `Process()` vs `ProcessAndPersist()`
+- Use distinct interfaces: `IOrderProcessor` vs `IPersistingOrderProcessor`
 
----
-
-### Postconditions
-- What is guaranteed *after* a method completes
-- A subtype must not guarantee *less* than the base type
-
-#### Violation Example
-- Base guarantees persistence
-- Subtype returns success without persisting
+**Rule:** If a method needs a mode flag, it probably needs a different name or a different abstraction.
 
 ---
 
-### Invariants
-- Conditions that must *always* hold true
-- Subtypes must preserve all base type invariants
+### 4. Interface Names Should Describe Capabilities
 
-#### Example
-- `Balance >= 0` must always remain true
+Interfaces should express *what they can do*, not vague roles.
 
----
+Prefer:
+- `IReadable<T>`
+- `IWritable<T>`
+- `IClock`
+- `INotifier`
 
-### Classic LSP Violation: Rectangle / Square
-- `Rectangle` implies independent width and height
-- `Square` enforces equality between dimensions
-- Substitution breaks client expectations
+Avoid:
+- `IUserManager`
+- `IDataService`
+- `IProcessingEngine`
 
-> Legal inheritance does not imply legal substitution.
-
----
-
-### DRY vs LSP
-- DRY encourages reuse
-- Inheritance reuses **behavior and meaning**
-- Reusing code via inheritance can accidentally reuse **invalid semantics**
-
-> It is better to duplicate small amounts of code than to duplicate meaning.
+**Test:** Can the interface be described with “Provides the ability to…”?
+If not, it is likely too broad and LSP-hostile.
 
 ---
 
-### Exception-Based LSP Violations
-- Introducing new exceptions in overrides often violates LSP
-- Base code did not expect the exception
-- Subtypes must not change failure behavior
+### 5. Class Names Should Narrow Meaning, Not Change It
+
+Subtypes should add specificity without changing expectations.
+
+Good:
+- `SqlOrderRepository : IOrderRepository`
+- `InMemoryOrderRepository : IOrderRepository` (if guarantees are preserved)
+
+Risky:
+- `TestOrderRepository` that does not persist
+- `FastOrderRepository` that changes correctness semantics
+
+**Guideline:** If the subclass name justifies behavioral exceptions (“Test”, “Mock”, “Fake”), do not subtype—use a different abstraction.
 
 ---
 
-### Temporal Coupling and LSP
-- Temporal coupling exists when operations must occur in order
-- LSP violations make temporal coupling **fragile**
+### 6. Method Names Should Encode Preconditions and Postconditions
 
-#### Temporal Inconsistency
-- An operation reports success
-- Later operations contradict that success
+LSP violations often come from weakening postconditions or strengthening preconditions.
 
-> A broken promise now becomes a failure later.
+#### Encode preconditions in the verb
+- `ParseX` implies strictness
+- `TryParseX` implies safe failure
+- `NormalizeX` implies valid output
+- `ValidateX` implies no mutation
 
----
+#### Encode postconditions explicitly
+- `Add` vs `Upsert`
+- `Delete` vs `Archive` vs `Deactivate`
+- `Save` vs `Commit` vs `Flush`
 
-### Interfaces and Test Doubles
-- Mocking interfaces is usually LSP-safe
-- Inheriting from concrete classes with strong semantics is risky
-- Interfaces allow **narrower, explicit contracts**
-
----
-
-### Practical Heuristics
-Ask these questions:
-- Would this behavior surprise a caller?
-- Does the subtype restrict valid inputs?
-- Does it remove guarantees?
-- Does client code need type checks?
-
-If yes → likely an LSP violation.
+If a subtype cannot meet the implied guarantee, it should not share the name.
 
 ---
 
-### Common Code Smells
-- Overridden methods that throw unexpectedly
-- `NotImplementedException`
-- Subtypes with unused methods
-- Client-side `if (x is SubType)` checks
-- “This works except when…” comments
+### 7. Choose Exception Semantics Up Front and Name Accordingly
 
-![image-20260209013820110](06-liskov-substitution-principle.assets/image-20260209013820110.png)
+If exceptions are required to discover normal outcomes, the contract is unclear.
 
----
+- Use `TryX` or result objects when failure is expected.
+- Use exceptions only for truly exceptional cases.
 
-### Relationship to Other SOLID Principles
-- **SRP** enables LSP
-- **LSP** makes **OCP** safe
-- Without LSP, polymorphism becomes dangerous
+**Rule:** `TryX` should not throw for expected failures. `X` should not silently fail when success is implied.
 
 ---
 
-### Final Takeaway
-- LSP is about **trust**
-- Abstractions are contracts
-- Substitutability is non-negotiable
+### 8. Method Signatures Are Contract Grammar
 
-> If a subtype cannot keep the promises of its base type, it should not inherit from it.
+Signature shape reinforces expectations.
+
+- Keep parameter meaning stable across subtypes.
+- Avoid overloading unrelated responsibilities.
+- Prefer immutability in return values.
+- Return the weakest type that still communicates guarantees (`IEnumerable<T>` vs `IReadOnlyList<T>`).
+
+Fewer guarantees mean fewer opportunities for LSP violations.
+
+---
+
+### LSP Naming Checklist
+
+Before adding or reviewing an abstraction:
+
+1. What does the name promise?
+2. Can every subtype uphold that promise?
+3. Does the signature prevent dishonest implementations?
+4. Are normal outcomes communicated without exceptions?
+5. Are capabilities narrow and explicit?
+6. Would a reasonable caller be surprised by any implementation?
+
+If the answer to the last question is “yes,” the contract is already broken.
+
+---
 
 # Appendix 2
 
-## Covariance and Contravariance
+The material in Appendix 2 is outside of the scope of this course, but recommended for your development and interview preparation. No material in Appendix 2 will appear on an exam or be required in an assignment or project.
 
-> This material will not appear on the exam. 
+## Covariance and Contravariance
 
 Covariance and contravariance are **type-system rules about safe substitution**, primarily involving generics, method parameters, and return types.
 
@@ -1242,3 +1251,195 @@ Awareness is sufficient for our goals.
 - Only LSP is enforced by the designer
 
 > **The compiler can enforce variance. Only design can enforce LSP.**
+
+---
+
+# Liskov Substitution Principle Study Guide
+
+### What LSP Is About
+
+- LSP is about **substitutability**.
+- If code works with a base type, it must work *correctly* with any subtype.
+- LSP is fundamentally about **trust in abstractions**.
+
+> If a subtype surprises client code, LSP is violated.
+
+---
+
+### Key Definition
+
+- **Liskov Substitution Principle:** Subtypes must be usable anywhere their base type is expected *without altering correct program behavior*.
+
+---
+
+### Semantic Promises
+
+- A **semantic promise** is what client code reasonably expects based on:
+  - Type name
+  - Method names
+  - Parameters
+  - Return values
+- Clients rely on *meaning*, not implementation.
+
+#### Examples of Semantic Promises
+
+- `Save()` implies persistence
+- `Withdraw()` implies balance reduction
+- `Get()` implies retrievable state
+
+> See Appendix 1 for a detailed [semantic promise example](#semantic-promise-example).
+
+---
+
+### LSP Is Not About
+
+- Method signatures
+- Inheritance syntax
+- Code reuse
+- Avoiding duplication
+
+LSP *is* about:
+
+- Behavior
+- Guarantees
+- Expectations over time
+
+---
+
+### Behavioral Subtyping Rules
+
+A subtype must:
+
+1. **Not strengthen preconditions**
+2. **Not weaken postconditions**
+3. **Preserve invariants**
+
+These rules define **behavioral compatibility**.
+
+---
+
+### Preconditions
+
+- What must be true *before* a method runs
+- A subtype must not require *more* than the base type
+
+#### Violation Example
+
+- Base allows `null`
+- Subtype throws when given `null`
+
+---
+
+### Postconditions
+
+- What is guaranteed *after* a method completes
+- A subtype must not guarantee *less* than the base type
+
+#### Violation Example
+
+- Base guarantees persistence
+- Subtype returns success without persisting
+
+---
+
+### Invariants
+
+- Conditions that must *always* hold true
+- Subtypes must preserve all base type invariants
+
+#### Example
+
+- `Balance >= 0` must always remain true
+
+---
+
+### Classic LSP Violation: Rectangle / Square
+
+- `Rectangle` implies independent width and height
+- `Square` enforces equality between dimensions
+- Substitution breaks client expectations
+
+> Legal inheritance does not imply legal substitution.
+
+---
+
+### DRY vs LSP
+
+- DRY encourages reuse
+- Inheritance reuses **behavior and meaning**
+- Reusing code via inheritance can accidentally reuse **invalid semantics**
+
+> It is better to duplicate small amounts of code than to duplicate meaning.
+
+---
+
+### Exception-Based LSP Violations
+
+- Introducing new exceptions in overrides often violates LSP
+- Base code did not expect the exception
+- Subtypes must not change failure behavior
+
+---
+
+### Temporal Coupling and LSP
+
+- Temporal coupling exists when operations must occur in order
+- LSP violations make temporal coupling **fragile**
+
+#### Temporal Inconsistency
+
+- An operation reports success
+- Later operations contradict that success
+
+> A broken promise now becomes a failure later.
+
+---
+
+### Interfaces and Test Doubles
+
+- Mocking interfaces is usually LSP-safe
+- Inheriting from concrete classes with strong semantics is risky
+- Interfaces allow **narrower, explicit contracts**
+
+---
+
+### Practical Heuristics
+
+Ask these questions:
+
+- Would this behavior surprise a caller?
+- Does the subtype restrict valid inputs?
+- Does it remove guarantees?
+- Does client code need type checks?
+
+If yes → likely an LSP violation.
+
+---
+
+### Common Code Smells
+
+- Overridden methods that throw unexpectedly
+- `NotImplementedException`
+- Subtypes with unused methods
+- Client-side `if (x is SubType)` checks
+- “This works except when…” comments
+
+![image-20260209013820110](06-liskov-substitution-principle.assets/image-20260209013820110.png)
+
+---
+
+### Relationship to Other SOLID Principles
+
+- **SRP** enables LSP
+- **LSP** makes **OCP** safe
+- Without LSP, polymorphism becomes dangerous
+
+---
+
+### Final Takeaway
+
+- LSP is about **trust**
+- Abstractions are contracts
+- Substitutability is non-negotiable
+
+> If a subtype cannot keep the promises of its base type, it should not inherit from it.

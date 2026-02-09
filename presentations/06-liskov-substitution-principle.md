@@ -26,6 +26,7 @@ When they do not, inheritance becomes a source of bugs and surprises rather than
 - [The Original Definition of LSP](#the-original-definition-of-lsp)
 - [What LSP Is Really About](#what-lsp-is-really-about)
 - [LSP as a Contract, Not Inheritance](#lsp-as-a-contract-not-inheritance)
+- [Bait-and-Switch as an LSP Metaphor](#bait-and-switch-as-an-lsp-metaphor)
 - [Classic Bad Example: Rectangle / Square](#classic-bad-example-rectangle--square)
 - [Why the Rectangle Example Fails](#why-the-rectangle-example-fails)
 - [A Corrected Design](#a-corrected-design)
@@ -126,7 +127,50 @@ The compiler checks signatures to validate type compatibility. The compiler cann
 
 **Only design discipline enforces LSP.** 
 
-![image-20260209003507612](06-liskov-substitution-principle.assets/image-20260209003507612.png)
+---
+
+## **Bait-and-Switch as an LSP Metaphor**
+
+In a bait-and-switch:
+
+- The seller **advertises** one thing, and
+
+- The buyer **forms plans** based on that promise, and
+
+- The seller **delivers something else**, and
+
+- When challenged, the defense is:
+
+  > “It’s basically the same thing.”
+
+#### The Legal Expert's View of LSP
+
+An attorney would call this **misrepresentation**.
+
+- One party makes a **representation of fact**, and
+- The other party **reasonably relies** on it, and
+- The reality **does not match the representation**, and
+- Harm occurs because of that reliance.
+
+------
+
+### **Mapping Directly to Code**
+
+- **The reservation description** → Method or interface contract
+- **The sedan category** → Base class or interface
+- **The weird car-shaped thing** → Subclass or implementation
+- **“You shouldn’t take it on the highway”** → Hidden preconditions
+- **“It still drives”** → Signature compatibility without behavioral compatibility
+
+Nothing *crashes* immediately — but the client is forced to add checks:
+
+> “Is this *really* a sedan?”
+
+> “Can I safely do the thing I always do?”
+
+Once clients have to ask those questions, substitutability is gone.
+
+> **LSP violations aren’t about objects that don’t work — they’re about objects that work differently enough to break client assumptions.**
 
 ---
 
@@ -184,8 +228,6 @@ Resize(r); //here we are passing a Square instance as a Rectangle to Resize
 ```
 
 This assertion **fails** for `Square`.
-
-> Read the code above... what are the values of `r.Width` and `r.Height`?
 
 ---
 
@@ -394,9 +436,9 @@ public class UserRepository
 #### Subclass LSP Violation
 
 ```c#
-public class StrictUserRepository : UserRepository
+public class SecureUserRepository : UserRepository
 {
-    // strengthens postconditions by introducing an exception
+    // strengthens postconditions by introducing an exception when ID is not found
     public override User? FindById(Guid id)
     {
         throw new InvalidOperationException("User not found");
@@ -480,6 +522,35 @@ If yes, then LSP is likely violated.
   > This signals that the subtype does not fully honor the semantic contract of the base type.
   >
   > If you see this in a code review, pay very careful attention!
+  >
+  > ```csharp
+  > public interface IBird {
+  >   void Walk();
+  >   void Fly();
+  > }
+  > 
+  > public interface IBird
+  > {
+  >     void Walk();
+  >     void Fly();   // Contract implies: "all birds can fly"
+  > }
+  > 
+  > public class Penguin : IBird
+  > {
+  >     public void Walk() { /* waddle */ }
+  > 
+  >     public void Fly()
+  >     {
+  >         // Smell: this type cannot honor the semantic contract implied by IBird
+  >         throw new NotSupportedException("Penguins cannot fly.");
+  >     }
+  > }
+  > 
+  > // Penguin is not safe to substitute for IBird if clients rely on Fly().
+  > // How do we properly fix this?
+  > // ... The Interface Segregation Principle! 
+  > // ... Coming up soon - the I in SOL[I]D.
+  > ```
 
 ---
 

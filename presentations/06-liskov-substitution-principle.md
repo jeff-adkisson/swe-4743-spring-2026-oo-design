@@ -41,12 +41,15 @@ When they do not, inheritance becomes a source of bugs and surprises rather than
 - [Practical Heuristics for LSP](#practical-heuristics-for-lsp)
 - [Code Smells That Signal LSP Violations](#code-smells-that-signal-lsp-violations)
 - [Conclusion: Substitutability Is Trust](#conclusion-substitutability-is-trust)
-- Appendix
-	- [LSP Video Overview (NotebookLM)](#lsp-video-overview)
-	- [ Semantic Promise Example](#semantic-promise-example)
-	- [Prevent LSP-Unsafe Subtypes by Forbidding Inheritance ](#prevent-lsp-unsafe-subtypes-by-forbidding-inheritance)
-	- [Liskov Substitution Principle Study Guide](#liskov-substitution-principle-study-guide)
-	
+- Appendix 1
+  - [LSP Video Overview (NotebookLM)](#lsp-video-overview)
+  - [ Semantic Promise Example](#semantic-promise-example)
+  - [Prevent LSP-Unsafe Subtypes by Forbidding Inheritance ](#prevent-lsp-unsafe-subtypes-by-forbidding-inheritance)
+  - [Liskov Substitution Principle Study Guide](#liskov-substitution-principle-study-guide)
+
+- Appendix 2
+  - [Covariance and Contravariance](#covariance-and-contravariance)
+
 
 ---
 
@@ -273,7 +276,7 @@ Now:
 
 > Key idea: Be **very careful** applying DRY in a base class. You must make sure it preserves substitutability across all subtypes. 
 
-> Another approach is [forbidding inheritance](#prevent-lsp-unsafe-subtypes-by-forbidding-inheritance). See the details in the appendix on `sealed \ final` classes.
+> Another approach is [forbidding inheritance](#prevent-lsp-unsafe-subtypes-by-forbidding-inheritance). See the details in Appendix 1 on `sealed \ final` classes.
 
 ![image-20260209013904918](06-liskov-substitution-principle.assets/image-20260209013904918.png)
 
@@ -592,7 +595,7 @@ Breaking LSP breaks that trust.
 
 ---
 
-# APPENDIX
+# APPENDIX 1
 
 ## LSP Video Overview
 
@@ -875,7 +878,7 @@ These small design choices significantly reduce the risk of LSP violations:
 - `Withdraw()` implies balance reduction
 - `Get()` implies retrievable state
 
-> See the Appendix for a detailed [semantic promise example](#semantic-promise-example).
+> See Appendix 1 for a detailed [semantic promise example](#semantic-promise-example).
 
 ---
 
@@ -1011,3 +1014,231 @@ If yes → likely an LSP violation.
 - Substitutability is non-negotiable
 
 > If a subtype cannot keep the promises of its base type, it should not inherit from it.
+
+# Appendix 2
+
+## Covariance and Contravariance
+
+> This material will not appear on the exam. 
+
+Covariance and contravariance are **type-system rules about safe substitution**, primarily involving generics, method parameters, and return types.
+
+They are conceptually related to the Liskov Substitution Principle (LSP) because they exist to **protect client expectations**, but they operate at a different level:
+
+- **LSP** is a *design principle* about **semantic promises and trust**
+- **Variance** is a *compiler-enforced rule* about **type compatibility**
+
+This topic is **commonly discussed in interviews**, but it is **out of scope for this course**.  
+This appendix is included for awareness and vocabulary only.
+
+---
+
+### How Variance Relates to LSP
+
+At a high level:
+
+- LSP asks: *Can this implementation be substituted without surprising the client?*
+- Variance asks: *Can this generic type be substituted without violating type safety?*
+
+You can think of variance as **LSP encoded into the type system**, enforced mechanically rather than by design discipline.
+
+---
+
+### Informal Definitions
+
+- **Covariance**  
+  Allows substitution in the **same direction** as inheritance  
+  (“a more specific type is acceptable”)
+
+- **Contravariance**  
+  Allows substitution in the **opposite direction** of inheritance  
+  (“a more general type is acceptable”)
+
+- **Invariance**  
+  No substitution allowed (the default for most mutable types)
+
+---
+
+### Simple Type Hierarchy Used in Examples
+
+```mermaid
+classDiagram
+direction TB
+
+class Animal
+class Dog
+class Cat
+
+Animal <|-- Dog
+Animal <|-- Cat
+```
+
+---
+
+### Covariance (Values Returned to the Client)
+
+Covariance is safe when a type is **produced** (returned) but not consumed.
+
+#### Intuition
+
+> If a client expects an `Animal`, returning a `Dog` does not violate the promise.
+
+#### C# Example (Covariant Interface)
+
+```csharp
+public interface IReadOnlyBox<out T>
+{
+    T Get();
+}
+```
+
+Usage:
+
+```csharp
+IReadOnlyBox<Dog> dogs = ...
+IReadOnlyBox<Animal> animals = dogs; // Safe
+```
+
+Why this is safe:
+- The client relies only on receiving an `Animal`
+- Receiving a `Dog` preserves that semantic promise
+
+```mermaid
+classDiagram
+direction LR
+
+class IReadOnlyBox~Animal~
+class IReadOnlyBox~Dog~
+
+IReadOnlyBox~Animal~ <|-- IReadOnlyBox~Dog~
+```
+
+---
+
+### Contravariance (Values Supplied by the Client)
+
+Contravariance is safe when a type is **consumed** (input) but not produced.
+
+#### Intuition
+
+> If you can handle any `Animal`, you can certainly handle a `Dog`.
+
+#### C# Example (Contravariant Interface)
+
+```csharp
+public interface IHandler<in T>
+{
+    void Handle(T item);
+}
+```
+
+Usage:
+
+```csharp
+IHandler<Animal> animalHandler = ...
+IHandler<Dog> dogHandler = animalHandler; // Safe
+```
+
+Why this is safe:
+- The client will only pass `Dog`
+- The handler already accepts all `Animal` instances
+
+```mermaid
+classDiagram
+direction LR
+
+class IHandler~Animal~
+class IHandler~Dog~
+
+IHandler~Dog~ <|-- IHandler~Animal~
+```
+
+(Note the reversed direction compared to covariance.)
+
+---
+
+### Common Misconceptions (Interview Favorites)
+
+#### “All collections should be covariant”
+False. **Mutable collections are invariant**.
+
+Allowing covariance on mutable collections would permit semantic contradictions:
+
+```csharp
+List<Dog> dogs = new();
+List<Animal> animals = dogs;
+animals.Add(new Cat()); // Violates the original promise
+```
+
+This would break both **type safety** and **client expectations**, so languages forbid it.
+
+---
+
+#### “Covariance and contravariance are design principles”
+They are not.
+
+- LSP is a **design responsibility**
+- Variance is a **language feature**
+
+Variance prevents some substitution errors, but it cannot express semantic promises such as:
+- persistence
+- ordering
+- side effects
+- invariants over time
+
+---
+
+#### “If it compiles, LSP is satisfied”
+False.
+
+Variance only ensures **type correctness**.
+
+Many LSP violations:
+- Compile cleanly
+- Fail at runtime
+- Appear far from their source
+
+The Rectangle / Square example compiles perfectly — and still violates LSP.
+
+---
+
+### Why This Appears in Interviews
+
+Interviewers like variance questions because they:
+- Test understanding of type systems
+- Have precise rules with sharp edges
+- Quickly reveal shallow vs deep knowledge
+
+Common prompts include:
+- “Why is `IEnumerable<T>` covariant?”
+- “Why are method parameters contravariant?”
+- “Why are mutable collections invariant?”
+
+These questions assess **language mechanics**, not OO design judgment.
+
+---
+
+### Why This Course Does Not Go Deeper
+
+This course focuses on:
+- Semantic promises
+- Behavioral substitutability
+- Trustworthy abstractions
+
+Variance is:
+- Language-specific
+- Compiler-enforced
+- Rarely a conscious design decision
+
+Awareness is sufficient for our goals.
+
+---
+
+### Key Takeaway
+
+- **Variance** protects *type safety*
+- **LSP** protects *semantic trust*
+- Both exist to prevent surprise
+- Only LSP is enforced by the designer
+
+> **The compiler can enforce variance. Only design can enforce LSP.**

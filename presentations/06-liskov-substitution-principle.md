@@ -41,9 +41,7 @@ When they do not, inheritance becomes a source of bugs and surprises rather than
 - [Code Smells That Signal LSP Violations](#code-smells-that-signal-lsp-violations)
 - [Conclusion: Substitutability Is Trust](#conclusion-substitutability-is-trust)
 - Appendix
-	
-	- [LSP Video Overview](#lsp-video-overview)
-	
+	- [LSP Video Overview (NotebookLM)](#lsp-video-overview)
 	- [ Semantic Promise Example](#semantic-promise-example)
 	- [Liskov Substitution Principle Study Guide](#liskov-substitution-principle-study-guide)
 	

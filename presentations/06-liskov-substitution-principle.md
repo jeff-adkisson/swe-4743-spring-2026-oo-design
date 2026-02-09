@@ -44,6 +44,7 @@ When they do not, inheritance becomes a source of bugs and surprises rather than
 - Appendix
 	- [LSP Video Overview (NotebookLM)](#lsp-video-overview)
 	- [ Semantic Promise Example](#semantic-promise-example)
+	- [Prevent LSP-Unsafe Subtypes by Forbidding Inheritance ](#prevent-lsp-unsafe-subtypes-by-forbidding-inheritance)
 	- [Liskov Substitution Principle Study Guide](#liskov-substitution-principle-study-guide)
 	
 
@@ -131,6 +132,15 @@ The compiler checks signatures to validate type compatibility. The compiler cann
 
 ## Classic Bad Example: Rectangle / Square
 
+[Mathematics states that a square is a rectangle](https://en.wikipedia.org/wiki/Square).
+
+That statement is correct mathematically, but software design has an additional constraint:
+**behavioral substitutability**.
+
+So the question becomes:
+
+> Is it always correct to say that a `Square` is-a `Rectangle` when `Square` is implemented as a subtype of `Rectangle`?
+
 ### Base Class
 
 ```csharp
@@ -168,6 +178,30 @@ public class Square : Rectangle
 }
 ```
 
+```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: true
+---
+
+classDiagram
+direction TB
+
+class Rectangle {
+  +int Width
+  +int Height
+  +Area() int
+}
+
+class Square {
+  +Width
+  +Height
+}
+
+Rectangle <|-- Square
+```
+
 ### Client Code
 
 ```csharp
@@ -182,7 +216,9 @@ Rectangle r = new Square(); //Square is-a Rectangle, so we can assign it to Rect
 Resize(r); //here we are passing a Square instance as a Rectangle to Resize
 ```
 
-This assertion **fails** for `Square`.
+This assertion **fails** for `Square`: `Debug.Assert(r.Area() == 50);` 
+
+![image-20260209104336337](06-liskov-substitution-principle.assets/image-20260209104336337.png)
 
 ---
 
@@ -211,7 +247,7 @@ The fix is modeling that **preserves substitutability**.
 classDiagram
 direction TB
 
-class Shape {
+class IShape {
   <<interface>>
   Area()
 }
@@ -225,16 +261,19 @@ class Square {
   +Side
 }
 
-Shape <|.. Rectangle
-Shape <|.. Square
+IShape <|.. Rectangle
+IShape <|.. Square
 ```
 
 Now:
 - No false promises
 - No broken assumptions
 - Polymorphism is safe again
+- All implementations of `IShape` implement their own `Area()` method
 
-> Key idea: Be very careful applying DRY in a base class. You must make sure it preserves substitutability across all subtypes. 
+> Key idea: Be **very careful** applying DRY in a base class. You must make sure it preserves substitutability across all subtypes. 
+
+> Another approach is [forbidding inheritance](#prevent-lsp-unsafe-subtypes-by-forbidding-inheritance). See the details in the appendix on `sealed \ final` classes.
 
 ![image-20260209013904918](06-liskov-substitution-principle.assets/image-20260209013904918.png)
 
@@ -678,6 +717,134 @@ public class InMemoryRepository : Repository
 This keeps the base meaning intact, so it’s substitutable.
 
 ---
+
+## Prevent LSP-Unsafe Subtypes by Forbidding Inheritance 
+
+Sometimes the safest way to preserve the Liskov Substitution Principle (LSP) is to **forbid inheritance entirely**.
+
+If a class represents a behavioral contract that must not be altered by subtypes, mark it as **non-inheritable**:
+
+- **C#**: `sealed` — the class cannot be derived from  
+- **Java**: `final` — the class cannot be extended  
+
+This prevents “looks compatible but behaves differently” subtypes — such as the classic `Square : Rectangle` example.
+
+---
+
+### Why Sealing Helps LSP
+
+LSP requires that **any subtype must be safely substitutable** for its base type.
+
+But when a base class allows overriding, you implicitly permit future code to:
+
+- Change semantics while keeping the same method signatures
+- Add hidden invariants or coupling
+- Break assumptions that clients reasonably rely on
+
+By sealing the base class, you guarantee:
+
+> The contract and behavior clients depend on cannot be overridden.
+
+Substitution safety is preserved because **no subtypes can exist** that might violate the contract.
+
+---
+
+### C# Example: Seal `Rectangle` to Block `Square : Rectangle`
+
+```csharp
+public sealed class Rectangle
+{
+    public int Width { get; set; }
+    public int Height { get; set; }
+
+    public int Area() => Width * Height;
+}
+```
+
+Now this is impossible:
+
+```csharp
+public class Square : Rectangle // Compile-time error
+{
+}
+```
+
+This is an intentional design decision, not a limitation.
+
+```mermaid
+classDiagram
+direction TB
+
+class Rectangle {
+  <<sealed>>
+  +int Width
+  +int Height
+  +Area() int
+}
+
+note for Rectangle "Sealed class:<br>inheritance not allowed"
+```
+
+---
+
+### When Sealing Is the Right Choice
+
+Seal a class when:
+
+- The type has **strong behavioral guarantees**
+- Clients rely on **specific invariants**
+- You cannot define a safe substitution story for all possible subtypes
+- Variation should occur via **composition**, not inheritance
+
+A useful rule of thumb:
+
+> **If overriding would require restating the contract, inheritance is the wrong tool.**
+
+---
+
+### Tie-back to Rectangle / Square
+
+[In this API, a `Rectangle` guarantees that `Width` and `Height` can be changed independently.](#classic-bad-example-rectangle--square)
+
+Allowing inheritance would permit subtypes to silently violate that guarantee.
+
+Sealing `Rectangle` is an explicit declaration:
+
+> “Being a rectangle in this system includes behavioral guarantees we refuse to let subtypes weaken.”
+
+### Additional Structural Strategies to Preserve Substitution
+
+These small design choices significantly reduce the risk of LSP violations:
+
+- **Avoid** **protected** **setters**
+
+  protected setters allow subtypes to change state in ways the base class did not intend, often introducing hidden invariants. Prefer private setters or constructor-only initialization so state meaning cannot be reinterpreted by subclasses.
+
+- **Prefer constructor initialization with preconditions**
+
+  Validate invariants once, at construction time. Establishing guarantees early prevents subtypes from weakening them later through overridden behavior or delayed validation.
+
+  ```csharp
+  public class Discount
+  {
+      public decimal Percentage { get; }
+  
+      public Discount(decimal percentage)
+      {
+          if (percentage < 0 || percentage > 1)
+              throw new ArgumentOutOfRangeException(nameof(percentage));
+  
+          Percentage = percentage;
+      }
+  }
+  ```
+  Validate each invariant at the *earliest* point where that invariant becomes knowable, and do it in the type that owns the invariant.
+
+- **Make methods non-virtual by default**
+
+  Treat virtual as an explicit extension point. Only allow overriding when variation is intentional and safe. Non-virtual methods preserve behavioral guarantees and prevent semantic drift across subtypes.
+
+> **LSP is preserved not by clever overrides, but by limiting what can be overridden.**
 
 ## Liskov Substitution Principle Study Guide
 

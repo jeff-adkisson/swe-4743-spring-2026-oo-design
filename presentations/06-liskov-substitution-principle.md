@@ -66,7 +66,7 @@ Without LSP:
 
 ## The Original Definition of LSP
 
-Barbara Liskov (1987):
+[Barbara Liskov (1987)](https://en.wikipedia.org/wiki/Barbara_Liskov):
 
 > *“What is wanted here is something like the following substitution property:  
 > If for each object o1 of type S there is an object o2 of type T such that for all programs P defined in terms of T, the behavior of P is unchanged when o1 is substituted for o2, then S is a subtype of T.”*
@@ -238,6 +238,8 @@ Now:
 
 > Key idea: Be very careful applying DRY in a base class. You must make sure it preserves substitutability across all subtypes. 
 
+![image-20260209013904918](06-liskov-substitution-principle.assets/image-20260209013904918.png)
+
 ---
 
 ## Behavioral Subtyping Rules
@@ -249,6 +251,8 @@ A subtype must:
 3. **Preserve invariants**
 
 These rules define behavioral compatibility.
+
+![image-20260209013458536](06-liskov-substitution-principle.assets/image-20260209013458536.png)
 
 ---
 
@@ -324,6 +328,8 @@ public class SecureFileLogger : FileLogger
 
 `SecureFileLogger.Log` strengthens the precondition by throwing when a null string is passed, even though the method signature explicitly permits null values.
 
+![image-20260209013545721](06-liskov-substitution-principle.assets/image-20260209013545721.png)
+
 ---
 
 ## Weakening Postconditions (Bad)
@@ -361,6 +367,8 @@ The violation is *not* that the subtype behaves differently.
 
 The violation is that the base type trained clients to rely on a guarantee that the subtype does not honor.
 
+![image-20260209013612351](06-liskov-substitution-principle.assets/image-20260209013612351.png)
+
 ---
 
 ## Exception-Based LSP Violations
@@ -394,6 +402,8 @@ public class StrictUserRepository : UserRepository
     }
 }
 ```
+
+![image-20260209013653806](06-liskov-substitution-principle.assets/image-20260209013653806.png)
 
 ---
 
@@ -446,6 +456,8 @@ Ask these questions:
 
 If yes, then LSP is likely violated.
 
+![image-20260209014027677](06-liskov-substitution-principle.assets/image-20260209014027677.png)
+
 ---
 
 ## Code Smells That Signal LSP Violations
@@ -483,6 +495,10 @@ Breaking LSP breaks that trust.
 
 > **Good abstractions keep their promises.**
 
+![image-20260209013951745](06-liskov-substitution-principle.assets/image-20260209013951745.png)
+
+![image-20260209012423675](06-liskov-substitution-principle.assets/image-20260209012423675.png)
+
 ---
 
 # APPENDIX
@@ -511,6 +527,8 @@ Based on the class name and method contract (name, parameters, and return type),
 - Side effects consistent with persistence (I/O, storage, etc.) occurred
 
 > **Key idea:** These promises come from what clients reasonably infer from the API, not from reading the implementation.
+
+![image-20260209013425073](06-liskov-substitution-principle.assets/image-20260209013425073.png)
 
 ---
 
@@ -545,6 +563,8 @@ The downstream effects of an LSP violation can lead to serious defects far from 
 > This is an example of **temporal coupling**. Temporal coupling exists whenever one operation must precede another—an extremely common and often unavoidable requirement. When semantic promises are preserved, temporal coupling is *reliable*. **LSP violations make temporal coupling fragile**, causing later operations to fail even when earlier calls report success.
 >
 > **Temporal inconsistency** occurs when later operations contradict the success of earlier ones.
+
+![image-20260209013728990](06-liskov-substitution-principle.assets/image-20260209013728990.png)
 
 ---
 
@@ -748,6 +768,8 @@ If yes → likely an LSP violation.
 - Subtypes with unused methods
 - Client-side `if (x is SubType)` checks
 - “This works except when…” comments
+
+![image-20260209013820110](06-liskov-substitution-principle.assets/image-20260209013820110.png)
 
 ---
 

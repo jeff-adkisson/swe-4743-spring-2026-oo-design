@@ -6,7 +6,7 @@
 
 The Liskov Substitution Principle is about **trust**. When a client uses a base type, it should not need to know—or care—which subtype it receives. 
 
-Subtypes must honor the **semantic promises** of their base types, not reinterpret them.
+Subtypes must honor the [**semantic promises**](#semantic-promise-example) of their base types, not reinterpret them.
 
 When they do not, inheritance becomes a source of bugs and surprises rather than a means of reuse.
 
@@ -656,6 +656,8 @@ This keeps the base meaning intact, so it’s substitutable.
 - `Save()` implies persistence
 - `Withdraw()` implies balance reduction
 - `Get()` implies retrievable state
+
+> See the Appendix for a detailed [semantic promise example](#semantic-promise-example).
 
 ---
 

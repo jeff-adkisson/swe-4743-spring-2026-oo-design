@@ -40,7 +40,10 @@ When they do not, inheritance becomes a source of bugs and surprises rather than
 - [Practical Heuristics for LSP](#practical-heuristics-for-lsp)
 - [Code Smells That Signal LSP Violations](#code-smells-that-signal-lsp-violations)
 - [Conclusion: Substitutability Is Trust](#conclusion-substitutability-is-trust)
-- [Appendix](#appendix)
+- Appendix
+	
+	- [LSP Video Overview](#lsp-video-overview)
+	
 	- [ Semantic Promise Example](#semantic-promise-example)
 	- [Liskov Substitution Principle Study Guide](#liskov-substitution-principle-study-guide)
 	
@@ -502,6 +505,10 @@ Breaking LSP breaks that trust.
 ---
 
 # APPENDIX
+
+## LSP Video Overview
+
+- [AI generated video overview of LSP by NotebookLM](06-liskov-substitution-principle-video-notebooklm.mp4)
 
 ## Semantic Promise Example
 

@@ -1,0 +1,2313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>06-liskov-substitution-principle</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="slides-wrapper">
+            
+            <div class="slide active" data-slide="1">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 21.42%; 
+                                        top: 54.55%; 
+                                        width: 45.26%; 
+                                        height: 33.07%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>LiskovSubstitutionPrincipleDesigning Correct Subtypes Without Surprise</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.31%; 
+                                        top: 33.08%; 
+                                        width: 43.37%; 
+                                        height: 16.92%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>SWE 4743: Object-Oriented Design Jeff Adkisson</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="2">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Designing Correct Subtypes Without Surprise</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>The Liskov Substitution Principle is about **trust**. When a client uses a base type, it should not need to know—or care—which subtype it receives.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Subtypes must honor the **semantic promises** of their base types, not reinterpret them.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>When they do not, inheritance becomes a source of bugs and surprises rather than a means of reuse.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>#### What is "Semantic"?</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="3">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Table of Contents</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>[The Liskov Substitution Principle (LSP)](#the-liskov-substitution-principle-lsp)</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>[Designing Correct Subtypes Without Surprise](#designing-correct-subtypes-without-surprise)</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>[Positioning LSP Within SOLID](#positioning-lsp-within-solid)</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>[The Original Definition of LSP](#the-original-definition-of-lsp)</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>[What LSP Is Really About](#what-lsp-is-really-about)</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>[LSP as a Contract, Not Inheritance](#lsp-as-a-contract-not-inheritance)</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="4">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Positioning LSP Within SOLID</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>The **Liskov Substitution Principle (LSP)** is the principle that most clearly explains *why bad inheritance hurts so badly*.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>If **SRP** is about *why code changes*<br>and **OCP** is about *where changes should land*<br></span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>then **LSP** is about *whether abstractions can be trusted at all*.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Without LSP:</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Polymorphism becomes dangerous</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Abstractions can mislead when their guarantees are unclear.</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="5">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">The Original Definition of LSP</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Barbara Liskov (1987):</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>In plain language:</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="6">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">What LSP Is Really About</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>LSP is **not** about:</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Syntax</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Method signatures</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Inheritance trees</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>LSP *is* about:</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>**Behavior**</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="7">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">LSP as a Contract, Not Inheritance</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Inheritance is a *mechanism*.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>LSP is a *promise*.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>classDiagram</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>direction TB</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>class BaseType {</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>+operation()</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="8">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Classic Bad Example: Rectangle / Square</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>### Base Class</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>public class Rectangle</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>{</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>public virtual int Width { get; set; }</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>public virtual int Height { get; set; }</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>public int Area() => Width * Height;</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="9">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Why the Rectangle Example Fails</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>The base class contract implies:</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Width and height are independent</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Setting one does not affect the other</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>**`Square` violates that contract**.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Inheritance was legal.<br>Substitution was not.</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="10">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">A Corrected Design</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>The fix is **not** clever overriding.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>The fix is modeling that **preserves substitutability**.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>classDiagram</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>direction TB</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>class Shape {</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span><<interface>></span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="11">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Behavioral Subtyping Rules</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>A subtype must:</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>1. **Not strengthen preconditions**</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>2. **Not weaken postconditions**</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>3. **Preserve invariants**</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>These rules define behavioral compatibility.</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="12">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Preconditions, Postconditions, and Invariants</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>### Preconditions</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>What must be true *before* a method runs</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>### Postconditions</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>What is guaranteed *after* the method completes</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>### Invariants</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>What must *always* remain true</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="13">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Strengthening Preconditions (Bad)</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>public class FileLogger</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>{</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>public virtual void Log(string? message)</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>{</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>// accepts any string</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>}</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="14">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Weakening Postconditions (Bad)</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>public class OrderProcessor</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>{</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>// Contract:</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>// - Processes the order</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>// - Persists the result</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>// - Returns true on success</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="15">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Exception-Based LSP Violations</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Throwing **new exceptions** from overrides is often an LSP violation.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>#### Base Class</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>public class UserRepository</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>{</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>// Contract: returns null if user is not found</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>public virtual User? FindById(Guid id)</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="16">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">LSP Across Abstraction Levels</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>LSP applies to:</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Classes</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Interfaces</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>APIs</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Services</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Microservices</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="17">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">LSP and Single Responsibility Principle</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Single Responsibility makes LSP possible.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>If a class has multiple responsibilities:</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Some subtypes satisfy one responsibility</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Others satisfy another</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>No subtype satisfies all</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Multiple responsibilities almost guarantee LSP violations.</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="18">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">LSP and Open-Closed Principle</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>The Open-Closed Principle *depends* on LSP.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>You cannot safely extend behavior if subtypes cannot be reliably substituted.</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="19">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Practical Heuristics for LSP</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Ask these questions:</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Would I be surprised by this behavior?</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Does this subtype restrict valid inputs?</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Does it remove guarantees?</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Does client code need `if (x is SubType)`?</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>If yes → LSP is violated.</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="20">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Code Smells That Signal LSP Violations</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>Overridden methods that throw</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Subtypes with unused methods</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Boolean flags in subclasses</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Client-side type checks</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>“This works except when…”</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>`NotImplementedException`</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="slide" data-slide="21">
+                <div class="slide-canvas" style="position: relative; width: 100%; padding-bottom: 75.0%;">
+                    <div class="slide-content-positioned" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                        
+                            
+                            <div class="shape shape-text shape-title" 
+                                 style="position: absolute; 
+                                        left: 21.45%; 
+                                        top: 11.78%; 
+                                        width: 64.28%; 
+                                        height: 15.71%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        ">
+                                
+                                    
+                                        <div style="width: 100%; padding: 0.5em; font-weight: bold;">Conclusion: Substitutability Is Trust</div>
+                                    
+                                
+                            </div>
+                            
+                        
+                            
+                            <div class="shape shape-text" 
+                                 style="position: absolute; 
+                                        left: 23.25%; 
+                                        top: 29.89%; 
+                                        width: 62.48%; 
+                                        height: 58.33%;
+                                        
+                                        
+                                        text-align: left;
+                                        overflow-y: auto;
+                                        padding: 0.5em;">
+                                
+                                    
+                                        <div style="width: 100%;">
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 0.0em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">•</span>
+                                                
+                                                <span>LSP is about **trust**.</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>When you depend on an abstraction:</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>You trust its promises</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>You assume consistency</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>You rely on behavior, not type</span>
+                                            </div>
+                                        
+                                            <div class="paragraph" style="margin-bottom: 0.3em; padding-left: 1.5em; 
+                                                
+                                                
+                                                
+                                                text-align: left;">
+                                                
+                                                <span style="margin-right: 0.5em;">◦</span>
+                                                
+                                                <span>Breaking LSP breaks that trust.</span>
+                                            </div>
+                                        
+                                        </div>
+                                    
+                                
+                            </div>
+                            
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+        </div>
+
+        <div class="controls">
+            <button id="prevBtn" class="nav-btn">← Previous</button>
+            <span class="slide-counter">
+                <span id="currentSlide">1</span> / <span id="totalSlides">21</span>
+            </span>
+            <button id="nextBtn" class="nav-btn">Next →</button>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

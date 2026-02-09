@@ -69,3 +69,9 @@ Design and implement a console-based Tea Shop application in C# or Java that int
 - [PDF](presentations/05-open-closed-principle-and-decorator.pdf)
 - [HTML](presentations/05-open-closed-principle-and-decorator_html/index.html)
 - [Lecture Material](presentations/05-open-closed-principle-and-decorator.md)
+
+#### 06. Liskov Substitution Principle
+- [PowerPoint](presentations/06-liskov-substitution-principle.pptx)
+- [PDF](presentations/06-liskov-substitution-principle.pdf)
+- [HTML](presentations/06-liskov-substitution-principle_html/index.html)
+- [Lecture Material](presentations/06-liskov-substitution-principle.md)

@@ -1,0 +1,1 @@
+- [Lecture Material](presentations/06-liskov-substitution-principle.md)

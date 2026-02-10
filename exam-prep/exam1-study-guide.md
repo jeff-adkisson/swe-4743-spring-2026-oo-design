@@ -104,68 +104,170 @@ Source: [assignment-2.md](../assignments/assignment-2.md)
 *Textbook Readings: A Philosophy of Software Design, 2nd Edition, Ousterhout*
 
 ### Chapter 1 - Complexity
-- Complexity is the primary cause of software problems and maintenance cost.
+- Complexity is the primary cause of software problems and maintenance cost.<br>
 *This aligns with Lecture 1 "Why Design Matters" on change cost in long-lived systems.*
-- The goal of design is to reduce complexity for future readers, not just make code work today.
+- The goal of design is to reduce complexity for future readers, not just make code work today.<br>
 *The UML lecture emphasizes communication and intent for future developers.*
-- Even small complexity accumulates; good design prevents that accumulation.
+- Even small complexity accumulates; good design prevents that accumulation.<br>
 *SRP and OCP stress preventing change amplification over time.*
 
 ### Chapter 2 - The Nature of Complexity
-- Complexity shows up as change amplification, cognitive load, and unknown unknowns.
+- Complexity shows up as change amplification, cognitive load, and unknown unknowns.<br>
 *SRP highlights change amplification as a primary warning signal.*
-- Systems become fragile when understanding one part requires understanding many others.
+- Systems become fragile when understanding one part requires understanding many others.<br>
 *UML relationship types help reveal and reduce unnecessary coupling.*
-- Good design isolates details so most changes affect only a small area.
+- Good design isolates details so most changes affect only a small area.<br>
 *OCP and Strategy/Decorator localize change to extension points.*
 
 ### Chapter 3 - Working Code Is Not Enough
-- "It works" is not sufficient if the design increases future complexity.
+- "It works" is not sufficient if the design increases future complexity.<br>
 *Assignments 1 and 2 emphasize design quality, not just working output.*
-- Tactical programming optimizes for speed now; strategic programming optimizes for long-term simplicity.
+- Tactical programming optimizes for speed now; strategic programming optimizes for long-term simplicity.<br>
 *OCP is framed as a refactoring discipline, not day-one over-design.*
-- Refactoring is a normal cost of good design, not a failure.
+- Refactoring is a normal cost of good design, not a failure.<br>
 *The OCP lecture shows progressive evolution as change pressure appears.*
 
 ### Chapter 4 - Modules Should Be Deep
-- A deep module provides powerful functionality with a simple interface.
+- A deep module provides powerful functionality with a simple interface.<br>
 *Strategy hides algorithm details behind a stable interface in Lecture 4.2.*
-- Shallow modules expose too many details relative to the value they provide.
+- Shallow modules expose too many details relative to the value they provide.<br>
 *Encapsulation guidance in Lecture 2 warns against exposing internal lists and state.*
-- The best modules hide complexity rather than distribute it.
+- The best modules hide complexity rather than distribute it.<br>
 *UML class diagrams stress abstraction over implementation detail.*
 
+Example class UML:
+```mermaid
+classDiagram
+direction TB
+
+class ReportingFacade {
+  +generateReport()
+}
+
+class DataLoader
+class Formatter
+class ChartBuilder
+
+ReportingFacade --> DataLoader : depends-on
+ReportingFacade --> Formatter : depends-on
+ReportingFacade --> ChartBuilder : depends-on
+
+note for ReportingFacade "Simple interface hides complex subsystem"
+```
+*Note: A deep module offers a small interface while hiding multiple collaborators.*
+
 ### Chapter 5 - Information Hiding
-- Each module should hide design decisions and internal details that are likely to change.
+- Each module should hide design decisions and internal details that are likely to change.<br>
 *SRP uses actors and axes of change to identify what to hide.*
-- Public interfaces should be stable; internal representations should be free to evolve.
+- Public interfaces should be stable; internal representations should be free to evolve.<br>
 *LSP focuses on honoring semantic promises of those public interfaces.*
-- Encapsulation is most valuable when it hides volatility.
+- Encapsulation is most valuable when it hides volatility.<br>
 *Assignment 1 explicitly requires protecting internal state and collections.*
 
+Example class UML:
+```mermaid
+classDiagram
+direction TB
+
+class IUserRepository {
+  +findById(id)
+}
+<<interface>> IUserRepository
+
+class UserService
+class SqlUserRepository
+class SqlConnection
+
+UserService --> IUserRepository : depends-on
+IUserRepository <|.. SqlUserRepository : realizes
+SqlUserRepository --> SqlConnection : depends-on
+
+note for SqlUserRepository "Storage details hidden from clients"
+```
+*Note: Clients depend on a stable interface while storage details remain private.*
+
 ### Chapter 6 - General-Purpose Modules
-- General-purpose modules can reduce duplication and simplify clients when designed carefully.
+- General-purpose modules can reduce duplication and simplify clients when designed carefully.<br>
 *The SRP vs DRY tension explains when reuse helps or hurts.*
-- Avoid overgeneralization: unnecessary options and configuration create complexity.
+- Avoid overgeneralization: unnecessary options and configurations create complexity.<br>
 *OCP warns against interfaces without evidence of variation.*
-- Build generality when multiple real use cases demand it.
+- Build generality when multiple real use cases demand it.<br>
 *Strategy is introduced when policies repeatedly change in the same method.*
 
+Example class UML:
+```mermaid
+classDiagram
+direction TB
+
+class CsvParser {
+  +parse(text)
+}
+
+class ReportExporter
+class InventoryImporter
+
+ReportExporter ..> CsvParser : depends-on
+InventoryImporter ..> CsvParser : depends-on
+
+note for CsvParser "Generality justified by multiple real clients"
+```
+*Note: General-purpose modules are most justified when multiple clients already need them.*
+
 ### Chapter 7 - Different Layer, Different Abstraction
-- Each layer should provide a different level of abstraction than the layers around it.
+- Each layer should provide a different level of abstraction than the layers around it.<br>
 *Assignment 2 requires separating Domain logic from User Interface logic.*
-- Leaky abstractions and redundant layers increase cognitive load.
+- Leaky abstractions and redundant layers increase cognitive load.<br>
 *Lecture 1 emphasizes design that reduces what developers must think about.*
-- Cross-layer coupling is a warning sign that responsibilities are unclear.
+- Cross-layer coupling is a warning sign that responsibilities are unclear.<br>
 *UML diagrams help spot these relationships early.*
 
+Example class UML:
+```mermaid
+classDiagram
+direction TB
+
+class OrderController
+class OrderService
+class OrderRepository
+
+OrderController --> OrderService : depends-on
+OrderService --> OrderRepository : depends-on
+
+note for OrderService "Business rules, higher abstraction"
+note for OrderRepository "Persistence details"
+```
+*Note: Each layer raises the abstraction level for the layer above it.*
+
 ### Chapter 8 - Pull Complexity Downwards
-- Keep high-level modules simple by pushing complexity into lower-level components.
+- Keep high-level modules simple by pushing complexity into lower-level components.<br>
 *Strategy and Decorator keep the context simple while variation lives below.*
-- Define clear, simple interfaces upward; hide complicated logic downward.
+- Define clear, simple interfaces upward; hide complicated logic downward.<br>
 *The UML lecture encourages depending on abstractions, not concrete classes.*
-- The best designs allow most developers to work without touching deep complexity.
+- The best designs allow most developers to work without touching deep complexity.<br>
 *OCP localizes change, reducing the number of files touched for new features.*
+
+Example class UML:
+```mermaid
+classDiagram
+direction TB
+
+class CheckoutService {
+  +checkout()
+}
+
+class PricingEngine {
+  +calculateTotal()
+}
+
+class DiscountRules
+
+CheckoutService --> PricingEngine : depends-on
+PricingEngine --> DiscountRules : depends-on
+
+note for CheckoutService "High-level stays simple"
+note for PricingEngine "Complex rules kept lower"
+```
+*Note: Complexity is pushed downward so most changes avoid top-level logic.*
 
 ## Patterns
 ### Strategy Pattern

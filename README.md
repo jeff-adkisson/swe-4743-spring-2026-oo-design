@@ -15,6 +15,10 @@ Spring 2026
 - [Calendar](calendar.md)
 - [Terminology](terminology.md)
 
+## Exams
+
+- [Exam 1 Study Guide](exam-prep/exam1-study-guide.md)
+
 ## Assignments
 
 - [**Assignment 1: OO Foundations Review**](assignments/assignment-1.md)<br>

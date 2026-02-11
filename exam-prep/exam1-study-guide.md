@@ -805,11 +805,56 @@ B. A decorator chain implementing `IInventoryQuery`/`InventoryQuery`
 C. A static utility class of filter helpers only  
 D. A single enum switch in UI code  
 
-17. (Multiple choice, Bloom 3/4) In the decorator UML structure, which relationship expresses "wrapping another component instance"?
-A. `Component <|.. Decorator`  
-B. `Decorator --> Component`  
-C. `Decorator <|-- ConcreteDecorator`  
-D. `Component <|.. ConcreteComponent`  
+17. (Multiple choice, Bloom 3/4) In the single diagram below, each diagram (`A`, `B`, `C`, `D`) shows one candidate relationship. Which diagram expresses "wrapping another component instance" in the Decorator pattern?
+```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: true
+---
+classDiagram
+direction TB
+
+namespace Diagram_A {
+  class A_Component["Component"]
+  class A_Decorator["Decorator"]
+}
+
+namespace Diagram_B {
+  class B_Decorator["Decorator"]
+  class B_Component["Component"]
+}
+
+A_Decorator ..|> A_Component 
+B_Decorator --> B_Component  
+```
+```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: true
+---
+classDiagram
+direction TB
+
+namespace Diagram_C {
+  class C_Decorator["Decorator"]
+  class C_ConcreteDecorator["ConcreteDecorator"]
+}
+
+namespace Diagram_D {
+  class D_Component["Component"]
+  class D_ConcreteComponent["ConcreteComponent"]
+}
+
+C_ConcreteDecorator --|> C_Decorator 
+D_ConcreteComponent ..|> D_Component
+```
+
+A. Diagram A  
+B. Diagram B  
+C. Diagram C  
+D. Diagram D  
 
 18. (Multiple choice, Bloom 3/4) In the sequence below, which participant is the context?
 ```mermaid

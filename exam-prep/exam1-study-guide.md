@@ -30,7 +30,7 @@ If there is any mismatch between this guide and in-class/D2L announcements, foll
 - [Terminology](#terminology)
 - [Example Questions](#example-questions)
 - [Example Questions - Answers](#example-questions---answers)
-- [Presentation (NotebookLM)](#presentation)
+- [NotebookLM Materials](#notebooklm-materials)
 
 ## Concepts
 ### Lecture 1 - Course Introduction
@@ -913,6 +913,9 @@ D. checkout(42.00)
 23. Split UI prompt/parsing from domain query/mutation logic (for example `InventoryQueryBuilder` + `InventoryService`).
 24. Extract lower-level components (for example pricing/validation/payment strategy) behind a simple `CheckoutService` interface so high-level flow stays small and stable.
 
-## Presentation
+## NotebookLM Materials
 
-[Linked here is a presentation AI-generated from this document by NotebookLM.](exam1-study-guide-notebooklm.pdf)
+- [AI-generated presentation from this document by NotebookLM.](exam1-study-guide-notebooklm.pdf)
+- [AI-generated video from this document by NotebookLM.](exam1-study-guide-notebooklm.mp4)
+  *This high-level summary surprised me with how good it is. AI can make outstanding learning materials.* 
+

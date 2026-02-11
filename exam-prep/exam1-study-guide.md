@@ -30,6 +30,7 @@ If there is any mismatch between this guide and in-class/D2L announcements, foll
 - [Terminology](#terminology)
 - [Example Questions](#example-questions)
 - [Example Questions - Answers](#example-questions---answers)
+- [Presentation (NotebookLM)](#presentation)
 
 ## Concepts
 ### Lecture 1 - Course Introduction
@@ -911,3 +912,7 @@ D. checkout(42.00)
 22. `Sms.before -> Logging.before -> Email.send -> Logging.after -> Sms.after`.
 23. Split UI prompt/parsing from domain query/mutation logic (for example `InventoryQueryBuilder` + `InventoryService`).
 24. Extract lower-level components (for example pricing/validation/payment strategy) behind a simple `CheckoutService` interface so high-level flow stays small and stable.
+
+## Presentation
+
+[Linked here is a presentation AI-generated from this document by NotebookLM.](exam1-study-guide-notebooklm.pdf)

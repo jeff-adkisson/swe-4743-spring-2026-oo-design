@@ -45,7 +45,7 @@ GameEngine --> IPlayer : depends on
 note for WebApiPlayer "Forced to implement ReadFromConsole() even though API clients do not read from a console."
 ```
 
-### Student-Friendly Explanation
+### Friendly Explanation
 
 If one interface tries to represent too many jobs, every class and every client pays the price.
 A better design is to expose focused contracts so each client sees a small, relevant surface.
@@ -146,14 +146,14 @@ ISP reduces these risks by keeping contracts cohesive and client-specific.
 - [1. What Is ISP?](#1-what-is-isp)
 - [2. A Bad Example to a Refactored Good Example](#2-a-bad-example-to-a-refactored-good-example)
 - [3. Relationship to Other SOLID Principles](#3-relationship-to-other-solid-principles)
-- [4. ISP and John Ousterhout](#4-isp-and-john-ousterhout)
+- [4. ISP and Ousterhout](#4-isp-and-ousterhout)
 - [5. Practical Application](#5-practical-application)
 - [6. Identifying the Need for Refactoring](#6-identifying-the-need-for-refactoring)
 - [7. Adapter Pattern](#7-adapter-pattern)
 - [8. Facade Pattern](#8-facade-pattern)
 - [9. Real-World Summary](#9-real-world-summary)
 - [10. Interface Segregation Principle Study Guide](#10-interface-segregation-principle-study-guide)
-- [Appendix 1: Public API Versioning and ISP (Beyond Course Scope, Not on Exam)](#appendix-1-public-api-versioning-and-isp-beyond-course-scope-not-on-exam)
+- [Appendix 1: Public API Versioning and ISP](#appendix-1-public-api-versioning-and-isp)
 
 ## 2. A Bad Example to a Refactored Good Example
 
@@ -535,7 +535,7 @@ This is both an ISP and LSP problem:
 - ISP: interface is too broad for some clients.
 - LSP: subtype cannot honor full contract semantics.
 
-## 4. ISP and John Ousterhout
+## 4. ISP and Ousterhout
 
 ### Deep Modules
 
@@ -1093,7 +1093,7 @@ A Facade is good when it meaningfully simplifies the client view; it is harmful 
 - Describe a safe refactoring sequence to segregate an interface.
 - Explain how Adapter and Facade can support ISP at boundaries.
 
-## Appendix 1: Public API Versioning and ISP (Beyond Course Scope, Not on Exam)
+## Appendix 1: Public API Versioning and ISP
 
 This appendix is recommended reading. It is a common industry problem, but it is beyond the scope of this course and will not appear on any exam.
 

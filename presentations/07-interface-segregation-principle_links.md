@@ -1,0 +1,1 @@
+- [Lecture Material](presentations/07-interface-segregation-principle.md)

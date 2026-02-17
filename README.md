@@ -79,3 +79,6 @@ Design and implement a console-based Tea Shop application in C# or Java that int
 - [PDF](presentations/06-liskov-substitution-principle.pdf)
 - [HTML](presentations/06-liskov-substitution-principle_html/index.html)
 - [Lecture Material](presentations/06-liskov-substitution-principle.md)
+
+#### 07. Interface Segregation Principle
+- [Lecture Material](presentations/07-interface-segregation-principle.md)

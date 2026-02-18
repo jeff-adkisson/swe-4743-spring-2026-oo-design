@@ -30,7 +30,7 @@ In practical OO design terms, ISP means this:
 
 ```mermaid
 classDiagram
-direction LR
+direction TB
 
 class IPlayer {
   <<interface>>
@@ -66,7 +66,7 @@ An ISP-compliant version of the same player scenario separates gameplay from con
 
 ```mermaid
 classDiagram
-direction LR
+direction TB
 
 class IPlayer {
   <<interface>>
@@ -179,6 +179,7 @@ A single interface was created for convenience, then reused by checkout, warehou
 ### Before: ISP Violation (Fat Interface)
 
 ```csharp
+//C#
 public interface IOrderPlatformService
 {
     Order PlaceOrder(Cart cart);
@@ -229,6 +230,7 @@ public sealed class NightlyWarehouseJob
 ```
 
 ```java
+// Java
 public interface OrderPlatformService {
     Order placeOrder(Cart cart);
     void cancelOrder(String orderId);
@@ -280,7 +282,7 @@ public final class NightlyWarehouseJob {
 
 ```mermaid
 classDiagram
-direction LR
+direction TB
 
 class IOrderPlatformService {
   <<interface>>
@@ -426,40 +428,55 @@ public final class NightlyWarehouseJob {
 ```
 
 ```mermaid
+---
+config:
+  layout: elk
+---
 classDiagram
-direction LR
+direction RL
+    class IOrderPlacementService {
+	    +PlaceOrder(cart) Order
+	    +CancelOrder(orderId) void
+    }
 
-class IOrderPlacementService {
-  <<interface>>
-  +PlaceOrder(cart) Order
-  +CancelOrder(orderId) void
-}
-class IWarehouseOperationsService {
-  <<interface>>
-  +PrintPickList(shipDate) void
-}
-class IAuditExportService {
-  <<interface>>
-  +ExportTaxAuditCsv(year, month, filePath) void
-}
-class ISearchMaintenanceService {
-  <<interface>>
-  +RebuildSearchIndex() void
-}
+    class IWarehouseOperationsService {
+	    +PrintPickList(shipDate) void
+    }
 
-class WebCheckoutService
-class WarehouseBackOfficeService
-class SearchMaintenanceServiceImpl
-class CheckoutController
-class NightlyWarehouseJob
+    class IAuditExportService {
+	    +ExportTaxAuditCsv(year, month, filePath) void
+    }
 
-IOrderPlacementService <|.. WebCheckoutService
-IWarehouseOperationsService <|.. WarehouseBackOfficeService
-IAuditExportService <|.. WarehouseBackOfficeService
-ISearchMaintenanceService <|.. SearchMaintenanceServiceImpl
+    class ISearchMaintenanceService {
+	    +RebuildSearchIndex() void
+    }
 
-CheckoutController --> IOrderPlacementService
-NightlyWarehouseJob --> IWarehouseOperationsService
+    class WebCheckoutService {
+    }
+
+    class WarehouseBackOfficeService {
+    }
+
+    class SearchMaintenanceServiceImpl {
+    }
+
+    class CheckoutController {
+    }
+
+    class NightlyWarehouseJob {
+    }
+
+	<<interface>> IOrderPlacementService
+	<<interface>> IWarehouseOperationsService
+	<<interface>> IAuditExportService
+	<<interface>> ISearchMaintenanceService
+
+    IOrderPlacementService <|.. WebCheckoutService
+    IWarehouseOperationsService <|.. WarehouseBackOfficeService
+    IAuditExportService <|.. WarehouseBackOfficeService
+    ISearchMaintenanceService <|.. SearchMaintenanceServiceImpl
+    CheckoutController --> IOrderPlacementService
+    NightlyWarehouseJob --> IWarehouseOperationsService
 ```
 
 ### What Improved
@@ -627,6 +644,7 @@ The target is cohesive boundaries, not minimal method counts.
 ### Practical Examples
 
 ```csharp
+// C#
 // Cohesive split: read and write concerns have different clients and scaling needs.
 public interface IOrderReader
 {
@@ -650,6 +668,8 @@ public sealed class SqlOrderService : IOrderReader, IOrderWriter
 ```
 
 ```java
+// Java
+// Cohesive split: read and write concerns have different clients and scaling needs.
 public interface OrderReader {
     OrderSummary getById(String orderId);
     List<OrderSummary> search(OrderSearchCriteria criteria);
@@ -684,7 +704,7 @@ public final class SqlOrderService implements OrderReader, OrderWriter {
 
 ```mermaid
 classDiagram
-direction LR
+direction TB
 
 class IOrderReader {
   <<interface>>
@@ -827,8 +847,12 @@ Naming is architecture. In interface-first design, names define cognitive bounda
 ### Canonical UML
 
 ```mermaid
+---
+config:
+  layout: elk
+---
 classDiagram
-direction LR
+direction TB
 
 class Client
 
@@ -993,9 +1017,10 @@ Common cases:
 - One endpoint for mobile clients while internal services remain modular
 - Reducing call-site complexity and ordering constraints
 
-### C# Example
+### Facade Example
 
 ```csharp
+// C# Facade Example
 public sealed class CheckoutFacade
 {
     private readonly IInventoryReservationService _inventory;
@@ -1027,9 +1052,8 @@ public sealed class CheckoutFacade
 }
 ```
 
-### Java Example
-
 ```java
+// Java Facade Example
 public final class CheckoutFacade {
     private final InventoryReservationService inventory;
     private final PaymentAuthorizationService payments;
@@ -1286,7 +1310,7 @@ Bad API surface visualization:
 
 ```mermaid
 classDiagram
-direction LR
+direction BT
 
 class IPartnerPaymentsApi {
   <<interface>>
@@ -1314,6 +1338,7 @@ note for CardProcessorAdapter "Forced to implement unrelated methods."
 Keep stable capabilities stable. Add new capabilities as new interfaces.
 
 ```csharp
+// C# Example
 public interface IPaymentAuthorizationApi
 {
     PaymentResult Authorize(PaymentRequest request);
@@ -1331,9 +1356,8 @@ public interface IAuditExportApi
 }
 ```
 
-Java equivalent:
-
 ```java
+// Java Example
 public interface PaymentAuthorizationApi {
     PaymentResult authorize(PaymentRequest request);
 }
@@ -1352,7 +1376,7 @@ Good API surface visualization:
 
 ```mermaid
 classDiagram
-direction LR
+direction RL
 
 class IPaymentAuthorizationApi {
   <<interface>>
@@ -1384,15 +1408,16 @@ IRefundApi <|.. CardProcessorAdapter
 Public HTTP surface view of the same design decision:
 
 ```mermaid
-flowchart LR
-subgraph Bad Surface
-  B1["/api/v1/partner (authorize, refund, auditExport, rebuildIndex)"]
-end
+flowchart TB
 
 subgraph Good Surface
   G1["/api/v1/payments/authorize"]
   G2["/api/v1/refunds"]
   G3["/api/v2/compliance/audit-export"]
+end
+
+subgraph Bad Surface
+  B1["/api/v1/partner (authorize, refund,<br>auditExport, rebuildIndex)"]
 end
 ```
 

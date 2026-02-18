@@ -786,31 +786,25 @@ For interface ergonomics and long-term flexibility, design method signatures con
 
 - Narrow parameters: require only the minimum capability needed by the method.
 - Wide return interfaces: return stable abstractions that avoid over-committing to concrete implementation details.
-- [Generally follow Postel's Law: be liberal in what you accept and conservative in what you return.](https://medium.com/@mesw1/understanding-the-robustness-principle-postels-law-c1199ea79210)
+- [Generally follow Postel's Law: be liberal in what you accept and conservative in what you return.](https://martinfowler.com/bliki/TolerantReader.html)
 
 ```csharp
 // Bad: over-specific parameter and over-committed concrete return type.
 public interface IOrderSearchService
 {
+    //Accepts a materialized mutable list (should SearchOrders be able)
+    //to mutate the inbound reference type? The method name suggests 
+    //it should not...) and returns a mutable list.
     List<OrderSummary> SearchOrders(List<string> orderIds);
 }
 
 // Better: narrow required capability in, wide interface out.
 public interface IOrderSearchService
 {
+    //Accepts a narrow interface (IEnumerable is just an iterator contract and
+    //may even represent a lazy-loaded collection not yet in memory)
+    //and returns an immutable interface.
     IReadOnlyList<OrderSummary> SearchOrders(IEnumerable<string> orderIds);
-}
-```
-
-```java
-// Bad: concrete collection types on both sides.
-public interface OrderSearchService {
-    ArrayList<OrderSummary> searchOrders(ArrayList<String> orderIds);
-}
-
-// Better: minimal input requirement, stable output abstraction.
-public interface OrderSearchService {
-    List<OrderSummary> searchOrders(Collection<String> orderIds);
 }
 ```
 
@@ -1406,6 +1400,8 @@ end
 - Keep old contracts stable while introducing new capability surfaces.
 - Deprecate with clear timelines and migration guides.
 - Track which client groups use which methods before changing shared contracts.
+
+Reference: [Zalando RESTful API Guidelines - Principles (Postel/compatibility guidance)](https://opensource.zalando.com/restful-api-guidelines/#principles)
 
 ### Explicit ISP Connection
 

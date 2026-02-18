@@ -2,6 +2,8 @@
 
 > The **I** in SOL**I**D...
 
+[PowerPoint Presentation](07-interface-segregation-principle.pptx) [[pdf version](07-interface-segregation-principle.pdf)]
+
 ## 1. What Is ISP?
 
 ### Canonical Definition (Robert C. Martin)

@@ -712,25 +712,30 @@ config:
 ---
 classDiagram
 direction TB
+    class Client {
+    }
 
-class Client
+    class Target {
+	    +Request(data) Result
+    }
 
-class Target {
-  <<interface>>
-  +Request(data) Result
-}
+    class Adapter {
+	    +Request(data) Result
+    }
 
-class Adapter {
-  +Request(data) Result
-}
+    class Adaptee {
+	    +SpecificRequest(payload) LegacyResult
+    }
 
-class Adaptee {
-  +SpecificRequest(payload) LegacyResult
-}
+	<<interface>> Target
 
-Client --> Target
-Target <|.. Adapter
-Adapter --> Adaptee : translates and delegates
+    Client --> Target
+    Target <|.. Adapter
+    Adapter --> Adaptee : translates and delegates
+
+	class Adapter:::Peach
+
+	classDef Peach :,stroke-width:1px,stroke-dasharray:none,stroke:#FBB35A,fill:#FFEFDB,color:#8F632D
 ```
 
 ### Why It Exists and When to Use It
@@ -744,9 +749,28 @@ Common cases:
 - Vendor migration where old and new APIs must coexist
 - Integrating an incompatible implementation into an existing Strategy or Decorator ecosystem without modifying client code
 
-### C# Example
+### Common Synonyms
+
+- **Wrapper**
+
+  Emphasizes that the adapter “wraps” another object.
+
+- **Interface Adapter**
+
+  Highlights that the purpose is interface translation.
+
+- **Compatibility Adapter**
+
+  Often used when bridging legacy or versioned APIs.
+
+- **Shim**
+
+  Informal industry term for a thin compatibility layer.
+
+### Adapter Example
 
 ```csharp
+// C#
 public interface IShippingLabelGateway
 {
     ShippingLabel CreateLabel(ShipmentRequest request);
@@ -778,9 +802,8 @@ public sealed class LegacyCarrierAdapter : IShippingLabelGateway
 }
 ```
 
-### Java Example
-
 ```java
+// Java
 public interface ShippingLabelGateway {
     ShippingLabel createLabel(ShipmentRequest request);
 }
@@ -843,27 +866,35 @@ Ultimately, deciding whether an Adapter is appropriate is an engineering judgmen
 ```mermaid
 classDiagram
 direction LR
+    class Client {
+    }
 
-class Client
+    class Facade {
+	    +Operation() Result
+    }
 
-class Facade {
-  +Operation() Result
-}
+    class SubsystemA {
+	    +A1()
+    }
 
-class SubsystemA {
-  +A1()
-}
-class SubsystemB {
-  +B1()
-}
-class SubsystemC {
-  +C1()
-}
+    class SubsystemB {
+	    +B1()
+    }
 
-Client --> Facade
-Facade --> SubsystemA
-Facade --> SubsystemB
-Facade --> SubsystemC
+    class SubsystemC {
+	    +C1()
+    }
+
+    Client --> Facade
+    Facade --> SubsystemA
+    Facade --> SubsystemB
+    Facade --> SubsystemC
+
+	class Facade:::Peach
+
+	classDef Peach :,stroke-width:1px,stroke-dasharray:none,stroke:#FBB35A,fill:#FFEFDB,color:#8F632D,stroke-width:1px,stroke-dasharray:none,stroke:#FBB35A,fill:#FFEFDB,color:#8F632D
+	classDef Pine :,stroke-width:1px,stroke-dasharray:none,stroke:#254336,fill:#27654A,color:#FFFFFF
+	classDef Sky :,stroke-width:1px,stroke-dasharray:none,stroke:#374D7C,fill:#E2EBFF,color:#374D7C
 ```
 
 ### Why It Exists and When to Use It
@@ -941,6 +972,25 @@ public final class CheckoutFacade {
 }
 ```
 
+### Common Synonyms
+
+- **Facade** → CheckoutFacade
+- **Service** → CheckoutService
+- **Application Service** → CheckoutApplicationService
+- **Gateway** → CheckoutGateway
+- **Manager** → CheckoutManager
+- **Coordinator** → CheckoutCoordinator
+- **Orchestrator** → CheckoutOrchestrator
+- **Client** (SDK-style) → CheckoutClient
+
+All of these can structurally represent a **Facade** — a simplified entry point coordinating multiple underlying components (payment processing, inventory validation, tax calculation, etc.).
+
+The term "Facade" is not often used in practice. 
+
+> **“What’s in a name? That which we call a rose**
+> **By any other word would smell as sweet.”**
+> — *William Shakespeare, Romeo and Juliet*
+
 ### Facade and ISP
 
 Facade supports ISP by giving a specific client group a focused contract.
@@ -959,6 +1009,7 @@ When introducing a facade, the common failure mode is turning it into a coordina
 Bad direction (mixed responsibilities in one facade):
 
 ```csharp
+// C#
 public interface ICommerceFacade
 {
     OrderReceipt PlaceOrder(CheckoutCommand command);
@@ -1043,6 +1094,24 @@ From Ousterhout's perspective, a Facade is valuable when it reduces cognitive lo
 A Facade is good when it meaningfully simplifies the client view; it is harmful when it becomes either a pass-through wrapper or a new god interface.
 
 ![image-20260217202726543](07-interface-segregation-principle.assets/image-20260217202726543.png)
+
+### When To Use Facade or Adapter
+
+| **Decision Factor**       | **Use** **Facade** **When…**                                 | **Use** **Adapter** **When…**                                |
+| ------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| **Primary Goal**          | You want to **simplify** a complex subsystem.                | You need to **translate** one interface into another.        |
+| **Client Compatibility**  | The client already understands the subsystem’s concepts but shouldn’t see all of them. | The client and existing component have **incompatible interfaces**. |
+| **Interface Shape**       | You are creating a **smaller, cleaner surface area**.        | You are preserving the client’s expected interface while wrapping an existing implementation. |
+| **Behavior Change**       | No behavioral change — just orchestration and simplification. | No behavioral change — just interface conversion.            |
+| **Typical Scenario**      | Checkout workflow coordinating payment, inventory, tax, shipping. | Legacy payment provider with a different method signature.   |
+| **Direction of Control**  | You define a new high-level entry point over many components. | You conform an existing component to a required interface.   |
+| **Dependency Motivation** | Reduce coupling to many subsystem classes.                   | Reuse an existing class without modifying it.                |
+| **Actor Focus**           | Often actor/use-case driven (e.g., CheckoutFacade).          | Often compatibility/version driven (e.g., V1ToV2Adapter).    |
+
+**Short rule of thumb:**
+
+- If you’re **hiding complexity**, use **Facade**.
+- If you’re **making two interfaces compatible**, use **Adapter**.
 
 ## 10. Real-World Summary
 

@@ -7,6 +7,14 @@
 > "Clients should not be forced to depend upon interfaces that they do not use."
 > - Robert C. Martin
 
+### An Absurd Example 
+
+> ... that happens regularly in software design, thus the need for ISP.
+
+![image-20260217202438981](07-interface-segregation-principle.assets/image-20260217202438981.png)
+
+![image-20260217202459976](07-interface-segregation-principle.assets/image-20260217202459976.png)
+
 ### Precise Technical Interpretation
 
 In practical OO design terms, ISP means this:
@@ -130,6 +138,8 @@ Air Inter Flight 148 is often cited in UX safety discussions because mode/repres
 
 Reference: [Good UX / Bad UX - Air Inter Flight 148 Example](https://www.adgcreative.net/resources/good-ux-bad-ux/)
 
+![image-20260217202345760](07-interface-segregation-principle.assets/image-20260217202345760.png)
+
 ### Why ISP Matters in Real Systems
 
 In enterprise systems, fat interfaces create avoidable operational risk:
@@ -141,7 +151,7 @@ In enterprise systems, fat interfaces create avoidable operational risk:
 
 ISP reduces these risks by keeping contracts cohesive and client-specific.
 
-### Table of Contents (H2 Sections)
+### Table of Contents
 
 - [1. What Is ISP?](#1-what-is-isp)
 - [2. A Bad Example to a Refactored Good Example](#2-a-bad-example-to-a-refactored-good-example)
@@ -149,10 +159,11 @@ ISP reduces these risks by keeping contracts cohesive and client-specific.
 - [4. ISP and Ousterhout](#4-isp-and-ousterhout)
 - [5. Practical Application](#5-practical-application)
 - [6. Identifying the Need for Refactoring](#6-identifying-the-need-for-refactoring)
-- [7. Adapter Pattern](#7-adapter-pattern)
-- [8. Facade Pattern](#8-facade-pattern)
-- [9. Real-World Summary](#9-real-world-summary)
-- [10. Interface Segregation Principle Study Guide](#10-interface-segregation-principle-study-guide)
+- [7. Interface Naming Conventions](#7-interface-naming-conventions)
+- [8. Adapter Pattern](#8-adapter-pattern)
+- [9. Facade Pattern](#9-facade-pattern)
+- [10. Real-World Summary](#10-real-world-summary)
+- [11. Interface Segregation Principle Study Guide](#11-interface-segregation-principle-study-guide)
 - [Appendix 1: Public API Versioning and ISP](#appendix-1-public-api-versioning-and-isp)
 
 ## 2. A Bad Example to a Refactored Good Example
@@ -535,6 +546,8 @@ This is both an ISP and LSP problem:
 - ISP: interface is too broad for some clients.
 - LSP: subtype cannot honor full contract semantics.
 
+![image-20260217202542228](07-interface-segregation-principle.assets/image-20260217202542228.png)
+
 ## 4. ISP and Ousterhout
 
 ### Deep Modules
@@ -568,6 +581,8 @@ ISP is a concrete mechanism for this: remove irrelevant methods from each client
 
 A 20-method interface increases mental overhead for every reader.
 A 2-4 method interface aligned to one use case lowers cognitive load, code review effort, and onboarding time.
+
+![image-20260217202555308](07-interface-segregation-principle.assets/image-20260217202555308.png)
 
 ## 5. Practical Application
 
@@ -735,7 +750,81 @@ In reviews, you will commonly hear these terms:
 - Better team autonomy around specific interfaces
 - Lower cognitive load per client and per code review
 
-## 7. Adapter Pattern
+## 7. Interface Naming Conventions
+
+### Why Naming Quality Matters for Interfaces
+
+Interface names are consumed far more often than they are authored.
+If names are vague or overloaded, every reader pays the tax repeatedly in design reviews, maintenance, and onboarding.
+
+Good interface naming should optimize for:
+
+- cognitive scan speed (`what is this for?`)
+- long-lived intent (`will this still read clearly in two years?`)
+- discoverability (`can a new developer find this quickly by role/capability?`)
+- change isolation (clear names reduce accidental cross-domain coupling)
+
+### Naming Guidelines for Interface Types
+
+- Name by role or capability, not storage or technology detail.
+- Prefer cohesive nouns that match client language (`IPaymentAuthorizer`, `IOrderReader`).
+- Avoid generic or inflated names (`IManager`, `IService`, `IProcessor`, `ICommonUtils`).
+- Split names when responsibilities diverge (`IShipmentScheduler` and `IShipmentTracker`, not `IShipmentService`).
+- Keep prefixes/suffixes consistent with team conventions; inconsistency destroys searchability.
+
+### Method Naming Guidelines
+
+- Use verb + domain object (`AuthorizePayment`, `ScheduleShipment`, `ExportTaxAuditZip`).
+- Keep names intention-revealing: business outcome first, implementation detail omitted.
+- Avoid ambiguous verbs (`Handle`, `Process`, `DoWork`) unless paired with precise domain context.
+- Keep side-effecting commands and pure queries clearly distinguishable.
+- Reserve abbreviations for universally recognized domain terms.
+
+### Signature Design: Narrow Parameters, Wide Return Interfaces
+
+For interface ergonomics and long-term flexibility, design method signatures conservatively:
+
+- Narrow parameters: require only the minimum capability needed by the method.
+- Wide return interfaces: return stable abstractions that avoid over-committing to concrete implementation details.
+- [Generally follow Postel's Law: be liberal in what you accept and conservative in what you return.](https://medium.com/@mesw1/understanding-the-robustness-principle-postels-law-c1199ea79210)
+
+```csharp
+// Bad: over-specific parameter and over-committed concrete return type.
+public interface IOrderSearchService
+{
+    List<OrderSummary> SearchOrders(List<string> orderIds);
+}
+
+// Better: narrow required capability in, wide interface out.
+public interface IOrderSearchService
+{
+    IReadOnlyList<OrderSummary> SearchOrders(IEnumerable<string> orderIds);
+}
+```
+
+```java
+// Bad: concrete collection types on both sides.
+public interface OrderSearchService {
+    ArrayList<OrderSummary> searchOrders(ArrayList<String> orderIds);
+}
+
+// Better: minimal input requirement, stable output abstraction.
+public interface OrderSearchService {
+    List<OrderSummary> searchOrders(Collection<String> orderIds);
+}
+```
+
+### Quick Naming Smell Checklist
+
+- Could another team member infer the interface purpose from its name alone?
+- Does each method name describe business intent without reading the implementation?
+- Are unrelated capabilities packed behind one broad name?
+- Does the signature force clients to depend on concrete types they do not need?
+- Would this name still make sense after one major feature expansion?
+
+Naming is architecture. In interface-first design, names define cognitive boundaries as much as method sets do.
+
+## 8. Adapter Pattern
 
 ### Canonical UML
 
@@ -864,7 +953,9 @@ The key evaluation is not whether a class is named `Adapter`, but whether it pro
 
 Ultimately, deciding whether an Adapter is appropriate is an engineering judgment call. Best-practice guidance should inform decisions, not replace context-specific tradeoff analysis.
 
-## 8. Facade Pattern
+![image-20260217202711149](07-interface-segregation-principle.assets/image-20260217202711149.png)
+
+## 9. Facade Pattern
 
 ### Canonical UML
 
@@ -1021,7 +1112,9 @@ From Ousterhout's perspective, a Facade is valuable when it reduces cognitive lo
 
 A Facade is good when it meaningfully simplifies the client view; it is harmful when it becomes either a pass-through wrapper or a new god interface.
 
-## 9. Real-World Summary
+![image-20260217202726543](07-interface-segregation-principle.assets/image-20260217202726543.png)
+
+## 10. Real-World Summary
 
 ### Practical Guidance
 
@@ -1037,7 +1130,9 @@ A Facade is good when it meaningfully simplifies the client view; it is harmful 
 - "If it compiles, substitutability is fine." No. Runtime exceptions from unsupported methods indicate broken contracts.
 - "Facade and Adapter replace ISP." No. They are tools that help apply ISP at integration boundaries.
 
-## 10. Interface Segregation Principle Study Guide
+![image-20260217202739996](07-interface-segregation-principle.assets/image-20260217202739996.png)
+
+## 11. Interface Segregation Principle Study Guide
 
 ### Core Definitions
 
@@ -1045,6 +1140,15 @@ A Facade is good when it meaningfully simplifies the client view; it is harmful 
 - Design intent: Keep contracts client-specific and cohesive.
 - Failure mode: Broad interfaces that mix unrelated capabilities.
 - SRP vs ISP boundary: SRP governs reasons-to-change within modules; ISP governs client-forced dependencies at module boundaries.
+- Postel's Law (API design framing): Be liberal in what you accept and conservative in what you return.
+
+### Interface Naming and Signature Summary
+
+- Name interfaces by role/capability, not generic placeholders (`IOrderReader` > `IManager`).
+- Keep naming consistent so interfaces are easy to discover and reason about over time.
+- Method names should express clear domain intent (`AuthorizePayment`, `ScheduleShipment`) instead of vague verbs.
+- Prefer narrow parameters (accept only the minimal required capability).
+- Prefer wide/stable return abstractions (return interfaces or read-only abstractions over concrete types).
 
 ### Relationship Map
 

@@ -98,6 +98,7 @@ note for WebApiPlayer "No console input dependency."
 ```
 
 ```csharp
+// C#
 public interface IPlayer
 {
     Move PlayTurn(GameState state);
@@ -179,7 +180,7 @@ A single interface was created for convenience, then reused by checkout, warehou
 ### Before: ISP Violation (Fat Interface)
 
 ```csharp
-//C#
+// C#
 public interface IOrderPlatformService
 {
     Order PlaceOrder(Cart cart);
@@ -229,57 +230,6 @@ public sealed class NightlyWarehouseJob
 }
 ```
 
-```java
-// Java
-public interface OrderPlatformService {
-    Order placeOrder(Cart cart);
-    void cancelOrder(String orderId);
-    void printPickList(LocalDate shipDate);
-    void exportTaxAuditCsv(int year, int month, String filePath);
-    void rebuildSearchIndex();
-}
-
-public final class WebCheckoutService implements OrderPlatformService {
-    @Override
-    public Order placeOrder(Cart cart) {
-        // Checkout workflow
-        return new Order();
-    }
-
-    @Override
-    public void cancelOrder(String orderId) {
-        // Checkout cancellation
-    }
-
-    @Override
-    public void printPickList(LocalDate shipDate) {
-        throw new UnsupportedOperationException("Checkout does not own warehouse pick lists.");
-    }
-
-    @Override
-    public void exportTaxAuditCsv(int year, int month, String filePath) {
-        throw new UnsupportedOperationException("Checkout does not own compliance export.");
-    }
-
-    @Override
-    public void rebuildSearchIndex() {
-        throw new UnsupportedOperationException("Checkout does not own search indexing.");
-    }
-}
-
-public final class NightlyWarehouseJob {
-    private final OrderPlatformService service;
-
-    public NightlyWarehouseJob(OrderPlatformService service) {
-        this.service = service;
-    }
-
-    public void run(LocalDate shipDate) {
-        service.printPickList(shipDate);
-    }
-}
-```
-
 ```mermaid
 classDiagram
 direction TB
@@ -314,6 +264,7 @@ NightlyWarehouseJob --> IOrderPlatformService
 ### After: Segregated Interfaces
 
 ```csharp
+// C#
 public interface IOrderPlacementService
 {
     Order PlaceOrder(Cart cart);
@@ -364,65 +315,6 @@ public sealed class NightlyWarehouseJob
     public void Run(DateOnly shipDate)
     {
         _warehouse.PrintPickList(shipDate);
-    }
-}
-```
-
-```java
-public interface OrderPlacementService {
-    Order placeOrder(Cart cart);
-    void cancelOrder(String orderId);
-}
-
-public interface WarehouseOperationsService {
-    void printPickList(LocalDate shipDate);
-}
-
-public interface AuditExportService {
-    void exportTaxAuditCsv(int year, int month, String filePath);
-}
-
-public interface SearchMaintenanceService {
-    void rebuildSearchIndex();
-}
-
-public final class WebCheckoutService implements OrderPlacementService {
-    @Override
-    public Order placeOrder(Cart cart) {
-        return new Order();
-    }
-
-    @Override
-    public void cancelOrder(String orderId) {
-    }
-}
-
-public final class WarehouseBackOfficeService
-        implements WarehouseOperationsService, AuditExportService {
-    @Override
-    public void printPickList(LocalDate shipDate) {
-    }
-
-    @Override
-    public void exportTaxAuditCsv(int year, int month, String filePath) {
-    }
-}
-
-public final class SearchMaintenanceServiceImpl implements SearchMaintenanceService {
-    @Override
-    public void rebuildSearchIndex() {
-    }
-}
-
-public final class NightlyWarehouseJob {
-    private final WarehouseOperationsService warehouse;
-
-    public NightlyWarehouseJob(WarehouseOperationsService warehouse) {
-        this.warehouse = warehouse;
-    }
-
-    public void run(LocalDate shipDate) {
-        warehouse.printPickList(shipDate);
     }
 }
 ```
@@ -497,7 +389,7 @@ Boundary clarification: SRP asks what independent reasons-to-change exist inside
 If one interface serves multiple actors, it usually reflects mixed responsibilities.
 
 ```csharp
-// Mixed actors: Checkout + Compliance
+// Mixed actors: Checkout + Compliance, C#
 public interface IInvoiceService
 {
     Invoice Create(CheckoutRequest request);
@@ -508,6 +400,7 @@ public interface IInvoiceService
 Split by actor pressure:
 
 ```csharp
+// C#
 public interface IInvoiceCreationService
 {
     Invoice Create(CheckoutRequest request);
@@ -527,6 +420,7 @@ Fat interfaces are unstable because unrelated client needs keep changing them.
 With ISP, you extend behavior by adding new focused contracts instead of modifying broad ones.
 
 ```java
+// Java
 public interface PaymentAuthorizationService {
     Authorization authorize(PaymentRequest request);
 }
@@ -664,41 +558,6 @@ public sealed class SqlOrderService : IOrderReader, IOrderWriter
     public IReadOnlyList<OrderSummary> Search(OrderSearchCriteria criteria) => new List<OrderSummary>();
     public string Place(OrderDraft draft) => "ORD-1001";
     public void Cancel(string orderId) { }
-}
-```
-
-```java
-// Java
-// Cohesive split: read and write concerns have different clients and scaling needs.
-public interface OrderReader {
-    OrderSummary getById(String orderId);
-    List<OrderSummary> search(OrderSearchCriteria criteria);
-}
-
-public interface OrderWriter {
-    String place(OrderDraft draft);
-    void cancel(String orderId);
-}
-
-public final class SqlOrderService implements OrderReader, OrderWriter {
-    @Override
-    public OrderSummary getById(String orderId) {
-        return new OrderSummary();
-    }
-
-    @Override
-    public List<OrderSummary> search(OrderSearchCriteria criteria) {
-        return List.of();
-    }
-
-    @Override
-    public String place(OrderDraft draft) {
-        return "ORD-1001";
-    }
-
-    @Override
-    public void cancel(String orderId) {
-    }
 }
 ```
 
@@ -1123,6 +982,55 @@ public interface IComplianceFacade
 ```
 
 This keeps SRP boundaries explicit while preserving the simplicity benefits of Facade for each client group.
+
+```mermaid
+---
+config:
+  layout: elk
+---
+classDiagram
+direction LR
+	namespace Bad_Direction {
+        class CheckoutCommand_ {
+        }
+
+        class OrderReceipt_ {
+        }
+
+        class ICommerceFacade {
+	        +OrderReceipt PlaceOrder(CheckoutCommand command)
+	        +byte[] ExportTaxAuditZip(int year, int month)
+	        +void RebuildSearchIndex()
+        }
+
+	}
+	namespace Better_Direction {
+        class CheckoutCommand {
+        }
+
+        class OrderReceipt {
+        }
+
+        class ICheckoutFacade {
+	        +OrderReceipt PlaceOrder(CheckoutCommand command)
+        }
+
+        class IComplianceFacade {
+	        +byte[] ExportTaxAuditZip(int year, int month)
+        }
+
+	}
+
+	<<interface>> ICommerceFacade
+	<<interface>> ICheckoutFacade
+	<<interface>> IComplianceFacade
+
+    ICommerceFacade ..> CheckoutCommand_ : uses
+    ICommerceFacade ..> OrderReceipt_ : returns
+    ICheckoutFacade ..> CheckoutCommand : uses
+    ICheckoutFacade ..> OrderReceipt : returns
+```
+
 
 ### Facade and Ousterhout: Thin vs Deep Modules
 

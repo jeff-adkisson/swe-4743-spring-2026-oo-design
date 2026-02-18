@@ -1,5 +1,7 @@
 # The Interface Segregation Principle (ISP)
 
+> The **I** in SOL**I**D...
+
 ## 1. What Is ISP?
 
 ### Canonical Definition (Robert C. Martin)

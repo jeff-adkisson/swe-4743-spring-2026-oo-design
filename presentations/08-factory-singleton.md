@@ -12,7 +12,7 @@ Object creation is one of the most common places where coupling quietly enters a
 
 The goal is not to apply patterns everywhere. The goal is to apply them where they reduce change impact, improve clarity, and make behavior easier to reason about.
 
-Scope note: Appendix 1 introduces reflection-based registration. This is beyond the scope of this course and will not appear on exams.
+![image-20260223173825699](08-factory-singleton.assets/image-20260223173825699.png)
 
 
 ## Table of Contents
@@ -46,6 +46,8 @@ There are three common factory approaches:
 | "Given a runtime key, which concrete implementation should I create?" | Simple Factory | One centralized selector keeps branching out of business logic. |
 | "Which subclass should decide what gets created?" | Factory Method Pattern | Creation varies by creator subtype and extension point. |
 | "How do I create a compatible set of related objects?" | Abstract Factory | One concrete factory guarantees a consistent product family. |
+
+![image-20260223173911027](08-factory-singleton.assets/image-20260223173911027.png)
 
 ## Simple Factory
 
@@ -206,6 +208,8 @@ public decimal QuoteTotal(decimal subtotal, decimal weightKg, string mode)
 A checkout system can map runtime provider keys (`stripe`, `adyen`, `mock`) to `PaymentStrategy` implementations using a simple factory.  
 This keeps payment selection logic centralized while allowing safe non-production overrides (`mock`) in test/staging environments.
 
+![image-20260223174018312](08-factory-singleton.assets/image-20260223174018312.png)
+
 ### Minimal Test Example
 
 ```csharp
@@ -275,6 +279,8 @@ Transition: when creation variation belongs to subtype-specific extension points
 Factory Method Pattern defines an abstract creator operation and delegates concrete creation to subclasses. It is useful when different creator types should decide which strategy to instantiate.
 
 Canonical GoF terminology is **Factory Method**. This lecture uses **Factory Method Pattern** as a label to avoid confusion with ordinary class methods.
+
+![image-20260223174109869](08-factory-singleton.assets/image-20260223174109869.png)
 
 ### Canonical UML Class Diagram (Factory Method Pattern)
 
@@ -405,6 +411,8 @@ Java note: this Factory Method Pattern example is structurally very close to the
 Factory Method Pattern removes selection logic from `CheckoutService`, but the system still has to choose a concrete creator somewhere (usually the composition root).  
 You can replace explicit `switch` selection with a simple registration map.
 
+![image-20260223174232805](08-factory-singleton.assets/image-20260223174232805.png)
+
 #### C# Registration Example
 
 ```csharp
@@ -496,6 +504,8 @@ Transition: when clients must construct whole sets of related objects that must 
 ### What It Is and What It Accomplishes
 
 Abstract Factory provides an interface for creating **families of related objects** without specifying concrete classes. It guarantees that products created together are compatible (for example, a dark-themed button with a dark-themed dialog).
+
+![image-20260223174256406](08-factory-singleton.assets/image-20260223174256406.png)
 
 ### Detailed Example: Admin Console Theming
 
@@ -717,6 +727,7 @@ if (!output.Contains("Dark")) throw new Exception("Expected dark-family widgets 
 - **Easy change:** add a new family (`CorporateWidgetFactory`) by adding concrete products + one factory.
 - **Expensive change:** add a new product type (`Tooltip`) because every factory interface and concrete factory must expand.
 - This is the core Abstract Factory tradeoff and a common exam question.
+- ![image-20260223174323252](08-factory-singleton.assets/image-20260223174323252.png)
 
 ### Relationship to Factory Method Pattern
 
@@ -787,6 +798,8 @@ Singleton ensures a class has one accessible instance and provides a global acce
 
 The risk singleton introduces is **hidden global state**: any code can reach the same shared object from anywhere, often without that dependency appearing in constructors or method parameters. This hides coupling and makes behavior harder to reason about, because one part of the system can mutate singleton state and unexpectedly affect unrelated parts. It is especially problematic in tests, where state can leak between test cases, create order-dependent failures, and break parallel test isolation.
 
+![image-20260223174339335](08-factory-singleton.assets/image-20260223174339335.png)
+
 ### Canonical UML Class Diagram
 
 ```mermaid
@@ -804,6 +817,10 @@ classDiagram
 ### Implementation Walkthrough
 
 Below are two equivalent implementations per language: a simple version and a thread-safe double-checked locking version.
+
+![image-20260223174411117](08-factory-singleton.assets/image-20260223174411117.png)
+
+![image-20260223174431143](08-factory-singleton.assets/image-20260223174431143.png)
 
 #### C# Demo
 
@@ -972,6 +989,8 @@ Typical mitigation:
 - keep singleton immutable where possible,
 - provide explicit reset hooks only in test builds (with caution).
 
+![image-20260223174458156](08-factory-singleton.assets/image-20260223174458156.png)
+
 ### Industry Example: Process-Wide Configuration Snapshot
 
 A service may load immutable startup configuration once and expose it process-wide through a singleton-like accessor.  
@@ -1063,6 +1082,8 @@ if (SimpleAppConfig.GetInstance().Theme != "light")
 - Choose **Abstract Factory** when the key question is: "Which compatible family of implementations should I create together?"
 - Choose **Singleton** only when the key question is: "Should there be exactly one process-wide instance?"
 - Prefer design clarity over pattern density; patterns are tools, not goals.
+
+![image-20260223174551389](08-factory-singleton.assets/image-20260223174551389.png)
 
 ### New Terminology
 

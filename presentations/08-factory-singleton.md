@@ -1,0 +1,1103 @@
+# Factory Pattern, Abstract Factory Pattern, and Singleton Pattern
+
+**Course:** SWE 4743 - Object-Oriented Design  
+**Audience:** Senior undergraduate software engineering students
+
+## Introduction
+
+Object creation is one of the most common places where coupling quietly enters a design. This lecture addresses two creation concerns:
+
+- **Factories** (Simple Factory, Factory Method Pattern, and Abstract Factory) control *how and where object creation decisions are made*.
+- **Singleton Pattern** controls *how many instances* of a type exist and how that instance is accessed.
+
+The goal is not to apply patterns everywhere. The goal is to apply them where they reduce change impact, improve clarity, and make behavior easier to reason about.
+
+### How to Use This Material (Lecture + Self-Study)
+
+- During lecture delivery, focus on the diagrams, the "Delta" section, and the "When to Use / When Not to Use" summaries.
+- During self-study, work through the C# walkthroughs first, then answer the example questions and check against the answer key.
+- Use the Singleton section as the primary C#/Java comparison point, because the thread-safe implementations differ more by language.
+
+## Table of Contents
+
+- [Factories](#factories)
+- [Simple Factory](#simple-factory)
+- [Factory Method Pattern](#factory-method-pattern)
+- [Abstract Factory Pattern](#abstract-factory-pattern)
+- [Singleton Pattern](#singleton-pattern)
+- [Study Guide](#study-guide)
+
+## Factories
+
+### What Factories Solve
+
+Factories centralize object creation so client code depends on abstractions instead of concrete classes. In practice, this reduces constructor coupling and supports runtime behavior selection.
+
+In this lecture, factory usage is tied directly to **Strategy** creation: factory logic chooses the correct `ShippingStrategy` implementation for the current context.
+
+There are three common factory approaches:
+
+- **Simple Factory**: one central creator selects a concrete type from runtime input.
+- **Factory Method Pattern**: creator subclasses decide which concrete product gets instantiated.
+- **Abstract Factory**: one factory creates a compatible family of related products.
+
+### Factory Choice Matrix
+
+| If your main question is... | Prefer | Why |
+|---|---|---|
+| "Given a runtime key, which concrete implementation should I create?" | Simple Factory | One centralized selector keeps branching out of business logic. |
+| "Which subclass should decide what gets created?" | Factory Method Pattern | Creation varies by creator subtype and extension point. |
+| "How do I create a compatible set of related objects?" | Abstract Factory | One concrete factory guarantees a consistent product family. |
+
+## Simple Factory
+
+### Introduction
+
+Simple Factory places creation logic in one method/class that returns the correct concrete strategy for a runtime key (for example `"ground"` or `"air"`).
+
+### Canonical UML Class Diagram (Simple Factory)
+
+```mermaid
+classDiagram
+    class ShippingStrategy {
+        <<interface>>
+        +calculate(weightKg)
+    }
+    class GroundShippingStrategy
+    class AirShippingStrategy
+    class DroneShippingStrategy
+    ShippingStrategy <|.. GroundShippingStrategy
+    ShippingStrategy <|.. AirShippingStrategy
+    ShippingStrategy <|.. DroneShippingStrategy
+
+    class ShippingStrategyFactory {
+        +create(mode) ShippingStrategy
+    }
+
+    class CheckoutService {
+        -factory : ShippingStrategyFactory
+        +quoteTotal(subtotal, weightKg, mode)
+    }
+
+    ShippingStrategyFactory ..> ShippingStrategy : creates
+    CheckoutService --> ShippingStrategyFactory : uses
+```
+
+### Implementation Walkthrough (Strategy Selection)
+
+#### C# Demo
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+public interface ShippingStrategy
+{
+    decimal Calculate(decimal weightKg);
+}
+
+public sealed class GroundShippingStrategy : ShippingStrategy
+{
+    public decimal Calculate(decimal weightKg) => 4.00m + (1.10m * weightKg);
+}
+
+public sealed class AirShippingStrategy : ShippingStrategy
+{
+    public decimal Calculate(decimal weightKg) => 10.00m + (2.75m * weightKg);
+}
+
+public sealed class DroneShippingStrategy : ShippingStrategy
+{
+    public decimal Calculate(decimal weightKg) => 15.00m + (4.00m * weightKg);
+}
+
+public sealed class ShippingStrategyFactory
+{
+    private readonly Dictionary<string, Func<ShippingStrategy>> _registry =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["ground"] = () => new GroundShippingStrategy(),
+            ["air"] = () => new AirShippingStrategy(),
+            ["drone"] = () => new DroneShippingStrategy()
+        };
+
+    public ShippingStrategy Create(string mode)
+    {
+        if (string.IsNullOrWhiteSpace(mode))
+            throw new ArgumentException("Shipping mode is required.", nameof(mode));
+
+        if (!_registry.TryGetValue(mode, out var creator))
+            throw new NotSupportedException($"Unsupported shipping mode '{mode}'.");
+
+        return creator();
+    }
+}
+
+public sealed class CheckoutService
+{
+    private readonly ShippingStrategyFactory _factory;
+
+    public CheckoutService(ShippingStrategyFactory factory) => _factory = factory;
+
+    public decimal QuoteTotal(decimal subtotal, decimal weightKg, string mode)
+    {
+        ShippingStrategy strategy = _factory.Create(mode);
+        return subtotal + strategy.Calculate(weightKg);
+    }
+}
+
+public static class Program
+{
+    public static void Main(string[] args)
+    {
+        // Runtime source: CLI, env var, or configuration provider.
+        string mode = args.Length > 0
+            ? args[0]
+            : Environment.GetEnvironmentVariable("SHIPPING_MODE") ?? "ground";
+
+        var service = new CheckoutService(new ShippingStrategyFactory());
+        decimal total = service.QuoteTotal(subtotal: 120m, weightKg: 3.5m, mode: mode);
+
+        Console.WriteLine($"Mode={mode}, Total={total:C}");
+    }
+}
+```
+
+Java note: the Java implementation is structurally identical to the C# version here, so this section uses C# as the primary teaching version.
+
+### Refactoring Case Study: Replace `if/switch` Construction Logic
+
+Before (policy + construction mixed):
+
+```csharp
+public decimal QuoteTotal(decimal subtotal, decimal weightKg, string mode)
+{
+    ShippingStrategy strategy = mode.ToLowerInvariant() switch
+    {
+        "ground" => new GroundShippingStrategy(),
+        "air" => new AirShippingStrategy(),
+        "drone" => new DroneShippingStrategy(),
+        _ => throw new NotSupportedException()
+    };
+
+    return subtotal + strategy.Calculate(weightKg);
+}
+```
+
+After (construction delegated):
+
+```csharp
+public decimal QuoteTotal(decimal subtotal, decimal weightKg, string mode)
+{
+    ShippingStrategy strategy = _factory.Create(mode);
+    return subtotal + strategy.Calculate(weightKg);
+}
+```
+
+### Runtime Selection, Error Handling, and Configuration Ownership
+
+- Runtime selector sources: command line, environment variable, config file, or user preference.
+- Invalid keys should fail fast with clear exceptions/logging.
+- The **composition root** owns configuration loading and decides which factory object to wire in.
+- Business services should not parse environment/config and construct concrete strategies directly.
+
+### Industry Example: Payment Provider Selection
+
+A checkout system can map runtime provider keys (`stripe`, `adyen`, `mock`) to `PaymentStrategy` implementations using a simple factory.  
+This keeps payment selection logic centralized while allowing safe non-production overrides (`mock`) in test/staging environments.
+
+### Minimal Test Example
+
+```csharp
+// Given
+var service = new CheckoutService(new ShippingStrategyFactory());
+
+// When
+decimal total = service.QuoteTotal(100m, 2m, "air");
+
+// Then
+if (total <= 100m) throw new Exception("Air shipping should increase total.");
+```
+
+### Synonyms (When Valid)
+
+- **Simple Factory** is also called **Static Factory** in some teams (non-GoF terminology).
+
+### Anti-Pattern / Misuse
+
+- **Switch Explosion Factory** with long unstructured conditionals.
+- **God Factory** that creates unrelated product categories.
+- Creating factories where no variant behavior exists.
+
+### Good Naming Conventions
+
+- `ShippingStrategyFactory`, `PaymentMethodFactory`, `Create`, `CreateFor`.
+- Strategy interfaces should describe behavior, e.g., `ShippingStrategy`.
+- Avoid names like `HelperFactory` or `ObjectManager`.
+
+### SOLID Support (Excluding DIP)
+
+- **SRP**: creation is separated from business policy.
+- **OCP**: new strategy types can be registered with minimal client edits.
+- **LSP**: clients work with `ShippingStrategy` abstraction.
+- **ISP**: strategy interfaces can stay narrow and use-case focused.
+
+### Performance and Memory Notes
+
+- One extra call layer is usually negligible.
+- Registry lookups are cheap; object churn may matter only in hot paths.
+- Profile before optimizing.
+
+### Code Smell Checklist (Overengineering/Misuse)
+
+- Factory always returns one concrete strategy forever.
+- Clients still branch on concrete types after factory creation.
+- Factory API names hide intent (`GetObject()`).
+
+### When to Use / When Not to Use
+
+**Use when:**
+- runtime keys select among concrete implementations,
+- you want to centralize construction rules,
+- strategy options are likely to grow.
+
+**Do not use when:**
+- there is one stable implementation,
+- creation logic is trivial and static,
+- additional indirection harms readability more than it helps.
+
+Transition: when creation variation belongs to subtype-specific extension points (instead of one selector), move to Factory Method Pattern.
+
+## Factory Method Pattern
+
+### Introduction
+
+Factory Method Pattern defines an abstract creator operation and delegates concrete creation to subclasses. It is useful when different creator types should decide which strategy to instantiate.
+
+Canonical GoF terminology is **Factory Method**. This lecture uses **Factory Method Pattern** as a label to avoid confusion with ordinary class methods.
+
+### Canonical UML Class Diagram (Factory Method Pattern)
+
+```mermaid
+classDiagram
+    class Product {
+        <<interface>>
+        +operation()
+    }
+    class ConcreteProductA
+    class ConcreteProductB
+    Product <|.. ConcreteProductA
+    Product <|.. ConcreteProductB
+
+    class Creator {
+        <<abstract>>
+        +anOperation()
+        #factoryMethod() Product
+    }
+    class ConcreteCreatorA
+    class ConcreteCreatorB
+    Creator <|-- ConcreteCreatorA
+    Creator <|-- ConcreteCreatorB
+
+    Creator ..> Product : uses
+    ConcreteCreatorA ..> ConcreteProductA : creates
+    ConcreteCreatorB ..> ConcreteProductB : creates
+```
+
+### Delta from Simple Factory
+
+Compared with Simple Factory, the key structural changes are:
+
+- Creation moves from one selector class (`ShippingStrategyFactory`) to a creator hierarchy (`ShippingStrategyCreator` and subclasses).
+- A factory method (`CreateStrategy`) becomes the extension point for each concrete creator.
+- `CheckoutService` now depends on an abstract creator, not a concrete selector class.
+- Selection still happens at composition time; the change is *where* variation lives.
+
+### Implementation Walkthrough (Strategy Selection via Subclass Creators)
+
+#### C# Demo
+
+```csharp
+using System;
+
+public interface ShippingStrategy
+{
+    decimal Calculate(decimal weightKg);
+}
+
+public sealed class GroundShippingStrategy : ShippingStrategy
+{
+    public decimal Calculate(decimal weightKg) => 4.00m + (1.10m * weightKg);
+}
+
+public sealed class AirShippingStrategy : ShippingStrategy
+{
+    public decimal Calculate(decimal weightKg) => 10.00m + (2.75m * weightKg);
+}
+
+public sealed class DroneShippingStrategy : ShippingStrategy
+{
+    public decimal Calculate(decimal weightKg) => 15.00m + (4.00m * weightKg);
+}
+
+public abstract class ShippingStrategyCreator
+{
+    public decimal QuoteShipping(decimal weightKg)
+    {
+        ShippingStrategy strategy = CreateStrategy();
+        return strategy.Calculate(weightKg);
+    }
+
+    protected abstract ShippingStrategy CreateStrategy();
+}
+
+public sealed class GroundShippingCreator : ShippingStrategyCreator
+{
+    protected override ShippingStrategy CreateStrategy() => new GroundShippingStrategy();
+}
+
+public sealed class AirShippingCreator : ShippingStrategyCreator
+{
+    protected override ShippingStrategy CreateStrategy() => new AirShippingStrategy();
+}
+
+public sealed class DroneShippingCreator : ShippingStrategyCreator
+{
+    protected override ShippingStrategy CreateStrategy() => new DroneShippingStrategy();
+}
+
+public sealed class CheckoutService
+{
+    private readonly ShippingStrategyCreator _creator;
+
+    public CheckoutService(ShippingStrategyCreator creator) => _creator = creator;
+
+    public decimal QuoteTotal(decimal subtotal, decimal weightKg)
+        => subtotal + _creator.QuoteShipping(weightKg);
+}
+
+public static class Program
+{
+    public static void Main(string[] args)
+    {
+        string mode = args.Length > 0
+            ? args[0]
+            : Environment.GetEnvironmentVariable("SHIPPING_MODE") ?? "ground";
+
+        ShippingStrategyCreator creator = mode.ToLowerInvariant() switch
+        {
+            "ground" => new GroundShippingCreator(),
+            "air" => new AirShippingCreator(),
+            "drone" => new DroneShippingCreator(),
+            _ => throw new NotSupportedException($"Unsupported shipping mode '{mode}'.")
+        };
+
+        var service = new CheckoutService(creator);
+        Console.WriteLine(service.QuoteTotal(120m, 3.5m));
+    }
+}
+```
+
+Java note: this Factory Method Pattern example is structurally very close to the C# version, so this section uses C# as the primary version.
+
+### Selection Is Moved, Not Eliminated
+
+Factory Method Pattern removes selection logic from `CheckoutService`, but the system still has to choose a concrete creator somewhere (usually the composition root).  
+You can replace explicit `switch` selection with a simple registration map.
+
+#### C# Registration Example
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+var creatorRegistry = new Dictionary<string, Func<ShippingStrategyCreator>>(StringComparer.OrdinalIgnoreCase)
+{
+    ["ground"] = () => new GroundShippingCreator(),
+    ["air"] = () => new AirShippingCreator(),
+    ["drone"] = () => new DroneShippingCreator()
+};
+
+if (!creatorRegistry.TryGetValue(mode, out var creatorFactory))
+    throw new NotSupportedException($"Unsupported shipping mode '{mode}'.");
+
+ShippingStrategyCreator creator = creatorFactory();
+var service = new CheckoutService(creator);
+```
+
+Java note: the registration-map approach is also directly portable to Java with `Map<String, Supplier<ShippingStrategyCreator>>`.
+
+### Industry Example: Plugin Exporters
+
+A reporting platform may define an abstract `ReportExporterCreator`, with concrete creators in plugin modules (`PdfExporterCreator`, `CsvExporterCreator`, `ParquetExporterCreator`).  
+New exporter plugins can be added by shipping a new creator subtype without editing existing exporter creators.
+
+### Minimal Test Example
+
+```csharp
+ShippingStrategyCreator creator = new GroundShippingCreator();
+var service = new CheckoutService(creator);
+decimal total = service.QuoteTotal(50m, 1m);
+
+if (total <= 50m) throw new Exception("Ground shipping should add cost.");
+```
+
+### Synonyms (When Valid)
+
+- **Factory Method Pattern** is often called a **Virtual Constructor**.
+
+### Anti-Pattern / Misuse
+
+- Subclass proliferation for minor variations.
+- Creator hierarchies with no real variation in product creation.
+- Forcing Factory Method Pattern when a small Simple Factory is enough.
+
+### Good Naming Conventions
+
+- Abstract creator names: `ShippingStrategyCreator`, `DocumentCreator`.
+- Concrete creators: `GroundShippingCreator`, `AirShippingCreator`.
+- Factory method names should be explicit: `CreateStrategy`, `CreateDocument`.
+
+### SOLID Support (Excluding DIP)
+
+- **SRP**: creator hierarchy isolates construction variation.
+- **OCP**: new creator subclasses extend behavior without editing existing creators.
+- **LSP**: clients use abstract creator and product contracts.
+- **ISP**: creation-related APIs can remain small and focused.
+
+### Performance and Memory Notes
+
+- Virtual dispatch overhead is generally trivial.
+- More classes can increase conceptual cost more than runtime cost.
+- Use when extensibility value exceeds hierarchy complexity.
+
+### Code Smell Checklist (Overengineering/Misuse)
+
+- Many concrete creators differ by one line and never evolve.
+- Clients select creators and then branch again on concrete strategy type.
+- Creator classes include unrelated business logic.
+
+### When to Use / When Not to Use
+
+**Use when:**
+- creation logic should vary by subclass,
+- frameworks need extension points for object creation,
+- you want to move creation variation out of central branching logic.
+
+**Do not use when:**
+- one central map-based selector is simpler and sufficient,
+- no subclass-specific creation behavior exists,
+- hierarchy depth harms readability and onboarding.
+
+Transition: when clients must construct whole sets of related objects that must stay compatible, use Abstract Factory.
+
+## Abstract Factory Pattern
+
+### What It Is and What It Accomplishes
+
+Abstract Factory provides an interface for creating **families of related objects** without specifying concrete classes. It guarantees that products created together are compatible (for example, a dark-themed button with a dark-themed dialog).
+
+### Detailed Example: Admin Console Theming
+
+Assume your application has an admin console that must render a consistent UI theme across multiple widgets:
+
+- `Button` (save/cancel actions)
+- `Dialog` (confirm delete, warnings)
+- `Input` (text fields, checkbox inputs)
+
+The user selects a theme (`light` or `dark`) at startup.  
+If the client code directly instantiates concrete classes, mismatches are easy to introduce:
+
+- `DarkButton` + `LightDialog` + `LightInput`
+
+That mismatch creates inconsistent visuals and can break behavior assumptions (spacing, color contrast rules, keyboard-focus behavior).
+
+With Abstract Factory, the app selects **one factory for one family** at composition time:
+
+- `LightWidgetFactory` creates `LightButton`, `LightDialog`, `LightInput`
+- `DarkWidgetFactory` creates `DarkButton`, `DarkDialog`, `DarkInput`
+
+Client code then depends only on `WidgetFactory` and product interfaces, not concrete classes:
+
+```text
+theme -> choose concrete WidgetFactory once
+WidgetFactory -> createButton(), createDialog(), createInput()
+Screen renderer -> uses Button/Dialog/Input interfaces only
+```
+
+This gives a clear compatibility guarantee: every widget on the screen belongs to the same family.
+
+### Canonical UML Class Diagram
+
+```mermaid
+classDiagram
+    class AbstractFactory {
+        <<interface>>
+        +createProductA() AbstractProductA
+        +createProductB() AbstractProductB
+        +createProductC() AbstractProductC
+    }
+    class ConcreteFactory1
+    class ConcreteFactory2
+    AbstractFactory <|.. ConcreteFactory1
+    AbstractFactory <|.. ConcreteFactory2
+
+    class AbstractProductA {
+        <<interface>>
+    }
+    class ProductA1
+    class ProductA2
+    AbstractProductA <|.. ProductA1
+    AbstractProductA <|.. ProductA2
+
+    class AbstractProductB {
+        <<interface>>
+    }
+    class ProductB1
+    class ProductB2
+    AbstractProductB <|.. ProductB1
+    AbstractProductB <|.. ProductB2
+
+    class AbstractProductC {
+        <<interface>>
+    }
+    class ProductC1
+    class ProductC2
+    AbstractProductC <|.. ProductC1
+    AbstractProductC <|.. ProductC2
+
+    ConcreteFactory1 ..> ProductA1 : creates
+    ConcreteFactory1 ..> ProductB1 : creates
+    ConcreteFactory1 ..> ProductC1 : creates
+    ConcreteFactory2 ..> ProductA2 : creates
+    ConcreteFactory2 ..> ProductB2 : creates
+    ConcreteFactory2 ..> ProductC2 : creates
+```
+
+### Implementation Walkthrough (UI Theming Family)
+
+Design goal: create matching UI components (`Button`, `Dialog`, `Input`) for a selected theme family.
+
+#### C# Demo
+
+```csharp
+public interface Button
+{
+    string Render();
+}
+
+public interface Dialog
+{
+    string Render();
+}
+
+public interface Input
+{
+    string Render();
+}
+
+public interface WidgetFactory
+{
+    Button CreateButton();
+    Dialog CreateDialog();
+    Input CreateInput();
+}
+
+public sealed class LightButton : Button
+{
+    public string Render() => "[Light Button]";
+}
+
+public sealed class LightDialog : Dialog
+{
+    public string Render() => "[Light Dialog]";
+}
+
+public sealed class DarkButton : Button
+{
+    public string Render() => "[Dark Button]";
+}
+
+public sealed class DarkDialog : Dialog
+{
+    public string Render() => "[Dark Dialog]";
+}
+
+public sealed class LightInput : Input
+{
+    public string Render() => "[Light Input]";
+}
+
+public sealed class DarkInput : Input
+{
+    public string Render() => "[Dark Input]";
+}
+
+public sealed class LightWidgetFactory : WidgetFactory
+{
+    public Button CreateButton() => new LightButton();   // Factory method
+    public Dialog CreateDialog() => new LightDialog();   // Factory method
+    public Input CreateInput() => new LightInput();      // Factory method
+}
+
+public sealed class DarkWidgetFactory : WidgetFactory
+{
+    public Button CreateButton() => new DarkButton();    // Factory method
+    public Dialog CreateDialog() => new DarkDialog();    // Factory method
+    public Input CreateInput() => new DarkInput();       // Factory method
+}
+
+public sealed class SettingsScreen
+{
+    private readonly WidgetFactory _factory;
+
+    public SettingsScreen(WidgetFactory factory) => _factory = factory;
+
+    public string Render()
+    {
+        Button button = _factory.CreateButton();
+        Dialog dialog = _factory.CreateDialog();
+        Input input = _factory.CreateInput();
+        return $"{button.Render()} {dialog.Render()} {input.Render()}";
+    }
+}
+
+// Test helper: controlled product family for deterministic tests.
+public sealed class FakeWidgetFactory : WidgetFactory
+{
+    public Button CreateButton() => new FakeButton();
+    public Dialog CreateDialog() => new FakeDialog();
+    public Input CreateInput() => new FakeInput();
+
+    private sealed class FakeButton : Button
+    {
+        public string Render() => "[Fake Button]";
+    }
+
+    private sealed class FakeDialog : Dialog
+    {
+        public string Render() => "[Fake Dialog]";
+    }
+
+    private sealed class FakeInput : Input
+    {
+        public string Render() => "[Fake Input]";
+    }
+}
+```
+
+Java note: this Abstract Factory code is structurally the same as the C# version, so this section keeps C# as the primary implementation.
+
+### Industry Example: Cloud Provider Families
+
+Infrastructure platforms often need provider-compatible clients as a family:
+
+- `AwsClientFactory` -> `AwsStorageClient`, `AwsQueueClient`, `AwsIdentityClient`
+- `AzureClientFactory` -> `AzureStorageClient`, `AzureQueueClient`, `AzureIdentityClient`
+
+This prevents accidental cross-provider combinations in one workflow.
+
+### Minimal Test Example
+
+```csharp
+var screen = new SettingsScreen(new DarkWidgetFactory());
+string output = screen.Render();
+
+if (!output.Contains("Dark")) throw new Exception("Expected dark-family widgets only.");
+```
+
+### Product Families and Consistency Guarantees
+
+- A concrete factory defines a **cohesive family** of products.
+- Client code receives products that are designed to work together.
+- This avoids cross-family mismatches (for example, `DarkButton` with `LightDialog`).
+
+### Tradeoff Analysis: Adding Families vs Adding Product Types
+
+- **Easy change:** add a new family (`CorporateWidgetFactory`) by adding concrete products + one factory.
+- **Expensive change:** add a new product type (`Tooltip`) because every factory interface and concrete factory must expand.
+- This is the core Abstract Factory tradeoff and a common exam question.
+
+### Relationship to Factory Method Pattern
+
+- Abstract Factory is often implemented with multiple **factory methods** (one per product type).
+- In the demo above, each `Create*` method is a factory method inside a broader family factory.
+
+### Cross-Platform/Theming Example Context
+
+- Desktop, mobile, and web UI libraries can be modeled as separate product families.
+- Light/dark themes are another common family boundary.
+
+### Synonyms (When Valid)
+
+- GoF references **Kit** as an alternative name for Abstract Factory.
+
+### Anti-Pattern / Misuse
+
+- Introducing Abstract Factory when there is only one product family.
+- Splitting one simple factory into many interfaces without real variability.
+- Allowing family mixing by leaking concrete types into clients.
+
+### Good Naming Conventions
+
+- Abstract factory names: `WidgetFactory`, `PaymentProviderFactory`.
+- Concrete family names: `DarkWidgetFactory`, `StripeFactory`, `AwsFactory`.
+- Product interfaces: `Button`, `Dialog`, `Input`, `CacheClient`.
+- Family products should share clear prefixes/suffixes (`DarkButton`, `DarkDialog`).
+
+### SOLID Support (Excluding DIP)
+
+- **SRP**: creation of families is separated from client behavior.
+- **OCP**: new families can be introduced with minimal client modification.
+- **LSP**: clients can swap concrete factories and still receive valid product abstractions.
+- **ISP**: each product abstraction can remain small and focused by client usage.
+
+### Performance and Memory Notes
+
+- Overhead is mostly extra object creation calls and indirection, typically minor.
+- Memory impact grows with family count if factories pre-create/caches products.
+- Choose laziness vs caching based on measured usage patterns.
+
+### Code Smell Checklist (Overengineering/Misuse)
+
+- Factory interface has one creation method and no family concept.
+- Clients downcast products to concrete family types.
+- Product naming does not reveal family boundaries.
+- New product types require edits across many factories too frequently for team velocity.
+
+### When to Use / When Not to Use
+
+**Use when:**
+- you must create related product sets that must be used consistently,
+- you need runtime family switching (theme/platform/vendor),
+- you want client code fully decoupled from concrete family classes.
+
+**Do not use when:**
+- product families are not real and are unlikely to emerge,
+- you only need a single product type with occasional variants,
+- team complexity budget is low and a simpler factory is enough.
+
+Transition: factories decide *what to create*; Singleton addresses a different question, *how many instances should exist*.
+
+## Singleton Pattern
+
+### What It Is and What It Accomplishes
+
+Singleton ensures a class has one accessible instance and provides a global access point to that instance. It is useful for genuinely single logical resources (for example, process-wide configuration snapshot).
+
+The risk singleton introduces is **hidden global state**: any code can reach the same shared object from anywhere, often without that dependency appearing in constructors or method parameters. This hides coupling and makes behavior harder to reason about, because one part of the system can mutate singleton state and unexpectedly affect unrelated parts. It is especially problematic in tests, where state can leak between test cases, create order-dependent failures, and break parallel test isolation.
+
+### Canonical UML Class Diagram
+
+```mermaid
+classDiagram
+    class Singleton {
+        -Singleton()
+        -static instance : Singleton
+        +static getInstance() Singleton
+        +operation()
+    }
+    class Client
+    Client --> Singleton : uses
+```
+
+### Implementation Walkthrough
+
+Below are two equivalent implementations per language: a simple version and a thread-safe double-checked locking version.
+
+#### C# Demo
+
+```csharp
+using System;
+
+// Simple lazy singleton (NOT thread-safe).
+public sealed class SimpleAppConfig
+{
+    private static SimpleAppConfig? _instance;
+
+    private SimpleAppConfig()
+    {
+        Theme = "light";
+    }
+
+    public string Theme { get; set; }
+
+    public static SimpleAppConfig GetInstance()
+    {
+        _instance ??= new SimpleAppConfig();
+        return _instance;
+    }
+}
+
+// Thread-safe double-checked locking singleton.
+public sealed class AppLogger
+{
+    private static volatile AppLogger? _instance;
+    private static readonly object SyncRoot = new();
+
+    private AppLogger() { }
+
+    public static AppLogger Instance
+    {
+        get
+        {
+            if (_instance is null)
+            {
+                lock (SyncRoot)
+                {
+                    if (_instance is null)
+                        _instance = new AppLogger();
+                }
+            }
+            return _instance;
+        }
+    }
+
+    public void Info(string message) => Console.WriteLine($"[INFO] {message}");
+}
+
+public static class Program
+{
+    public static void Main()
+    {
+        SimpleAppConfig.GetInstance().Theme = "dark";
+        Console.WriteLine(SimpleAppConfig.GetInstance().Theme);
+
+        AppLogger.Instance.Info("Application started.");
+    }
+}
+```
+
+#### Java Demo
+
+```java
+// Simple lazy singleton (NOT thread-safe).
+final class SimpleAppConfig {
+    private static SimpleAppConfig instance;
+    private String theme = "light";
+
+    private SimpleAppConfig() { }
+
+    static SimpleAppConfig getInstance() {
+        if (instance == null) {
+            instance = new SimpleAppConfig();
+        }
+        return instance;
+    }
+
+    String getTheme() { return theme; }
+    void setTheme(String theme) { this.theme = theme; }
+}
+
+// Thread-safe double-checked locking singleton.
+final class AppLogger {
+    private static volatile AppLogger instance;
+
+    private AppLogger() { }
+
+    static AppLogger getInstance() {
+        if (instance == null) {
+            synchronized (AppLogger.class) {
+                if (instance == null) {
+                    instance = new AppLogger();
+                }
+            }
+        }
+        return instance;
+    }
+
+    void info(String message) {
+        System.out.println("[INFO] " + message);
+    }
+}
+
+public final class Main {
+    public static void main(String[] args) {
+        SimpleAppConfig.getInstance().setTheme("dark");
+        System.out.println(SimpleAppConfig.getInstance().getTheme());
+
+        AppLogger.getInstance().info("Application started.");
+    }
+}
+```
+
+### Initialization Sequence (Why Double-Checked Locking Matters)
+
+The lock and second `null` check prevent duplicate initialization when two threads race on first access.
+
+```mermaid
+sequenceDiagram
+    participant T1 as Thread A
+    participant T2 as Thread B
+    participant S as AppLogger
+    participant L as SyncRoot lock
+
+    T1->>S: Instance/getInstance()
+    S-->>T1: first check: instance == null
+
+    par concurrent first access
+        T2->>S: Instance/getInstance()
+        S-->>T2: first check: instance == null
+    end
+
+    T1->>L: acquire lock
+    T1->>S: second check: instance == null
+    T1->>S: create new AppLogger()
+    T1->>S: publish instance reference
+    T1-->>L: release lock
+    T1-->>T1: return instance
+
+    T2->>L: acquire lock
+    T2->>S: second check: instance != null
+    T2-->>L: release lock
+    T2-->>T2: return existing instance
+```
+
+### Initialization Variants
+
+- **Eager initialization**: instance created at class load time.
+- **Lazy initialization**: instance created on first use.
+- **Holder-based lazy initialization**: uses nested static holder class (commonly in Java).
+- **`enum` singleton (Java)**: concise, serialization-safe singleton approach.
+
+### Testing Difficulty: Why Singleton Can Hurt Tests
+
+- Hidden global state leaks between tests and breaks isolation.
+- Test order can affect outcomes if singleton state is mutable.
+- Direct singleton access is hard to replace with mocks/stubs.
+- Parallel test runs can produce flaky behavior if singleton mutates shared state.
+
+Typical mitigation:
+- expose behavior via interfaces and inject collaborators,
+- keep singleton immutable where possible,
+- provide explicit reset hooks only in test builds (with caution).
+
+### Industry Example: Process-Wide Configuration Snapshot
+
+A service may load immutable startup configuration once and expose it process-wide through a singleton-like accessor.  
+This can be valid when values never mutate after startup and all consumers only read from the shared instance.
+
+### Minimal Test Example (State Leakage Smell)
+
+```csharp
+// Test A mutates global singleton state.
+SimpleAppConfig.GetInstance().Theme = "dark";
+
+// Test B expects default theme but will fail if run after Test A.
+if (SimpleAppConfig.GetInstance().Theme != "light")
+    throw new Exception("Singleton state leaked between tests.");
+```
+
+### Anti-Pattern / Misuse
+
+- Using Singleton as a global variable bucket.
+- Storing mutable business state in singletons.
+- Turning services into singletons by default without proving single-instance semantics are required.
+
+### Good Naming Conventions
+
+- Name for domain role, not pattern: `AppLogger`, `ConfigurationStore`, `ClockProvider`.
+- Avoid names that over-advertise pattern mechanics (`TheSingletonManager`).
+- If accessed through a property/method, use clear names: `Instance`, `GetInstance`.
+
+### SOLID Support (Excluding DIP)
+
+- **SRP (conditional)**: can centralize one truly global concern (for example, immutable app metadata), but often drifts into multi-responsibility global state.
+- **OCP (conditional)**: singleton alone does not provide OCP; OCP benefits appear only when clients depend on stable abstractions and singleton state is tightly controlled.
+- **LSP (orthogonal)**: substitutability depends on behavioral contracts of exposed abstractions, not on whether the implementation is a singleton.
+- **ISP**: singleton-exposed interfaces should stay narrow; broad singleton APIs quickly violate ISP and increase coupling.
+
+### Concurrency Visibility Notes
+
+- Without proper synchronization/visibility rules, one thread can observe a partially initialized instance.
+- Java double-checked locking requires `volatile`.
+- C# uses `volatile`/`lock` patterns or `Lazy<T>` to ensure safe publication.
+
+### Serialization and Reflection Pitfalls
+
+- Serialization/deserialization can create new instances unless explicitly guarded.
+- Reflection can bypass private constructors in some environments.
+- Java `enum` singletons are a common defense against both issues.
+
+### Safer Alternatives to Consider First
+
+- Dependency injection with scoped lifetimes (`singleton`, `scoped`, `transient` in DI containers).
+- Composition root ownership of long-lived services.
+- Module-level stateless functions where state does not need to be global.
+
+### Performance and Memory Notes
+
+- A single instance can reduce repeated construction cost.
+- Synchronization in hot paths may add overhead; initialize safely and keep access lightweight.
+- The bigger risk is architectural coupling, not raw CPU cost.
+
+### Code Smell Checklist (Overengineering/Misuse)
+
+- **Singleton stores request/user/session state.**  
+  This mixes short-lived, user-specific data into a process-wide object. The result is accidental data bleed across requests, race conditions under concurrency, and severe debugging complexity when one user’s workflow affects another. Request/session state should be scoped to the request/session boundary, not stored globally.
+- **Multiple subsystems write mutable fields on the singleton.**  
+  If many modules can call setters on a shared instance, no single place owns invariants. Behavior becomes "last writer wins," and failures are hard to reproduce because outcomes depend on execution timing and call order. A singleton should be immutable where possible, or mutations should be tightly controlled behind a narrow API.
+- **Tests need order-dependent cleanup because singleton state persists.**  
+  If test B only passes when test A runs first (or when a manual reset runs), the singleton is leaking state across tests. This indicates broken test isolation and makes parallel CI runs flaky. Each test should be independently runnable without relying on global cleanup choreography.
+- **Singleton is used where constructor injection would be clearer.**  
+  When an object could be passed explicitly in the constructor but is fetched globally instead, dependencies become hidden. Hidden dependencies reduce readability, make mocking harder, and couple unrelated classes to global access points. Prefer constructor injection unless strict single-instance semantics are truly required.
+
+### When to Use / When Not to Use
+
+**Use when:**
+- the system truly requires one logical instance,
+- the instance encapsulates infrastructure-level coordination,
+- state is immutable or tightly controlled.
+
+**Do not use when:**
+- singleton is chosen only for convenience,
+- business logic depends on mutable shared singleton state,
+- testability and parallel execution are priorities.
+
+## Study Guide
+
+### Key Takeaways
+
+- Choose **Simple Factory** when one central selector should create strategies/products from runtime keys.
+- Choose **Factory Method Pattern** when creator subclasses should control which strategy/product gets created.
+- Choose **Abstract Factory** when the key question is: "Which compatible family of implementations should I create together?"
+- Choose **Singleton** only when the key question is: "Should there be exactly one process-wide instance?"
+- Prefer design clarity over pattern density; patterns are tools, not goals.
+
+### New Terminology
+
+| Term | Meaning |
+|---|---|
+| Simple Factory | Centralized creation method/class; common idiom, not one of the 23 GoF patterns |
+| Factory Method Pattern | Overridable method that creates product objects |
+| Product Family | Set of related objects intended to be used together |
+| Compatibility Guarantee | Property that family products are mutually consistent |
+| Double-Checked Locking | Concurrency pattern that reduces lock overhead while safely initializing once |
+| Safe Publication | Guarantee that other threads observe a fully initialized object |
+| Composition Root | Application startup boundary where object graph is assembled |
+| Global State | Data accessible broadly across the system, often difficult to isolate in tests |
+
+### Comparison Table
+
+| Pattern | Primary Intent | Typical Structure | Strengths | Main Risks | Best Fit |
+|---|---|---|---|---|---|
+| Simple Factory | Select and create one implementation from a runtime selector | One factory class/method + product interface + concrete products | Centralized construction logic, easy runtime selection | Can become switch-heavy and monolithic | Strategy/provider selection from config/env/input |
+| Factory Method Pattern | Defer creation to subclasses of a creator type | Abstract creator + factory method + concrete creators + products | Extension via subclassing, framework-friendly creation hooks | Too many creator subclasses for minor differences | Plugin points and subtype-specific creation rules |
+| Abstract Factory | Create compatible families of related objects | Abstract factory + multiple product interfaces + concrete family factories | Enforces family consistency; easy family substitution | Interface explosion when product types keep growing | Theming, cross-platform UI, vendor-specific client stacks |
+| Singleton | Ensure exactly one shared instance | Private constructor + static instance accessor | Centralized access to truly unique resource | Hidden global mutable state, testing difficulty, lifecycle coupling | Immutable app config snapshot, process-wide coordination components |
+
+### Example Questions
+
+1. Why is adding a new product type usually more disruptive in Abstract Factory than adding a new family?
+2. When would you choose Simple Factory over Factory Method Pattern for Strategy creation?
+3. Why can singleton state cause order-dependent tests?
+4. How are safe publication and lazy initialization different, and how can they be combined?
+5. In which cases does a simple factory beat an abstract factory on design clarity?
+
+### Example Questions: Answers
+
+1. Adding a product type is usually more disruptive because it requires changing the abstract factory contract (for example, adding `CreateNewType`) and updating all existing concrete factories. Adding a new family is usually additive: add new concrete products plus one new concrete factory, with little or no change to existing factory contracts.
+2. Choose Simple Factory when one centralized runtime selector (config/env/user input) is enough; choose Factory Method Pattern when creation behavior should vary by creator subtype/extension point.
+3. Singleton state is shared process-wide, so mutations from one test can persist into later tests, creating hidden coupling and order-dependent pass/fail outcomes.
+4. They are different concerns: lazy initialization means "create only when first needed," while safe publication means "all threads observe a fully initialized instance correctly." You can combine both (for example, double-checked locking with correct memory semantics, `Lazy<T>` in C#, or Java holder-based idiom).
+5. Simple Factory is clearer when you only need one product axis with straightforward runtime selection and do not need family coordination or subclass-based creator hierarchies.

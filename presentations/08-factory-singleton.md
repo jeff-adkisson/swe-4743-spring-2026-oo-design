@@ -12,11 +12,6 @@ Object creation is one of the most common places where coupling quietly enters a
 
 The goal is not to apply patterns everywhere. The goal is to apply them where they reduce change impact, improve clarity, and make behavior easier to reason about.
 
-### How to Use This Material (Lecture + Self-Study)
-
-- During lecture delivery, focus on the diagrams, the "Delta" section, and the "When to Use / When Not to Use" summaries.
-- During self-study, work through the C# walkthroughs first, then answer the example questions and check against the answer key.
-- Use the Singleton section as the primary C#/Java comparison point, because the thread-safe implementations differ more by language.
 
 ## Table of Contents
 

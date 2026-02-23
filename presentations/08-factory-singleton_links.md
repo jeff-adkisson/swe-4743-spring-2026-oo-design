@@ -1,0 +1,1 @@
+- [Lecture Material](presentations/08-factory-singleton.md)

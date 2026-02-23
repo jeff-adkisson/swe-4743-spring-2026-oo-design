@@ -86,5 +86,8 @@ Design and implement a console-based Tea Shop application in C# or Java that int
 - [HTML](presentations/07-interface-segregation-principle_html/index.html)
 - [Lecture Material](presentations/07-interface-segregation-principle.md)
 
-#### 08. Factories and Singleton
+#### 08. Factory Singleton
+- [PowerPoint](presentations/08-factory-singleton.pptx)
+- [PDF](presentations/08-factory-singleton.pdf)
+- [HTML](presentations/08-factory-singleton_html/index.html)
 - [Lecture Material](presentations/08-factory-singleton.md)

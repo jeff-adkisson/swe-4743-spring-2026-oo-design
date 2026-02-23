@@ -716,6 +716,8 @@ public class House {
 - **Inheritance** - "Is-a" relationship enabling reuse of base behavior/state.
 - **Interface** - Contract defining required members without implementation.
 - **Liskov Substitution Principle (LSP)** - Subtypes must be usable anywhere their base type is expected without surprises.
+- **Magic number** - Hard-coded numeric literal with implicit meaning; code smell because units/precision are unclear and duplicated values drift over time.
+- **Magic string** - Hard-coded string literal with semantic or control-flow meaning; code smell because typos/casing/encoding differences are not compiler-checked and repeated literals violate DRY.
 - **Multiplicity** - UML constraint on how many related instances exist; must be enforced in code.
 - **Open-Closed Principle (OCP)** - Extend behavior without modifying stable code.
 - **Polymorphism** - Using a base type to work with many concrete types.
@@ -918,4 +920,3 @@ D. checkout(42.00)
 - [AI-generated presentation from this document by NotebookLM.](exam1-study-guide-notebooklm.pdf)
 - [AI-generated video from this document by NotebookLM.](exam1-study-guide-notebooklm.mp4)
   *This high-level summary surprised me with how good it is. AI can make outstanding learning materials.* 
-

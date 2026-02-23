@@ -1,7 +1,7 @@
 # Factory Pattern, Abstract Factory Pattern, and Singleton Pattern
 
-**Course:** SWE 4743 - Object-Oriented Design  
-**Audience:** Senior undergraduate software engineering students
+
+[PowerPoint Presentation](08-factory-singleton.pptx) [[pdf version](08-factory-singleton.pdf)]
 
 ## Introduction
 
@@ -12,15 +12,18 @@ Object creation is one of the most common places where coupling quietly enters a
 
 The goal is not to apply patterns everywhere. The goal is to apply them where they reduce change impact, improve clarity, and make behavior easier to reason about.
 
+Scope note: Appendix 1 introduces reflection-based registration. This is beyond the scope of this course and will not appear on exams.
+
 
 ## Table of Contents
 
 - [Factories](#factories)
 - [Simple Factory](#simple-factory)
 - [Factory Method Pattern](#factory-method-pattern)
-- [Abstract Factory Pattern](#abstract-factory-pattern)
+- [Abstract Factory](#abstract-factory)
 - [Singleton Pattern](#singleton-pattern)
 - [Study Guide](#study-guide)
+- [Appendix 1: Using Reflection for Registration](#appendix-1-using-reflection-for-registration)
 
 ## Factories
 
@@ -49,6 +52,8 @@ There are three common factory approaches:
 ### Introduction
 
 Simple Factory places creation logic in one method/class that returns the correct concrete strategy for a runtime key (for example `"ground"` or `"air"`).
+
+Note: keys like `"ground"` in this demo are intentionally concise for teaching. In production code, these are **magic strings** (hard-coded string literals with semantic/control meaning) and are a code smell because they bypass compile-time checks and often duplicate across files. Over time, magic strings and magic numbers tend to violate DRY through casing differences, character-set/encoding differences, or numeric precision/unit drift. Prefer strongly typed selectors such as enums, value objects, or named constants, and convert external text input to those types at system boundaries.
 
 ### Canonical UML Class Diagram (Simple Factory)
 
@@ -1071,6 +1076,8 @@ if (SimpleAppConfig.GetInstance().Theme != "light")
 | Safe Publication | Guarantee that other threads observe a fully initialized object |
 | Composition Root | Application startup boundary where object graph is assembled |
 | Global State | Data accessible broadly across the system, often difficult to isolate in tests |
+| Magic String | Hard-coded string literal with domain/control meaning; code smell due to typo risk, weak compile-time safety, and DRY drift across casing/encoding variants |
+| Magic Number | Hard-coded numeric literal with hidden meaning; code smell due to readability loss and DRY drift from duplicated values with unit/precision differences |
 
 ### Comparison Table
 
@@ -1096,3 +1103,225 @@ if (SimpleAppConfig.GetInstance().Theme != "light")
 3. Singleton state is shared process-wide, so mutations from one test can persist into later tests, creating hidden coupling and order-dependent pass/fail outcomes.
 4. They are different concerns: lazy initialization means "create only when first needed," while safe publication means "all threads observe a fully initialized instance correctly." You can combine both (for example, double-checked locking with correct memory semantics, `Lazy<T>` in C#, or Java holder-based idiom).
 5. Simple Factory is clearer when you only need one product axis with straightforward runtime selection and do not need family coordination or subclass-based creator hierarchies.
+
+## Appendix 1: Using Reflection for Registration
+
+This appendix is enrichment material. It is beyond the scope of this course and will not appear on an exam.
+
+### Why This Is Useful (IDE Command Scenario)
+
+Imagine an IDE with a large and constantly growing set of commands:
+
+- `open-file`
+- `find-references`
+- `rename-symbol`
+- `format-document`
+- `run-tests`
+
+If every new command requires manually editing one central registration switch/map, maintenance cost grows quickly.  
+Reflection-based registration can discover factory classes automatically at startup and register them with minimal manual wiring.
+
+### What Reflection Is
+
+Reflection is runtime inspection of program metadata. It lets you:
+
+- inspect types/classes loaded in an assembly or classpath,
+- check whether a type implements a specific interface,
+- construct objects dynamically (for example, via default constructors),
+- invoke members without compile-time concrete type references.
+
+In this appendix, reflection is used to find all classes implementing a command-factory interface and register them automatically.
+
+### Common Reflection Uses in Real Systems
+
+Reflection is often used in frameworks and tooling for tasks such as:
+
+- **Controller/route discovery**: automatically finding controller classes and action methods.
+- **Security via attributes/annotations**: detecting metadata like `[Authorize]` or role requirements.
+- **Dependency injection scanning**: finding service implementations and registering them by convention.
+- **Serialization and mapping**: reading fields/properties dynamically for JSON/object mappers.
+- **Plugin/module loading**: discovering extension points without hard-coded type lists.
+
+### Target Interface
+
+Both demos use the same idea: factory classes implement a shared interface (`IdeCommandFactory`) and expose a command key.
+
+### C# Demonstration
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+
+public interface IdeCommand
+{
+    void Execute();
+}
+
+public interface IdeCommandFactory
+{
+    string CommandName { get; }
+    IdeCommand Create();
+}
+
+public sealed class OpenFileCommand : IdeCommand
+{
+    public void Execute() => Console.WriteLine("Open file...");
+}
+
+public sealed class OpenFileCommandFactory : IdeCommandFactory
+{
+    public string CommandName => "open-file";
+    public IdeCommand Create() => new OpenFileCommand();
+}
+
+public sealed class RunTestsCommand : IdeCommand
+{
+    public void Execute() => Console.WriteLine("Run tests...");
+}
+
+public sealed class RunTestsCommandFactory : IdeCommandFactory
+{
+    public string CommandName => "run-tests";
+    public IdeCommand Create() => new RunTestsCommand();
+}
+
+public sealed class ReflectionCommandRegistry
+{
+    private readonly Dictionary<string, IdeCommandFactory> _registry =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    public void RegisterFactoriesFromAssembly(Assembly assembly)
+    {
+        IEnumerable<Type> factoryTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .Where(t => typeof(IdeCommandFactory).IsAssignableFrom(t));
+
+        foreach (Type type in factoryTypes)
+        {
+            // Convention: each factory has a parameterless constructor.
+            IdeCommandFactory factory = (IdeCommandFactory)Activator.CreateInstance(type)!;
+            _registry[factory.CommandName] = factory;
+        }
+    }
+
+    public IdeCommand CreateCommand(string commandName)
+    {
+        if (!_registry.TryGetValue(commandName, out IdeCommandFactory? factory))
+            throw new NotSupportedException($"Unknown command '{commandName}'.");
+
+        return factory.Create();
+    }
+}
+
+public static class Program
+{
+    public static void Main()
+    {
+        var registry = new ReflectionCommandRegistry();
+        registry.RegisterFactoriesFromAssembly(Assembly.GetExecutingAssembly());
+
+        IdeCommand command = registry.CreateCommand("run-tests");
+        command.Execute();
+    }
+}
+```
+
+### Java Demonstration
+
+```java
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+interface IdeCommand {
+    void execute();
+}
+
+interface IdeCommandFactory {
+    String commandName();
+    IdeCommand create();
+}
+
+final class OpenFileCommand implements IdeCommand {
+    public void execute() { System.out.println("Open file..."); }
+}
+
+final class OpenFileCommandFactory implements IdeCommandFactory {
+    public String commandName() { return "open-file"; }
+    public IdeCommand create() { return new OpenFileCommand(); }
+}
+
+final class RunTestsCommand implements IdeCommand {
+    public void execute() { System.out.println("Run tests..."); }
+}
+
+final class RunTestsCommandFactory implements IdeCommandFactory {
+    public String commandName() { return "run-tests"; }
+    public IdeCommand create() { return new RunTestsCommand(); }
+}
+
+final class ReflectionCommandRegistry {
+    private final Map<String, IdeCommandFactory> registry = new HashMap<>();
+
+    void registerFactories(List<Class<?>> discoveredTypes) throws Exception {
+        for (Class<?> type : discoveredTypes) {
+            if (Modifier.isAbstract(type.getModifiers()) || type.isInterface()) continue;
+            if (!IdeCommandFactory.class.isAssignableFrom(type)) continue;
+
+            Constructor<?> ctor = type.getDeclaredConstructor();
+            ctor.setAccessible(true);
+            IdeCommandFactory factory = (IdeCommandFactory) ctor.newInstance();
+            registry.put(factory.commandName().toLowerCase(Locale.ROOT), factory);
+        }
+    }
+
+    IdeCommand createCommand(String commandName) {
+        IdeCommandFactory factory = registry.get(commandName.toLowerCase(Locale.ROOT));
+        if (factory == null)
+            throw new UnsupportedOperationException("Unknown command '" + commandName + "'.");
+        return factory.create();
+    }
+}
+
+public final class Main {
+    public static void main(String[] args) throws Exception {
+        // In production, discoveredTypes usually comes from package scanning or plugin metadata.
+        List<Class<?>> discoveredTypes = List.of(
+            OpenFileCommandFactory.class,
+            RunTestsCommandFactory.class
+        );
+
+        ReflectionCommandRegistry registry = new ReflectionCommandRegistry();
+        registry.registerFactories(discoveredTypes);
+
+        IdeCommand command = registry.createCommand("run-tests");
+        command.execute();
+    }
+}
+```
+
+### Practical Notes
+
+- Reflection reduces manual registration work when command counts are large and growing.
+- You should still enforce conventions (for example, parameterless constructors, unique command names).
+- Startup time may increase due to scanning/inspection, so cache results where appropriate.
+- For this course, treat this as advanced extension material rather than required implementation technique.
+
+### Reflection Support Comparison
+
+Reflection support varies by language. For this course, think of the landscape this way:
+
+| Language | Reflection / Similar Capability | Practical Meaning for Auto-Registration |
+|---|---|---|
+| C# | Strong runtime reflection (`System.Reflection`) | Straightforward to scan assemblies, find types by interface, instantiate, and register. |
+| Java | Strong runtime reflection (`java.lang.reflect`) | Similar to C#: scan/discover classes, inspect interfaces, construct dynamically. |
+| Python | Strong runtime introspection (`inspect`, `getattr`, dynamic imports) | Very flexible runtime discovery/registration patterns are common. |
+| JavaScript | Runtime introspection exists (`Reflect`, prototypes, dynamic imports) | You can inspect objects/modules at runtime, but class metadata conventions are app-defined. |
+| TypeScript | Type system is erased at runtime | Registration usually relies on JavaScript runtime values, decorators/metadata libraries, or build-time tooling; not TS static types directly. |
+| C++ | No broad built-in runtime reflection (RTTI is limited) | Typically use explicit registration, macros, code generation, or plugin manifests instead of full runtime type scanning. |
+| C | No standard reflection | Registration is usually manual tables/function pointers or generated metadata. |

@@ -62,7 +62,7 @@ flowchart TD
 ### Shared Evaluation Checklist (Use for All Four Patterns)
 
 - **Naming:** make roles explicit (`*Factory`, `*Creator`, behavior-oriented interfaces).
-- **SRP/OCP/LSP/ISP:** keep creation concerns isolated, extend by adding types, preserve substitutability, and keep interfaces small.ind
+- **SRP/OCP/LSP/ISP:** keep creation concerns isolated, extend by adding types, preserve substitutability, and keep interfaces small.
 - **Misuse signals:** no real variation, too many wrappers, or hidden global mutable state.
 - **When to stop:** if a simpler design is clearer and stable, prefer the simpler design.
 

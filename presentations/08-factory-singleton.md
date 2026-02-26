@@ -46,6 +46,19 @@ There are three common factory approaches:
 | "Which subclass should decide what gets created?" | Factory Method Pattern | Creation varies by creator subtype and extension point. |
 | "How do I create a compatible set of related objects?" | Abstract Factory | One concrete factory guarantees a consistent product family. |
 
+### Factory Pattern Decision Flow
+
+```mermaid
+flowchart TD
+    A["Need to create objects with variation?"] --> B{"Need a compatible family of related products?"}
+    B -- Yes --> AF["Use Abstract Factory"]
+    B -- No --> C{"Should creation vary by creator subclass/framework hook?"}
+    C -- Yes --> FM["Use Factory Method Pattern"]
+    C -- No --> D{"Single runtime selector (config/env/input) is enough?"}
+    D -- Yes --> SF["Use Simple Factory"]
+    D -- No --> E["Use direct construction or revisit requirements"]
+```
+
 ### Shared Evaluation Checklist (Use for All Four Patterns)
 
 - **Naming:** make roles explicit (`*Factory`, `*Creator`, behavior-oriented interfaces).
@@ -60,25 +73,25 @@ There are three common factory approaches:
 
 Simple Factory places creation logic in one method/class that returns the correct concrete strategy for a runtime key (for example `"ground"` or `"air"`).
 
-Note: keys like `"ground"` in this demo are intentionally concise for teaching. In production code, these are **magic strings** (hard-coded string literals with semantic/control meaning) and are a code smell because they bypass compile-time checks and often duplicate across files. Over time, magic strings and magic numbers tend to violate DRY through casing differences, character-set/encoding differences, or numeric precision/unit drift. Prefer strongly typed selectors such as enums, value objects, or named constants, and convert external text input to those types at system boundaries.
+>  Note: keys like `"ground"` in this demo are intentionally concise for teaching. In production code, these are **magic strings** (hard-coded string literals with semantic/control meaning) and are a code smell because they bypass compile-time checks and often duplicate across files. Over time, magic strings and magic numbers tend to violate DRY through casing differences, character-set/encoding differences, or numeric precision/unit drift. Prefer strongly typed selectors such as enums, value objects, or named constants, and convert external text input to those types at system boundaries.
 
 ### Canonical UML Class Diagram (Simple Factory)
 
 ```mermaid
 classDiagram
-    class ShippingStrategy {
+    class IShippingStrategy {
         <<interface>>
         +calculate(weightKg)
     }
     class GroundShippingStrategy
     class AirShippingStrategy
     class DroneShippingStrategy
-    ShippingStrategy <|.. GroundShippingStrategy
-    ShippingStrategy <|.. AirShippingStrategy
-    ShippingStrategy <|.. DroneShippingStrategy
+    IShippingStrategy <|.. GroundShippingStrategy
+    IShippingStrategy <|.. AirShippingStrategy
+    IShippingStrategy <|.. DroneShippingStrategy
 
     class ShippingStrategyFactory {
-        +create(mode) ShippingStrategy
+        +create(mode) IShippingStrategy
     }
 
     class CheckoutService {
@@ -86,7 +99,7 @@ classDiagram
         +quoteTotal(subtotal, weightKg, mode)
     }
 
-    ShippingStrategyFactory ..> ShippingStrategy : creates
+    ShippingStrategyFactory ..> IShippingStrategy : creates
     CheckoutService --> ShippingStrategyFactory : uses
 ```
 
@@ -98,29 +111,29 @@ classDiagram
 using System;
 using System.Collections.Generic;
 
-public interface ShippingStrategy
+public interface IShippingStrategy
 {
     decimal Calculate(decimal weightKg);
 }
 
-public sealed class GroundShippingStrategy : ShippingStrategy
+public sealed class GroundShippingStrategy : IShippingStrategy
 {
     public decimal Calculate(decimal weightKg) => 4.00m + (1.10m * weightKg);
 }
 
-public sealed class AirShippingStrategy : ShippingStrategy
+public sealed class AirShippingStrategy : IShippingStrategy
 {
     public decimal Calculate(decimal weightKg) => 10.00m + (2.75m * weightKg);
 }
 
-public sealed class DroneShippingStrategy : ShippingStrategy
+public sealed class DroneShippingStrategy : IShippingStrategy
 {
     public decimal Calculate(decimal weightKg) => 15.00m + (4.00m * weightKg);
 }
 
 public sealed class ShippingStrategyFactory
 {
-    private readonly Dictionary<string, Func<ShippingStrategy>> _registry =
+    private readonly Dictionary<string, Func<IShippingStrategy>> _registry =
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["ground"] = () => new GroundShippingStrategy(),
@@ -128,7 +141,7 @@ public sealed class ShippingStrategyFactory
             ["drone"] = () => new DroneShippingStrategy()
         };
 
-    public ShippingStrategy Create(string mode)
+    public IShippingStrategy Create(string mode)
     {
         if (string.IsNullOrWhiteSpace(mode))
             throw new ArgumentException("Shipping mode is required.", nameof(mode));
@@ -148,7 +161,7 @@ public sealed class CheckoutService
 
     public decimal QuoteTotal(decimal subtotal, decimal weightKg, string mode)
     {
-        ShippingStrategy strategy = _factory.Create(mode);
+        IShippingStrategy strategy = _factory.Create(mode);
         return subtotal + strategy.Calculate(weightKg);
     }
 }
@@ -170,6 +183,19 @@ public static class Program
 }
 ```
 
+#### Quick Compile/Run (C#)
+
+```bash
+# Assuming the snippet is Program.cs in a console project
+dotnet run -- ground
+```
+
+Expected output (sample; currency symbol/format is locale-dependent):
+
+```text
+Mode=ground, Total=$127.85
+```
+
 Java note: the Java implementation is structurally identical to the C# version here, so this section uses C# as the primary teaching version.
 
 ### Refactoring Case Study: Replace `if/switch` Construction Logic
@@ -179,7 +205,7 @@ Before (policy + construction mixed):
 ```csharp
 public decimal QuoteTotal(decimal subtotal, decimal weightKg, string mode)
 {
-    ShippingStrategy strategy = mode.ToLowerInvariant() switch
+    IShippingStrategy strategy = mode.ToLowerInvariant() switch
     {
         "ground" => new GroundShippingStrategy(),
         "air" => new AirShippingStrategy(),
@@ -196,7 +222,7 @@ After (construction delegated):
 ```csharp
 public decimal QuoteTotal(decimal subtotal, decimal weightKg, string mode)
 {
-    ShippingStrategy strategy = _factory.Create(mode);
+    IShippingStrategy strategy = _factory.Create(mode);
     return subtotal + strategy.Calculate(weightKg);
 }
 ```
@@ -352,6 +378,19 @@ public static class Program
         Console.WriteLine(service.QuoteTotal(120m, 3.5m));
     }
 }
+```
+
+#### Quick Compile/Run (C#)
+
+```bash
+# Assuming the snippet is Program.cs in a console project
+dotnet run -- air
+```
+
+Expected output:
+
+```text
+139.625
 ```
 
 #### Class Diagram of C# Demo Factory Method Pattern
@@ -661,6 +700,19 @@ public static class Program
 }
 ```
 
+#### Quick Compile/Run (C#)
+
+```bash
+# Assuming the snippet is Program.cs in a console project
+dotnet run -- dark
+```
+
+Expected output:
+
+```text
+[Dark Button] [Dark Dialog] [Dark Input]
+```
+
 #### Java Demo
 
 ```java
@@ -764,6 +816,19 @@ public final class Main {
         System.out.println(screen.render());
     }
 }
+```
+
+#### Quick Compile/Run (Java)
+
+```bash
+# Assuming the snippet is saved as Main.java
+javac Main.java && java Main dark
+```
+
+Expected output:
+
+```text
+[Dark Button] [Dark Dialog] [Dark Input]
 ```
 
 ### Industry Example: Cloud Provider Families
@@ -883,6 +948,20 @@ public static class Program
 }
 ```
 
+#### Quick Compile/Run (C#)
+
+```bash
+# Assuming the snippet is Program.cs in a console project
+dotnet run
+```
+
+Expected output:
+
+```text
+dark
+[INFO] Application started.
+```
+
 #### Java Demo
 
 ```java
@@ -934,6 +1013,20 @@ public final class Main {
         AppLogger.getInstance().info("Application started.");
     }
 }
+```
+
+#### Quick Compile/Run (Java)
+
+```bash
+# Assuming the snippet is saved as Main.java
+javac Main.java && java Main
+```
+
+Expected output:
+
+```text
+dark
+[INFO] Application started.
 ```
 
 ### Initialization Sequence (Why Double-Checked Locking Matters)

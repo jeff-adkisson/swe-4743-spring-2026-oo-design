@@ -878,11 +878,6 @@ In this example, two factories provide the same interfaces to various equivalent
 - Abstract Factory is often implemented with multiple **factory methods** (one per product type).
 - In the demo above, each `Create*` method is a factory method inside a broader family factory.
 
-### Cross-Platform/Theming Example Context
-
-- Desktop, mobile, and web UI libraries can be modeled as separate product families.
-- Light/dark themes are another common family boundary.
-
 ### Synonyms
 
 - GoF references **Kit** as an alternative name for Abstract Factory.

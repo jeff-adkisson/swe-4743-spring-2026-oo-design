@@ -12,15 +12,13 @@ Object creation is one of the most common places where coupling quietly enters a
 
 The goal is not to apply patterns everywhere. The goal is to apply them where they reduce change impact, improve clarity, and make behavior easier to reason about.
 
-![image-20260223173825699](08-factory-singleton.assets/image-20260223173825699.png)
-
 
 ## Table of Contents
 
 - [Factories](#factories)
 - [Simple Factory](#simple-factory)
 - [Factory Method Pattern](#factory-method-pattern)
-- [Abstract Factory](#abstract-factory)
+- [Abstract Factory](#abstract-factory-pattern)
 - [Singleton Pattern](#singleton-pattern)
 - [Study Guide](#study-guide)
 - [Appendix 1: Non-Thread-Safe Singleton Demo](#appendix-1-non-thread-safe-singleton-demo)
@@ -48,7 +46,13 @@ There are three common factory approaches:
 | "Which subclass should decide what gets created?" | Factory Method Pattern | Creation varies by creator subtype and extension point. |
 | "How do I create a compatible set of related objects?" | Abstract Factory | One concrete factory guarantees a consistent product family. |
 
-![image-20260223173911027](08-factory-singleton.assets/image-20260223173911027.png)
+### Shared Evaluation Checklist (Use for All Four Patterns)
+
+- **Naming:** make roles explicit (`*Factory`, `*Creator`, behavior-oriented interfaces).
+- **SRP/OCP/LSP/ISP:** keep creation concerns isolated, extend by adding types, preserve substitutability, and keep interfaces small.
+- **Performance:** treat indirection costs as secondary; optimize only with measurements.
+- **Misuse signals:** no real variation, too many wrappers, or hidden global mutable state.
+- **When to stop:** if a simpler design is clearer and stable, prefer the simpler design.
 
 ## Simple Factory
 
@@ -209,54 +213,13 @@ public decimal QuoteTotal(decimal subtotal, decimal weightKg, string mode)
 A checkout system can map runtime provider keys (`stripe`, `adyen`, `mock`) to `PaymentStrategy` implementations using a simple factory.  
 This keeps payment selection logic centralized while allowing safe non-production overrides (`mock`) in test/staging environments.
 
-![image-20260223174018312](08-factory-singleton.assets/image-20260223174018312.png)
+### Simple Factory: Pattern-Specific Notes
 
-### Synonyms
-
-- **Simple Factory** is also called **Static Factory** in some teams (non-GoF terminology).
-
-### Anti-Pattern / Misuse
-
-- **Switch Explosion Factory** with long unstructured conditionals.
-- **God Factory** that creates unrelated product categories.
-- Creating factories where no variant behavior exists.
-
-### Good Naming Conventions
-
-- `ShippingStrategyFactory`, `PaymentMethodFactory`, `Create`, `CreateFor`.
-- Strategy interfaces should describe behavior, e.g., `ShippingStrategy`.
-- Avoid names like `HelperFactory` or `ObjectManager`.
-
-### SOLID Support (Excluding DIP)
-
-- **SRP**: creation is separated from business policy.
-- **OCP**: new strategy types can be registered with minimal client edits.
-- **LSP**: clients work with `ShippingStrategy` abstraction.
-- **ISP**: strategy interfaces can stay narrow and use-case focused.
-
-### Performance and Memory Notes
-
-- One extra call layer is usually negligible.
-- Registry lookups are cheap; object churn may matter only in hot paths.
-- Profile before optimizing.
-
-### Code Smell Checklist (Overengineering/Misuse)
-
-- Factory always returns one concrete strategy forever.
-- Clients still branch on concrete types after factory creation.
-- Factory API names hide intent (`GetObject()`).
-
-### When to Use / When Not to Use
-
-**Use when:**
-- runtime keys select among concrete implementations,
-- you want to centralize construction rules,
-- strategy options are likely to grow.
-
-**Do not use when:**
-- there is one stable implementation,
-- creation logic is trivial and static,
-- additional indirection harms readability more than it helps.
+- Synonym used in some teams: **Static Factory** (non-GoF).
+- Most common failure mode: a large switch that keeps growing into a God Factory.
+- Good fit: runtime key selection from config/env/user input with one product axis.
+- Poor fit: one stable implementation or no realistic variant growth.
+- SOLID connection: strongest on SRP/OCP when creation policy is kept out of business services.
 
 Transition: when creation variation belongs to subtype-specific extension points (instead of one selector), move to Factory Method Pattern.
 
@@ -267,8 +230,6 @@ Transition: when creation variation belongs to subtype-specific extension points
 Factory Method Pattern defines an abstract creator operation and delegates concrete creation to subclasses. It is useful when different creator types should decide which strategy to instantiate.
 
 Canonical Gang-of-Four (GoF) terminology is **Factory Method**. This lecture uses **Factory Method Pattern** as a label to avoid confusion with ordinary class methods.
-
-![image-20260223174109869](08-factory-singleton.assets/image-20260223174109869.png)
 
 ### Canonical UML Class Diagram (Factory Method Pattern)
 
@@ -458,76 +419,33 @@ sequenceDiagram
 
 Java note: this Factory Method Pattern example is structurally very close to the C# version, so this section uses C# as the primary version.
 
-### Selection Is Moved, Not Eliminated
+### Selection Is Moved, Not Eliminated (Thin-Pass-Through Check)
 
-Factory Method Pattern removes selection logic from `CheckoutService`, but the system still has to choose a concrete creator somewhere (usually the composition root).  
-You can replace explicit `switch` selection with a simple registration map.
+Factory Method Pattern removes selection logic from `CheckoutService`, but the system still chooses a concrete creator at composition time.
 
-### Is This Just a Thin Pass-Through Mechanism?
+Example with registration (selection remains, but is centralized and extensible):
 
-Sometimes yes. If each creator only wraps `new ConcreteStrategy()` and nothing else, Factory Method Pattern can be an unnecessary abstraction layer.
+```csharp
+using System;
+using System.Collections.Generic;
 
-Factory Method Pattern becomes meaningful when creation carries real policy or extension value, for example:
+var creatorRegistry = new Dictionary<string, Func<ShippingStrategyCreator>>(StringComparer.OrdinalIgnoreCase)
+{
+    ["ground"] = () => new GroundShippingCreator(),
+    ["air"] = () => new AirShippingCreator(),
+    ["drone"] = () => new DroneShippingCreator()
+};
 
-- **Framework extension seam**: a base workflow calls `CreateStrategy()`, and external modules customize creation by subclassing.
-- **Lifecycle policy**: creators control initialization, validation, retries/fallbacks, pooling, or instrumentation around created objects.
-- **Invariant protection**: creators ensure that every created strategy is configured in a valid, consistent way.
-- **Local change containment**: new creation variants are added as new creator subclasses instead of editing existing creator logic.
+if (!creatorRegistry.TryGetValue(mode, out var creatorFactory))
+    throw new NotSupportedException($"Unsupported shipping mode '{mode}'.");
 
-When **not** to use Factory Method Pattern:
+ShippingStrategyCreator creator = creatorFactory();
+```
 
-- A single registry/map-based selector already solves the problem clearly.
-- Creation logic is stable and trivial (plain constructor calls, no policy).
-- Subclass count is growing faster than behavior differences.
-- Team onboarding/readability costs are higher than extensibility benefits.
+If each creator only wraps `new ConcreteStrategy()` forever, this pattern is probably too thin.  
+It becomes worthwhile when creation includes meaningful policy (validation, retries/fallbacks, instrumentation), framework extension seams, or invariant enforcement.
 
-
-### Synonyms
-
-- **Factory Method Pattern** is sometimes called a **Virtual Constructor**.
-
-### Anti-Pattern / Misuse
-
-- Subclass proliferation for minor variations.
-- Creator hierarchies with no real variation in product creation.
-- Forcing Factory Method Pattern when a small Simple Factory is enough.
-
-### Good Naming Conventions
-
-- Abstract creator names: `ShippingStrategyCreator`, `DocumentCreator`.
-- Concrete creators: `GroundShippingCreator`, `AirShippingCreator`.
-- Factory method names should be explicit: `CreateStrategy`, `CreateDocument`.
-
-### SOLID Support (Excluding DIP)
-
-- **SRP**: creator hierarchy isolates construction variation.
-- **OCP**: new creator subclasses extend behavior without editing existing creators.
-- **LSP**: clients use abstract creator and product contracts.
-- **ISP**: creation-related APIs can remain small and focused.
-
-### Performance and Memory Notes
-
-- Virtual dispatch overhead is generally trivial.
-- More classes can increase conceptual cost more than runtime cost.
-- Use when extensibility value exceeds hierarchy complexity.
-
-### Code Smell Checklist (Overengineering/Misuse)
-
-- Many concrete creators differ by one line and never evolve.
-- Clients select creators and then branch again on concrete strategy type.
-- Creator classes include unrelated business logic.
-
-### When to Use / When Not to Use
-
-**Use when:**
-- creation logic should vary by subclass,
-- frameworks need extension points for object creation,
-- you want to move creation variation out of central branching logic.
-
-**Do not use when:**
-- one central map-based selector is simpler and sufficient,
-- no subclass-specific creation behavior exists,
-- hierarchy depth harms readability and onboarding.
+Factory Method Pattern is also known as a **Virtual Constructor**.
 
 Transition: when clients must construct whole sets of related objects that must stay compatible, use Abstract Factory.
 
@@ -536,8 +454,6 @@ Transition: when clients must construct whole sets of related objects that must 
 ### What It Is and What It Accomplishes
 
 Abstract Factory provides an interface for creating **families of related objects** without specifying concrete classes. It guarantees that products created together are compatible (for example, a dark-themed button with a dark-themed dialog).
-
-![image-20260223174256406](08-factory-singleton.assets/image-20260223174256406.png)
 
 ### Detailed Example: Admin Console Theming
 
@@ -857,75 +773,24 @@ Infrastructure platforms often need provider-compatible clients as a family:
 - `AwsClientFactory` -> `AwsStorageClient`, `AwsQueueClient`, `AwsIdentityClient`
 - `AzureClientFactory` -> `AzureStorageClient`, `AzureQueueClient`, `AzureIdentityClient`
 
-In this example, two factories provide the same interfaces to various equivalent services in two different cloud providers. Imagine that you developed a popular tool to help manage a complex cloud provider such as AWS. By implementing abstract factory, you can extend your platform to additional cloud providers such as Azure and Google Cloud and switch them dynamically, making your platform available to entirely new customers (or customers who use multiple cloud providers). Here abstract factory is not only good software engineering practice, but helps you reach new customers.
+This lets one codebase switch provider families cleanly while preserving compatibility guarantees inside each family.
 
+### Product Family Guarantees and Tradeoff
 
-### Product Families and Consistency Guarantees
-
-- A concrete factory defines a **cohesive family** of products.
-- Client code receives products that are designed to work together.
-- This avoids cross-family mismatches (for example, `DarkButton` with `LightDialog`).
-
-### Tradeoff Analysis: Adding Families vs Adding Product Types
-
-- **Easy change:** add a new family (`CorporateWidgetFactory`) by adding concrete products + one factory.
-- **Expensive change:** add a new product type (`Tooltip`) because every factory interface and concrete factory must expand.
-- This is the core Abstract Factory tradeoff and a common exam question.
-- ![image-20260223174323252](08-factory-singleton.assets/image-20260223174323252.png)
+- A concrete factory defines one cohesive product family, preventing mix-and-match incompatibilities.
+- Adding a **new family** is usually additive (new concrete products + one new factory).
+- Adding a **new product type** is disruptive (abstract factory contract and every concrete factory must change).
 
 ### Relationship to Factory Method Pattern
 
-- Abstract Factory is often implemented with multiple **factory methods** (one per product type).
-- In the demo above, each `Create*` method is a factory method inside a broader family factory.
+Abstract Factory is often implemented with multiple factory methods, one per product type.
 
-### Synonyms
+### Abstract Factory: Pattern-Specific Notes
 
-- GoF references **Kit** as an alternative name for Abstract Factory.
-
-### Anti-Pattern / Misuse
-
-- Introducing Abstract Factory when there is only one product family.
-- Splitting one simple factory into many interfaces without real variability.
-- Allowing family mixing by leaking concrete types into clients.
-
-### Good Naming Conventions
-
-- Abstract factory names: `WidgetFactory`, `PaymentProviderFactory`.
-- Concrete family names: `DarkWidgetFactory`, `StripeFactory`, `AwsFactory`.
-- Product interfaces: `Button`, `Dialog`, `Input`, `CacheClient`.
-- Family products should share clear prefixes/suffixes (`DarkButton`, `DarkDialog`).
-
-### SOLID Support (Excluding DIP)
-
-- **SRP**: creation of families is separated from client behavior.
-- **OCP**: new families can be introduced with minimal client modification.
-- **LSP**: clients can swap concrete factories and still receive valid product abstractions.
-- **ISP**: each product abstraction can remain small and focused by client usage.
-
-### Performance and Memory Notes
-
-- Overhead is mostly extra object creation calls and indirection, typically minor.
-- Memory impact grows with family count if factories pre-create/caches products.
-- Choose laziness vs caching based on measured usage patterns.
-
-### Code Smell Checklist (Overengineering/Misuse)
-
-- Factory interface has one creation method and no family concept.
-- Clients downcast products to concrete family types.
-- Product naming does not reveal family boundaries.
-- New product types require edits across many factories too frequently for team velocity.
-
-### When to Use / When Not to Use
-
-**Use when:**
-- you must create related product sets that must be used consistently,
-- you need runtime family switching (theme/platform/vendor),
-- you want client code fully decoupled from concrete family classes.
-
-**Do not use when:**
-- product families are not real and are unlikely to emerge,
-- you only need a single product type with occasional variants,
-- team complexity budget is low and a simpler factory is enough.
+- GoF synonym: **Kit**.
+- Misuse pattern: introducing family abstractions when no true family variability exists.
+- Good fit: themed/platform/vendor families that must stay internally consistent.
+- Poor fit: one product axis with occasional variants where Simple Factory is clearer.
 
 ---
 
@@ -936,8 +801,6 @@ In this example, two factories provide the same interfaces to various equivalent
 Singleton ensures a class has *one and only one* accessible instance and provides a global access point to that instance. It is useful for genuinely single logical resources (for example, process-wide configuration snapshot).
 
 The risk singleton introduces is **hidden global state**: any code can reach the same shared object from anywhere, often without that dependency appearing in constructors or method parameters. This hides coupling and makes behavior harder to reason about, because one part of the system can mutate singleton state and unexpectedly affect unrelated parts. It is especially problematic in tests, where state can leak between test cases, create order-dependent failures, and break parallel test isolation.
-
-![image-20260223174339335](08-factory-singleton.assets/image-20260223174339335.png)
 
 ### Canonical UML Class Diagram
 
@@ -956,10 +819,6 @@ classDiagram
 ### Implementation Walkthrough
 
 Below are two equivalent implementations per language: a simple version and a thread-safe double-checked locking version.
-
-![image-20260223174411117](08-factory-singleton.assets/image-20260223174411117.png)
-
-![image-20260223174431143](08-factory-singleton.assets/image-20260223174431143.png)
 
 #### C# Demo
 
@@ -1129,8 +988,6 @@ Typical mitigation:
 - keep singleton immutable where possible,
 - provide explicit reset hooks only in test builds (with caution).
 
-![image-20260223174458156](08-factory-singleton.assets/image-20260223174458156.png)
-
 ### Unit Test Example (State Leakage Smell)
 
 ```csharp
@@ -1148,124 +1005,70 @@ A service may load immutable startup configuration once and expose it process-wi
 
 This can be valid when values never mutate after startup and all consumers only read from the shared instance.
 
-### Anti-Pattern / Misuse
-
-- Using Singleton as a global variable bucket.
-- Storing mutable business state in singletons.
-- Turning services into singletons by default without proving single-instance semantics are required.
-
-### Good Naming Conventions
-
-- Name for domain role, not pattern: `AppLogger`, `ConfigurationStore`, `ClockProvider`.
-- Avoid names that over-advertise pattern mechanics (`TheSingletonManager`).
-- If accessed through a property/method, use clear names: `Instance`, `GetInstance`.
-
-### SOLID Support (Excluding DIP)
-
-- **SRP (conditional)**: can centralize one truly global concern (for example, immutable app metadata), but often drifts into multi-responsibility global state.
-- **OCP (conditional)**: singleton alone does not provide OCP; OCP benefits appear only when clients depend on stable abstractions and singleton state is tightly controlled.
-- **LSP (orthogonal)**: substitutability depends on behavioral contracts of exposed abstractions, not on whether the implementation is a singleton.
-- **ISP**: singleton-exposed interfaces should stay narrow; broad singleton APIs quickly violate ISP and increase coupling.
-
 ### Concurrency Visibility Notes
 
 - Without proper synchronization/visibility rules, one thread can observe a partially initialized instance.
 - Java double-checked locking requires `volatile`.
 - C# uses `volatile`/`lock` patterns or `Lazy<T>` to ensure safe publication.
-- For a concrete race demonstration of unsynchronized lazy initialization, see [Appendix 1: Non-Thread-Safe Singleton Demo](#appendix-1-non-thread-safe-singleton-demo).
 
-### Serialization and Reflection Pitfalls
+### Singleton: Pattern-Specific Notes
 
-- Serialization/deserialization can create new instances unless explicitly guarded.
-- Reflection can bypass private constructors in some environments.
-- Java `enum` singletons are a common defense against both issues.
+- Use only when the system truly needs one process-wide instance with tightly controlled or immutable state.
+- Avoid when constructor injection or scoped lifetimes would make dependencies explicit and testable.
+- Serialization/deserialization and reflection can break singleton guarantees unless explicitly guarded (`enum` singleton is a common Java defense).
+- Naming should describe role (`AppLogger`, `ConfigurationStore`) rather than pattern mechanics.
+- SOLID reminder: singleton can support SRP in narrow cases, but usually increases coupling pressure and test fragility.
 
-### Safer Alternatives to Consider First
+### Singleton Code Smell Checklist
 
-- Dependency injection with scoped lifetimes (`singleton`, `scoped`, `transient` in DI containers).
-- Composition root ownership of long-lived services.
-- Module-level stateless functions where state does not need to be global.
-
-### Performance and Memory Notes
-
-- A single instance can reduce repeated construction cost.
-- Synchronization in hot paths may add overhead; initialize safely and keep access lightweight.
-- The bigger risk is architectural coupling, not raw CPU cost.
-
-### Code Smell Checklist (Overengineering/Misuse)
-
-- **Singleton stores request/user/session state.**  
-  This mixes short-lived, user-specific data into a process-wide object. The result is accidental data bleed across requests, race conditions under concurrency, and severe debugging complexity when one user’s workflow affects another. Request/session state should be scoped to the request/session boundary, not stored globally.
-- **Multiple subsystems write mutable fields on the singleton.**  
-  If many modules can call setters on a shared instance, no single place owns invariants. Behavior becomes "last writer wins," and failures are hard to reproduce because outcomes depend on execution timing and call order. A singleton should be immutable where possible, or mutations should be tightly controlled behind a narrow API.
-- **Tests need order-dependent cleanup because singleton state persists.**  
-  If test B only passes when test A runs first (or when a manual reset runs), the singleton is leaking state across tests. This indicates broken test isolation and makes parallel CI runs flaky. Each test should be independently runnable without relying on global cleanup choreography.
-- **Singleton is used where constructor injection would be clearer.**  
-  When an object could be passed explicitly in the constructor but is fetched globally instead, dependencies become hidden. Hidden dependencies reduce readability, make mocking harder, and couple unrelated classes to global access points. Prefer constructor injection unless strict single-instance semantics are truly required.
-
-### When to Use / When Not to Use
-
-**Use when:**
-- the system truly requires one logical instance,
-- the instance encapsulates infrastructure-level coordination,
-- state is immutable or tightly controlled.
-
-**Do not use when:**
-- singleton is chosen only for convenience,
-- business logic depends on mutable shared singleton state,
-- testability and parallel execution are priorities.
+- **Request/user/session state is stored in the singleton.** This leaks short-lived data into global scope and creates race-prone cross-request behavior.
+- **Many subsystems mutate singleton fields.** "Last writer wins" behavior appears and invariants become unclear.
+- **Tests require order-dependent cleanup.** This is a direct signal that singleton state is leaking across tests.
+- **Global access is used where constructor injection is viable.** Hidden dependencies reduce readability and make mocking harder.
 
 ## Study Guide
 
-### Key Takeaways
+### Application Anchors
 
-- Choose **Simple Factory** when one central selector should create strategies/products from runtime keys.
-- Choose **Factory Method Pattern** when creator subclasses should control which strategy/product gets created.
-- Choose **Abstract Factory** when the key question is: "Which compatible family of implementations should I create together?"
-- Choose **Singleton** only when the key question is: "Should there be exactly one process-wide instance?"
-- Prefer design clarity over pattern density; patterns are tools, not goals.
-
-![image-20260223174551389](08-factory-singleton.assets/image-20260223174551389.png)
-
-### New Terminology
-
-| Term | Meaning |
-|---|---|
-| Simple Factory | Centralized creation method/class; common idiom, not one of the 23 GoF patterns |
-| Factory Method Pattern | Overridable method that creates product objects |
-| Product Family | Set of related objects intended to be used together |
-| Compatibility Guarantee | Property that family products are mutually consistent |
-| Double-Checked Locking | Concurrency pattern that reduces lock overhead while safely initializing once |
-| Safe Publication | Guarantee that other threads observe a fully initialized object |
-| Composition Root | Application startup boundary where object graph is assembled |
-| Global State | Data accessible broadly across the system, often difficult to isolate in tests |
-| Magic String | Hard-coded string literal with domain/control meaning; code smell due to typo risk, weak compile-time safety, and DRY drift across casing/encoding variants |
-| Magic Number | Hard-coded numeric literal with hidden meaning; code smell due to readability loss and DRY drift from duplicated values with unit/precision differences |
+- If variation is one runtime key on one product axis, start with **Simple Factory**.
+- If creation must vary by creator subtype/framework hook, use **Factory Method Pattern**.
+- If compatibility across multiple related products matters, use **Abstract Factory**.
+- Use **Singleton** only for truly single, infrastructure-level concerns.
 
 ### Comparison Table
 
-| Pattern | Primary Intent | Typical Structure | Strengths | Main Risks | Best Fit |
-|---|---|---|---|---|---|
-| Simple Factory | Select and create one implementation from a runtime selector | One factory class/method + product interface + concrete products | Centralized construction logic, easy runtime selection | Can become switch-heavy and monolithic | Strategy/provider selection from config/env/input |
-| Factory Method Pattern | Defer creation to subclasses of a creator type | Abstract creator + factory method + concrete creators + products | Extension via subclassing, framework-friendly creation hooks | Too many creator subclasses for minor differences | Plugin points and subtype-specific creation rules |
-| Abstract Factory | Create compatible families of related objects | Abstract factory + multiple product interfaces + concrete family factories | Enforces family consistency; easy family substitution | Interface explosion when product types keep growing | Theming, cross-platform UI, vendor-specific client stacks |
-| Singleton | Ensure exactly one shared instance | Private constructor + static instance accessor | Centralized access to truly unique resource | Hidden global mutable state, testing difficulty, lifecycle coupling | Immutable app config snapshot, process-wide coordination components |
+| Pattern | Primary Intent | Best Fit | Main Risk |
+|---|---|---|---|
+| Simple Factory | Select one concrete implementation from a runtime selector | Strategy/provider selection from config/env/input | Grows into a switch-heavy God Factory |
+| Factory Method Pattern | Defer creation to creator subtypes | Framework hooks, plugin creator hierarchies | Many near-empty creator subclasses |
+| Abstract Factory | Create compatible families of related objects | Theming, cross-platform UI, vendor client families | Adding product types forces broad contract changes |
+| Singleton | Ensure one shared instance | Immutable app config snapshot, process-wide coordination | Hidden global mutable state and test coupling |
 
-### Example Questions
+### Scenario Drills
 
-1. Why is adding a new product type usually more disruptive in Abstract Factory than adding a new family?
-2. When would you choose Simple Factory over Factory Method Pattern for Strategy creation?
-3. Why can singleton state cause order-dependent tests?
-4. How are safe publication and lazy initialization different, and how can they be combined?
-5. In which cases does a simple factory beat an abstract factory on design clarity?
+1. You receive `shippingMode` from configuration and need one `ShippingStrategy` implementation per request. Which pattern is the best starting point?
+2. A framework base class owns workflow, and plugins must override only creation behavior. Which pattern fits?
+3. You must prevent mismatched UI components (`DarkButton` with `LightDialog`) at compile-time boundaries. Which pattern fits?
+4. A logger must be process-wide, thread-safe, and cheap to access under load. Which singleton concerns are mandatory to address?
+5. Your team added five creator subclasses that differ only by `new ConcreteX()`. What refactor should you consider?
+
+### Edge-Case Checks
+
+- Simple Factory: are selectors strongly typed, or still magic strings scattered in business code?
+- Factory Method Pattern: is there meaningful creation policy, or just pass-through constructors?
+- Abstract Factory: are product families real, or was the family abstraction invented prematurely?
+- Abstract Factory: how often are new product types added, and can the team absorb broad factory-interface changes?
+- Singleton: can test runs be parallel and order-independent with current global state?
+- Singleton: do you need safe publication, lazy initialization, or both?
+- Singleton: would DI lifetimes (`singleton`/`scoped`/`transient`) express the intent more clearly?
 
 ### Example Questions: Answers
 
-1. Adding a product type is usually more disruptive because it requires changing the abstract factory contract (for example, adding `CreateNewType`) and updating all existing concrete factories. Adding a new family is usually additive: add new concrete products plus one new concrete factory, with little or no change to existing factory contracts.
-2. Choose Simple Factory when one centralized runtime selector (config/env/user input) is enough; choose Factory Method Pattern when creation behavior should vary by creator subtype/extension point.
-3. Singleton state is shared process-wide, so mutations from one test can persist into later tests, creating hidden coupling and order-dependent pass/fail outcomes.
-4. They are different concerns: lazy initialization means "create only when first needed," while safe publication means "all threads observe a fully initialized instance correctly." You can combine both (for example, double-checked locking with correct memory semantics, `Lazy<T>` in C#, or Java holder-based idiom).
-5. Simple Factory is clearer when you only need one product axis with straightforward runtime selection and do not need family coordination or subclass-based creator hierarchies.
+1. **Simple Factory**. One runtime selector and one product axis is its strongest use case.
+2. **Factory Method Pattern**. Subtypes provide creation behavior while the base class keeps workflow.
+3. **Abstract Factory**. One concrete family factory guarantees compatible products created together.
+4. Ensure safe publication and thread-safe initialization (`volatile` + locking semantics or equivalent). If lazy, ensure it is still safely published.
+5. Collapse to **Simple Factory** or a registration map unless those creators are about to carry meaningful policy.
 
 ## Appendix 1: Non-Thread-Safe Singleton Demo
 

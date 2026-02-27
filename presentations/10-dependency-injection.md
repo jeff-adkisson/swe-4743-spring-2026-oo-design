@@ -1,60 +1,36 @@
-# The Dependency Inversion Principle (DIP) with Dependency Injection (DI)
+# Dependency Injection (DI): Applying DIP in Practice
 
-[PowerPoint Presentation](08-dependency-inversion-principle.pptx)
+## 1. Introduction to Dependency Injection
 
-## 1. Introduction to the Dependency Inversion Principle
+Dependency Injection (DI) is the technique of supplying a class with the collaborators it needs instead of creating those collaborators inside the class.
 
-The Dependency Inversion Principle (DIP) says high-level policy should depend on abstractions rather than low-level details, and Dependency Injection (DI) is the most common practical way to apply that rule.
+- `DIP` defines the architectural rule (depend on abstractions).
+- `DI` operationalizes that rule at runtime by building and wiring object graphs.
 
-### Canonical Definition(s)
+In other words, DI is not the principle itself; DI is how teams automate and scale DIP in real systems.
 
-> "High-level modules should not depend on low-level modules. Both should depend on abstractions."
-> - Robert C. Martin
+Earlier in the course, Composition Root was introduced mostly as a way to keep `Main` short. In this lecture, we expand that understanding: Composition Root is the operational control point where DI policies are enforced for the full object graph.
 
-> "Abstractions should not depend on details. Details should depend on abstractions."
-> - Robert C. Martin
+### Canonical Definition
 
 > Dependency Injection: an object receives required collaborators from outside itself instead of creating them internally.
 
-DIP is the principle. DI is one implementation technique.
-
-### A Typical Example (That Creates DIP Problems Later)
-
-This is common enterprise practice: a high-level order policy service directly `new`s low-level infrastructure clients inside its method. It works initially, but it tightly couples policy to details.
+### Quick Before-and-After
 
 ```csharp
 public sealed class OrderApprovalPolicy
 {
     public bool Approve(Order order)
     {
-        // High-level policy creating low-level details directly.
         var credit = new LegacyCreditApiClient("https://credit.internal");
         var audit = new FileAuditLogger("/var/log/order-approval.log");
 
         bool approved = credit.Check(order.CustomerId, order.TotalAmount);
         audit.Write($"Order {order.Id} approved={approved}");
-
         return approved;
     }
 }
 ```
-
-```mermaid
-classDiagram
-direction LR
-
-class OrderApprovalPolicy {
-  +Approve(order) bool
-}
-
-class LegacyCreditApiClient
-class FileAuditLogger
-
-OrderApprovalPolicy --> LegacyCreditApiClient : creates detail directly
-OrderApprovalPolicy --> FileAuditLogger : creates detail directly
-```
-
-Now compare that to DIP plus a composition root:
 
 ```csharp
 public interface ICreditCheckGateway
@@ -92,29 +68,6 @@ var policy = new OrderApprovalPolicy(
     new FileAuditLogger("/var/log/order-approval.log"));
 ```
 
-Notice the abstractions are not added "just because." They are introduced at variance points where change is likely (credit provider and audit destination).
-
-Why DIP matters immediately:
-
-- Policy code can be tested with fakes instead of infrastructure.
-- Low-level vendor swaps do not force edits in high-level policy classes.
-- Wiring concerns move to composition root where they belong.
-
-### Precise Technical Interpretation
-
-In DIP discussions, precision matters:
-
-- `Dependency`: a collaborator a class needs to do its job (repository, policy engine, clock, logger, gateway).
-- `Object graph`: the runtime network of objects and their relationships for one process/request/job.
-- `Composition root`: the single place where concrete objects are created and wired (usually `Program.cs`/startup).
-- `Inversion`: high-level policy code depends on abstractions (`ICreditCheckGateway`) while low-level details (`LegacyCreditApiClient`) implement them.
-
-Why inversion matters operationally:
-
-- You localize change to implementation modules instead of policy modules.
-- You can substitute implementations per environment, tenant, or test.
-- You reduce blast radius when infrastructure changes.
-
 ```mermaid
 classDiagram
 direction TB
@@ -124,72 +77,53 @@ class ICreditCheckGateway {
   +Check(customerId, amount) bool
 }
 
-class LegacyCreditApiClient {
-  +Check(customerId, amount) bool
+class IAuditLogger {
+  <<interface>>
+  +Write(message) void
 }
 
 class OrderApprovalPolicy {
   +Approve(order) bool
 }
 
+class LegacyCreditApiClient
+class FileAuditLogger
 class CompositionRoot {
   +BuildGraph() OrderApprovalPolicy
 }
 
 ICreditCheckGateway <|.. LegacyCreditApiClient
+IAuditLogger <|.. FileAuditLogger
 OrderApprovalPolicy --> ICreditCheckGateway : depends on abstraction
+OrderApprovalPolicy --> IAuditLogger : depends on abstraction
 CompositionRoot --> OrderApprovalPolicy : wires
 CompositionRoot --> LegacyCreditApiClient : creates concrete
+CompositionRoot --> FileAuditLogger : creates concrete
 ```
 
-### Friendly Explanation
+## 2. Table of Contents
 
-Think of an enterprise cockpit:
+- [1. Introduction to Dependency Injection](#1-introduction-to-dependency-injection)
+- [2. Table of Contents](#2-table-of-contents)
+- [3. DI and DIP (Relationship Map)](#3-di-and-dip-relationship-map)
+- [4. Core Mechanics: Object Graphs and Constructor Injection](#4-core-mechanics-object-graphs-and-constructor-injection)
+- [5. Composition Root Deep Dive](#5-composition-root-deep-dive)
+- [6. Manual Dependency Injection (No Container)](#6-manual-dependency-injection-no-container)
+- [7. DI Containers Conceptually (How Framework DI Works)](#7-di-containers-conceptually-how-framework-di-works)
+- [8. C# Demo: Microsoft.Extensions.DependencyInjection in a Console App](#8-c-demo-microsoftextensionsdependencyinjection-in-a-console-app)
+- [9. Anti-Patterns and Failure Modes](#9-anti-patterns-and-failure-modes)
+- [10. Factory and Abstract Factory with DI](#10-factory-and-abstract-factory-with-di)
+- [11. Real-World Summary](#11-real-world-summary)
+- [12. Dependency Injection Study Guide](#12-dependency-injection-study-guide)
 
-- Pilots use stable controls for navigation intent.
-- The aircraft internals can vary by model and vendor.
-- The cockpit should not be rewired because a sensor vendor changed.
+## 3. DI and DIP (Relationship Map)
 
-DIP applies the same idea in software: business modules express intent through stable interfaces, and infrastructure details are swapped at the composition root.
+### DI vs DIP: Technique and Principle
 
-### Why It Matters in Real Systems
-
-DIP directly affects delivery speed and production risk:
-
-- Faster test cycles: replace external dependencies with fakes.
-- Safer changes: swap infrastructure implementations without rewriting policy logic.
-- Better observability design: cross-cutting concerns (logging, tracing, clock) become explicit and replaceable.
-- Cleaner incident response: clear dependency boundaries expose where faults originate.
-
-### Common Misconceptions
-
-- DIP means "use a container." (container usage is optional)
-- DIP means "everything must be an interface." (false: introduce abstractions where there is variance pressure, not everywhere)
-- Constructor injection always means better design. (constructor bloat can indicate SRP issues)
-- DI removes architectural decisions. (you still need clear boundaries, lifetimes, and ownership)
-
-### Table of Contents
-
-- [1. Introduction to the Dependency Inversion Principle](#1-introduction-to-the-dependency-inversion-principle)
-- [2. DIP vs DI (SOLID Relationship Map)](#2-dip-vs-di-solid-relationship-map)
-- [3. The Core Mechanics: Object Graphs and Constructor Injection](#3-the-core-mechanics-object-graphs-and-constructor-injection)
-- [4. Manual Dependency Injection (No Container)](#4-manual-dependency-injection-no-container)
-- [5. DI Containers Conceptually (How Framework DI Works)](#5-di-containers-conceptually-how-framework-di-works)
-- [6. C# Demo: Microsoft.Extensions.DependencyInjection in a Console App](#6-c-demo-microsoftextensionsdependencyinjection-in-a-console-app)
-- [7. Anti-Patterns and Failure Modes](#7-anti-patterns-and-failure-modes)
-- [8. Factory Pattern (As a Tool With and Without DI)](#8-factory-pattern-as-a-tool-with-and-without-di)
-- [9. Abstract Factory Pattern (Families of Related Dependencies)](#9-abstract-factory-pattern-families-of-related-dependencies)
-- [10. Real-World Summary](#10-real-world-summary)
-- [11. Dependency Inversion Principle Study Guide](#11-dependency-inversion-principle-study-guide)
-
-## 2. DIP vs DI (SOLID Relationship Map)
-
-### DIP vs DI: Principle and Technique
-
-- `DIP` is a design principle: policy and high-level modules should depend on abstractions.
-- `DI` is one implementation technique: pass collaborators in from outside.
-- You can follow DIP without a container (manual DI).
-- You can use a container and still violate DIP if abstractions are poor or hidden.
+- `DIP` is the architectural principle: high-level policy depends on abstractions.
+- `DI` is the delivery mechanism: collaborators are provided from outside.
+- You can apply DIP without a container (manual DI).
+- You can use a container and still violate DIP if abstractions are weak.
 
 ```mermaid
 classDiagram
@@ -214,24 +148,24 @@ IPaymentGateway <|.. StripePaymentGateway
 
 ### SOLID Relationship Map
 
-- `SRP`: DIP exposes responsibility boundaries; constructor bloat often reveals SRP drift.
-- `OCP`: DIP stabilizes high-level policy modules while low-level implementations can vary.
-- `LSP`: DIP relies on safe substitution; broken contracts undermine the inversion boundary.
-- `ISP`: DIP works best with focused abstractions; fat interfaces still over-couple clients.
+- `SRP`: constructor bloat often reveals mixed responsibilities.
+- `OCP`: DI enables implementation swaps while policy remains stable.
+- `LSP`: replacement implementations must honor contract behavior.
+- `ISP`: narrow interfaces produce cleaner DI graphs and less coupling.
 
-What DIP does not magically fix:
+What DI does not automatically fix:
 
-- Bad domain boundaries.
-- Poorly named or unstable abstractions.
-- Transaction and consistency design mistakes.
+- poor domain boundaries
+- unstable abstractions
+- transactional consistency design mistakes
 
-## 3. The Core Mechanics: Object Graphs and Constructor Injection
+## 4. Core Mechanics: Object Graphs and Constructor Injection
 
-### Object Graphs: DIP Requires Deliberate Composition
+### Object Graphs: DI at Runtime
 
-An object graph is the runtime dependency network for a use case. In practice, DI composes this graph so DIP holds at runtime.
+An object graph is the runtime network of objects and their dependencies for one process/request/job.
 
-In an order-processing service, a root object often needs multiple collaborators:
+In an order-processing service, a root object often needs:
 
 - persistence (`IOrderRepository`)
 - policy (`IPricingPolicy`)
@@ -240,13 +174,13 @@ In an order-processing service, a root object often needs multiple collaborators
 
 ### Constructor Injection: Dependencies Become Explicit
 
-Constructor injection means a class cannot exist without its required collaborators.
+Constructor injection means a class cannot be created without required collaborators.
 
 Technical effects:
 
-- Explicit contract: constructor signature declares required dependencies.
-- Fail fast: missing registrations are detected during composition/resolution.
-- Testable seams: tests pass fake dependencies directly.
+- explicit contract in the constructor signature
+- fail-fast behavior during composition/resolution
+- easier testing by passing fakes directly
 
 ```mermaid
 classDiagram
@@ -310,11 +244,124 @@ Main->>Processor: new OrderProcessor(repo, policy, clock, log)
 Main->>Processor: Process(command)
 ```
 
-## 4. Manual Dependency Injection (No Container)
+## 5. Composition Root Deep Dive
+
+Composition Root is where an application decides how abstractions map to concrete implementations. It is the boundary where object-graph construction is centralized and controlled.
+
+### Why This Is More Than a "Slim Main"
+
+Keeping `Main` short is a formatting concern. Composition Root is an architectural concern:
+
+- it controls dependency direction at runtime
+- it enforces lifetime and ownership rules
+- it keeps framework/infrastructure mechanics out of domain code
+- it provides one auditable place for wiring decisions
+
+### Responsibilities of the Composition Root
+
+- register or create concrete implementations
+- compose root services and transitive dependencies
+- validate startup wiring where possible
+- keep business decisions out of composition logic
+
+### What Should Not Be in Composition Root
+
+- business rules and orchestration logic
+- ad hoc per-feature service lookup in domain classes
+- scattered "mini roots" throughout feature code
+
+### C# Manual Composition Example
+
+```csharp
+public static class Program
+{
+    public static void Main()
+    {
+        ICreditCheckGateway creditGateway = new LegacyCreditApiClient("https://credit.internal");
+        IAuditLogger auditLogger = new FileAuditLogger("/var/log/order-approval.log");
+
+        var approvalPolicy = new OrderApprovalPolicy(creditGateway, auditLogger);
+
+        bool approved = approvalPolicy.Approve(new Order("ORD-1001", "C-9", 120.00m));
+        Console.WriteLine($"Approved={approved}");
+    }
+}
+```
+
+### Java Manual Composition Example
+
+```java
+import java.math.BigDecimal;
+
+public final class Main {
+    public static void main(String[] args) {
+        CreditCheckGateway creditGateway = new LegacyCreditApiClient("https://credit.internal");
+        AuditLogger auditLogger = new FileAuditLogger("/var/log/order-approval.log");
+
+        OrderApprovalPolicy approvalPolicy = new OrderApprovalPolicy(creditGateway, auditLogger);
+
+        boolean approved = approvalPolicy.approve(new Order("ORD-1001", "C-9", new BigDecimal("120.00")));
+        System.out.println("Approved=" + approved);
+    }
+}
+```
+
+```mermaid
+classDiagram
+direction LR
+
+class CompositionRoot {
+  +Main() void
+}
+class OrderApprovalPolicy
+class ICreditCheckGateway {
+  <<interface>>
+}
+class IAuditLogger {
+  <<interface>>
+}
+class LegacyCreditApiClient
+class FileAuditLogger
+
+CompositionRoot --> LegacyCreditApiClient : creates
+CompositionRoot --> FileAuditLogger : creates
+CompositionRoot --> OrderApprovalPolicy : wires
+OrderApprovalPolicy --> ICreditCheckGateway
+OrderApprovalPolicy --> IAuditLogger
+ICreditCheckGateway <|.. LegacyCreditApiClient
+IAuditLogger <|.. FileAuditLogger
+```
+
+```mermaid
+sequenceDiagram
+participant Main as CompositionRoot
+participant Credit as LegacyCreditApiClient
+participant Audit as FileAuditLogger
+participant Policy as OrderApprovalPolicy
+
+Main->>Credit: create gateway
+Main->>Audit: create logger
+Main->>Policy: new OrderApprovalPolicy(credit, audit)
+Main->>Policy: Approve(order)
+Policy-->>Main: approved
+```
+
+### Boundary Rule
+
+Use one composition root per application boundary:
+
+- console app entry point
+- web host startup
+- worker service startup
+- test harness bootstrap
+
+This gives predictable wiring, easier diagnostics, and clean dependency boundaries.
+
+## 6. Manual Dependency Injection (No Container)
 
 ### Scenario: Order Ingestion Pipeline
 
-A batch pipeline ingests external marketplace orders, enriches them with pricing rules, and stores normalized orders for downstream fulfillment.
+A batch pipeline ingests marketplace orders, enriches with pricing rules, and stores normalized orders.
 
 ### 1) BAD Version: Tight Coupling and Direct Instantiation
 
@@ -537,20 +584,20 @@ sut.Ingest(new OrderMessage("ORD-1", "C-1", 10m, "US"));
 Console.WriteLine(repo.Saved.Count == 1 ? "PASS" : "FAIL");
 ```
 
-## 5. DI Containers Conceptually (How Framework DI Works)
+## 7. DI Containers Conceptually (How Framework DI Works)
 
-A DI container is one tool for applying DIP at scale. Conceptually, it does five things:
+A DI container is one tool for scaling DI. Conceptually, it does five things:
 
 - `Registration`: map service type to implementation/factory.
 - `Lifetime`: define reuse rules (transient/scoped/singleton).
-- `Resolution`: build requested object and dependencies.
+- `Resolution`: build requested object and its dependencies.
 - `Constructor selection`: choose a usable constructor and resolve parameters.
 - `Cycle detection`: fail when dependency graphs loop.
 
 ### Lifetime and Scope in Practice
 
 - `Transient`: new instance every resolution.
-- `Scoped`: one instance per scope (in ASP.NET Core, usually one per request).
+- `Scoped`: one instance per scope (in ASP.NET Core, typically one per request).
 - `Singleton`: one instance for application lifetime.
 
 Common failure pattern: singleton captures scoped dependency and holds stale/request-specific state.
@@ -634,14 +681,14 @@ ServiceProvider --> ScopeCache : uses
 
 ### Warnings and Tradeoffs
 
-- Containers reduce boilerplate, but can hide wiring complexity.
-- Runtime resolution errors can move failures later if startup validation is weak.
-- Lifetime bugs are subtle and often show up only under concurrent load.
+- Containers reduce boilerplate but can hide wiring complexity.
+- Runtime resolution errors can surface late if startup validation is weak.
+- Lifetime bugs are subtle and appear under concurrency.
 - Overusing container APIs (`IServiceProvider` everywhere) drifts toward service locator.
 
-## 6. C# Demo: Microsoft.Extensions.DependencyInjection in a Console App
+## 8. C# Demo: Microsoft.Extensions.DependencyInjection in a Console App
 
-Goal: show constructor resolution visually using the same DI abstractions used by ASP.NET Core.
+Goal: show constructor resolution using the same abstractions used by ASP.NET Core.
 
 ### Complete `Program.cs`
 
@@ -793,7 +840,7 @@ ComplianceReportGenerator --> IAuditLogger
 NightlyComplianceJob --> IComplianceReportGenerator
 ```
 
-Registration flow for this demo (happens before `GetRequiredService(...)`):
+Registration flow (before `GetRequiredService(...)`):
 
 ```mermaid
 sequenceDiagram
@@ -841,7 +888,7 @@ Main->>Job: Run("ORD-2026-00042")
 
 ### ASP.NET Core Mapping (Concept)
 
-The same registrations move directly into ASP.NET Core:
+The same registrations map directly into ASP.NET Core startup:
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -850,29 +897,27 @@ builder.Services.AddTransient<IAuditLogger, ConsoleAuditLogger>();
 builder.Services.AddTransient<IComplianceReportGenerator, ComplianceReportGenerator>();
 ```
 
-Controller, endpoint, or hosted service constructors then receive those dependencies via DI automatically.
+Controllers, endpoints, and hosted services receive these dependencies through constructor injection.
 
-## 7. Anti-Patterns and Failure Modes
+## 9. Anti-Patterns and Failure Modes
 
 ### 1) Service Locator
 
-Service Locator is a pattern where a class asks a global provider/container for dependencies at runtime instead of declaring those dependencies in its constructor.
+Service Locator means a class requests dependencies from a global provider/container at runtime instead of declaring them in the constructor.
 
-Why teams use it:
+Why teams drift toward it:
 
-- it feels convenient when wiring is complex
-- it avoids changing constructor signatures during rapid feature work
-- it can simplify plugin and runtime-discovery boundaries
+- fast short-term wiring convenience
+- avoiding constructor changes
+- dynamic plugin/runtime discovery boundaries
 
-Why it is considered an anti-pattern in most business/domain code:
+Why it is an anti-pattern in domain/business code:
 
-- Hidden dependencies: class APIs look small, but true dependency count is invisible.
-- Late failure mode: missing registrations fail at runtime, not at compile time.
-- Weaker testability: tests must configure a locator/container even for focused unit tests.
-- Dependency creep: adding "just one more lookup" is easy, so services accumulate responsibilities.
-- Architectural drift: domain logic starts depending on container mechanics rather than stable abstractions.
-
-Constructor injection does the opposite: required collaborators are explicit, compile-time visible, and easier to substitute in tests.
+- hidden dependencies
+- late runtime failures
+- harder focused unit tests
+- easy dependency creep
+- architecture tied to container mechanics
 
 ```csharp
 public sealed class ShipmentService
@@ -927,21 +972,17 @@ ShipmentServiceExplicit --> ICustomerNotifier : explicit
 ShipmentServiceExplicit --> ILogger : explicit
 ```
 
-When it can be acceptable (bounded usage):
+When bounded use is acceptable:
 
-- boundary integration constraints (framework callback APIs you do not control)
-- legacy code where full refactor is not yet feasible
-- plugin architectures and runtime discovery where types are unknown at compile time
-- transitional refactoring while moving toward explicit constructors
+- framework callbacks you do not control
+- legacy transitions
+- plugin discovery where types are unknown at compile time
 
-Guidance:
-
-- Keep locator use in composition root or boundary adapters.
-- Keep it out of core domain/business logic.
+Guidance: keep locator use in boundaries/composition only, not in core domain logic.
 
 ### 2) Over-injection / Constructor Bloat
 
-If a class constructor takes 9-12 dependencies, it is often an SRP smell.
+If a constructor takes 9-12 dependencies, SRP is usually drifting.
 
 ```csharp
 public sealed class OrderWorkflowService
@@ -993,10 +1034,10 @@ OrderWorkflowService --> IOutbox
 
 Refactoring options:
 
-- extract an orchestration facade for one use case
-- split responsibilities into cohesive services
-- introduce a parameter object for correlated primitives
-- introduce an aggregate service only when the grouped dependencies are truly cohesive
+- extract per-use-case orchestrators
+- split responsibilities
+- group correlated primitives into parameter objects
+- introduce aggregate services only when cohesion is real
 
 ```csharp
 public sealed class CheckoutPipeline
@@ -1057,13 +1098,13 @@ IRequestContext <|.. HttpRequestContext
 
 Fix options:
 
-- align lifetimes (`ComplianceCache` becomes scoped)
-- or redesign API to pass request data as method parameters
-- or create scope per operation using `IServiceScopeFactory` only at boundaries
+- align lifetimes (make cache scoped)
+- pass request-specific data as method arguments
+- create operation scopes only at boundaries
 
 ### 4) Cyclic Dependencies
 
-Cycles usually mean responsibilities are tangled.
+Cycles indicate tangled responsibilities.
 
 ```csharp
 public sealed class PaymentService
@@ -1088,7 +1129,7 @@ PaymentService --> InvoiceService
 InvoiceService --> PaymentService
 ```
 
-Break the cycle with events, mediator, or responsibility split:
+Break cycles with events, mediator, or explicit responsibility split:
 
 ```csharp
 public sealed class PaymentService
@@ -1122,22 +1163,22 @@ public sealed class InvoicePaymentProjectionHandler : IDomainEventHandler<Paymen
 }
 ```
 
-## 8. Factory Pattern (As a Tool With and Without DI)
+## 10. Factory and Abstract Factory with DI
 
-### Canonical Intent
+### Factory Pattern with DI
 
-Factory encapsulates object creation so client code depends on an abstraction of creation rather than construction details.
+Factory encapsulates creation so clients depend on creation abstractions rather than construction details.
 
 Use Factory when:
 
-- runtime choice of implementation is needed (region, tenant, feature flag)
-- creation has nontrivial setup or validation
-- clients should not know concrete class names
+- implementation choice is runtime-dependent (region, tenant, feature flag)
+- creation has non-trivial setup
+- clients should not know concrete types
 
-Relationship to DIP:
+Relationship to DI:
 
-- A DI container behaves like a generalized factory for whole object graphs.
-- Domain-specific factories still add value when business rules decide which abstraction implementation to use.
+- a DI container behaves like a generalized factory for object graphs
+- domain-specific factories remain useful for business-driven selection rules
 
 ```mermaid
 classDiagram
@@ -1168,10 +1209,6 @@ IPaymentGateway <|.. StripeGateway
 IPaymentGateway <|.. AdyenGateway
 ```
 
-### C# Example (Simple Factory)
-
-This is a `Simple Factory` example, not Factory Method.
-
 ```csharp
 public interface IPaymentGateway
 {
@@ -1186,6 +1223,11 @@ public sealed class StripeGateway : IPaymentGateway
 public sealed class AdyenGateway : IPaymentGateway
 {
     public Authorization Authorize(PaymentRequest request) => Authorization.Approved("adyen");
+}
+
+public interface IPaymentGatewayFactory
+{
+    IPaymentGateway Create(string regionCode);
 }
 
 public sealed class PaymentGatewayFactory : IPaymentGatewayFactory
@@ -1210,18 +1252,11 @@ public sealed class PaymentGatewayFactory : IPaymentGatewayFactory
 }
 ```
 
-### Common Misconceptions
+### Abstract Factory with DI
 
-- Factory is not the same thing as DI.
-- DI does not remove the need for domain-level creation policies.
-- A factory can be injected and still follow DIP.
-- A factory that returns concretes to clients weakens abstraction boundaries.
+Scenario: multi-region compliance where each region needs a compatible pair of services (`tax + invoice`).
 
-## 9. Abstract Factory Pattern (Families of Related Dependencies)
-
-Scenario: multi-region compliance. Each region requires a compatible pair of services: tax calculation + invoice rendering.
-
-Canonical GoF structure (shape only):
+Canonical GoF structure:
 
 ```mermaid
 classDiagram
@@ -1260,7 +1295,7 @@ ConcreteFactoryB --> ProductB2
 Client --> AbstractFactory
 ```
 
-Enterprise mapping of that same structure:
+Enterprise mapping:
 
 ```mermaid
 classDiagram
@@ -1373,9 +1408,7 @@ public sealed class ComplianceBillingService
 }
 ```
 
-### Relationship to DIP (Using DI)
-
-DI can select the concrete abstract factory per tenant/environment while keeping high-level billing logic dependent on `IComplianceSuiteFactory`:
+DI can select the concrete abstract factory per tenant/environment while keeping billing logic stable:
 
 ```csharp
 services.AddScoped<UsComplianceSuiteFactory>();
@@ -1390,78 +1423,60 @@ services.AddScoped<IComplianceSuiteFactory>(sp =>
 });
 ```
 
-This keeps region selection in composition and keeps billing logic stable.
-
-## 10. Real-World Summary
+## 11. Real-World Summary
 
 ### Practical Guidance
 
-- Decide how to apply DIP: `manual DI vs container`.
-  - manual DI is excellent for small services, jobs, and explicit composition roots.
-  - a container is useful when graphs are large, lifetimes vary, and environment-specific wiring grows.
-- Keep the `composition root clean`.
-  - one place wires concrete implementations.
-  - do not scatter `new` for infrastructure across domain services.
-- Avoid `service locator creep`.
-  - constructors should show dependencies explicitly.
-  - keep `IServiceProvider` usage in boundaries only.
-- Reason about `lifetimes` deliberately.
-  - singleton: stateless/shared caches/configuration.
-  - scoped: request/operation context.
-  - transient: cheap, stateless, per-use components.
+- Start with `manual DI` for smaller jobs/services and explicit composition roots.
+- Use a `container` when object graphs become large and lifetime rules matter.
+- Keep one `composition root` per app boundary (startup/bootstrap).
+- Keep `IServiceProvider` out of domain code.
+- Treat `lifetimes` as correctness constraints, not performance knobs.
+- Use DI to automate DIP consistently across environments and deployments.
 
 ### Common Misconceptions
 
-- "DIP requires a framework container." (false: manual DI is often enough)
-- "Using DI means we automatically satisfy DIP." (false: poor abstractions still violate DIP)
-- "More injected services always means better decoupling." (false: it can indicate SRP failure)
-- "Service locator is equivalent to constructor injection." (false: locator hides dependencies)
-- "Singleton is faster so it is always better." (false: lifetime mismatches can create correctness bugs)
+- "DI requires a framework container." (false: manual DI is valid)
+- "Container usage guarantees good architecture." (false: abstractions can still be poor)
+- "More injected services always means more decoupling." (false: often SRP drift)
+- "Service locator is equivalent to constructor injection." (false: dependencies become hidden)
+- "Singleton is always better for performance." (false: captive dependency bugs are costly)
 
-## 11. Dependency Inversion Principle Study Guide
+## 12. Dependency Injection Study Guide
 
 ### Core Definitions
 
 - `Dependency Injection (DI)`: supplying required collaborators from outside a class.
-- `Dependency Inversion Principle (DIP)`: high-level and low-level modules depend on abstractions.
-- `Abstraction`: interface or contract that expresses behavior independent of implementation.
-- `Composition root`: centralized wiring point for concrete implementations.
-- `Object graph`: runtime network of resolved objects.
-- `Lifetime/scope`: reuse boundary for instances (transient/scoped/singleton).
-- `Service locator`: runtime dependency lookup pattern that hides required collaborators.
+- `Constructor Injection`: requiring collaborators through constructor parameters.
+- `Composition Root`: the boundary where concrete object graphs are wired.
+- `Object Graph`: runtime network of resolved instances.
+- `Container`: tooling that registers, resolves, and manages lifetimes.
+- `Lifetime`: reuse boundary (`transient`, `scoped`, `singleton`).
+- `Service Locator`: runtime lookup pattern that hides dependencies.
 
-### Relationship Map to Other SOLID Principles
+### Detection Checklist
 
-- `SRP`: constructor bloat often signals mixed responsibilities.
-- `OCP`: add new implementations via registration instead of rewriting policy modules.
-- `LSP`: DIP depends on safe substitution; invalid substitutes break behavior quickly.
-- `ISP`: focused interfaces make DI graphs stable and easier to reason about.
+- Do classes create infrastructure dependencies directly inside business methods?
+- Are constructor dependencies explicit and cohesive?
+- Are lifetime rules compatible across dependency chains?
+- Is `IServiceProvider` limited to boundaries/composition?
+- Are circular dependencies blocked early?
 
-### Detection Checklist (Smells and Symptoms)
+### Refactoring Playbook
 
-- Does a service `new` infrastructure dependencies inside business methods?
-- Does a class require environment resources (DB/network/fs) just to unit test logic?
-- Do constructors exceed a reasonable cohesive dependency count?
-- Are `IServiceProvider` or global locators used inside domain logic?
-- Are singleton services capturing scoped or request-bound dependencies?
-- Do resolution failures report circular dependencies?
+1. Identify one class with hidden or directly created dependencies.
+2. Move required collaborators into constructor parameters.
+3. Introduce focused abstractions where variation exists.
+4. Create a composition root and centralize wiring.
+5. Add tests using fakes/stubs for injected dependencies.
+6. Introduce container registrations only when manual wiring cost is meaningful.
+7. Validate registrations/lifetimes at startup.
 
-### Refactoring Playbook (Step-by-Step)
+### Exam-Focused Recall Prompts
 
-1. Identify one concrete dependency created inside business logic.
-2. Extract an interface at the usage boundary.
-3. Inject that abstraction through the constructor.
-4. Move concrete object creation to the composition root.
-5. Replace one infrastructure dependency in tests with a fake.
-6. Repeat dependency-by-dependency until orchestration code has explicit seams.
-7. Introduce a container only when manual wiring cost becomes meaningful.
-
-### Exam-Focused Recall Prompts (Short Answer)
-
-1. Explain, in one sentence each, the difference between DIP and DI.
-2. Define composition root and explain why scattering wiring is risky.
-3. Given a class that directly creates `SqlConnection`, identify the DIP violation and first refactoring step.
-4. Compare transient, scoped, and singleton lifetimes with one production risk for each misuse.
-5. Why is service locator usually harder to test than constructor injection?
-6. Describe two ways to break a cyclic dependency in an OO service design.
-7. In what situations is manual DI preferable to using a container?
+1. Explain the difference between DIP and DI in two sentences.
+2. Draw the resolution flow from `GetRequiredService<T>()` to object graph creation.
+3. Compare manual DI and container DI with one tradeoff each.
+4. Give one example of service locator and explain why it is risky.
+5. Explain captive dependency and one practical fix.
+6. Describe when a factory still adds value even when using DI.

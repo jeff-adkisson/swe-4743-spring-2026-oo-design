@@ -572,112 +572,112 @@ classDiagram
 
 ### Implementation Walkthrough (UI Theming Family)
 
-Design goal: create matching UI components (`Button`, `Dialog`, `Input`) for a selected theme family.
+Design goal: create matching UI components (`IButton`, `IDialog`, `IInput`) for a selected theme family.
 
 #### C# Demo
 
 ```csharp
 using System;
 
-public interface Button
+public interface IButton
 {
     string Render();
 }
 
-public interface Dialog
+public interface IDialog
 {
     string Render();
 }
 
-public interface Input
+public interface IInput
 {
     string Render();
 }
 
-public interface WidgetFactory
+public interface IWidgetFactory
 {
-    Button CreateButton();
-    Dialog CreateDialog();
-    Input CreateInput();
+    IButton CreateButton();
+    IDialog CreateDialog();
+    IInput CreateInput();
 }
 
-public sealed class LightButton : Button
+public sealed class LightButton : IButton
 {
     public string Render() => "[Light Button]";
 }
 
-public sealed class LightDialog : Dialog
+public sealed class LightDialog : IDialog
 {
     public string Render() => "[Light Dialog]";
 }
 
-public sealed class DarkButton : Button
+public sealed class DarkButton : IButton
 {
     public string Render() => "[Dark Button]";
 }
 
-public sealed class DarkDialog : Dialog
+public sealed class DarkDialog : IDialog
 {
     public string Render() => "[Dark Dialog]";
 }
 
-public sealed class LightInput : Input
+public sealed class LightInput : IInput
 {
     public string Render() => "[Light Input]";
 }
 
-public sealed class DarkInput : Input
+public sealed class DarkInput : IInput
 {
     public string Render() => "[Dark Input]";
 }
 
-public sealed class LightWidgetFactory : WidgetFactory
+public sealed class LightWidgetFactory : IWidgetFactory
 {
-    public Button CreateButton() => new LightButton();   // Factory method
-    public Dialog CreateDialog() => new LightDialog();   // Factory method
-    public Input CreateInput() => new LightInput();      // Factory method
+    public IButton CreateButton() => new LightButton();   // Factory method
+    public IDialog CreateDialog() => new LightDialog();   // Factory method
+    public IInput CreateInput() => new LightInput();      // Factory method
 }
 
-public sealed class DarkWidgetFactory : WidgetFactory
+public sealed class DarkWidgetFactory : IWidgetFactory
 {
-    public Button CreateButton() => new DarkButton();    // Factory method
-    public Dialog CreateDialog() => new DarkDialog();    // Factory method
-    public Input CreateInput() => new DarkInput();       // Factory method
+    public IButton CreateButton() => new DarkButton();    // Factory method
+    public IDialog CreateDialog() => new DarkDialog();    // Factory method
+    public IInput CreateInput() => new DarkInput();       // Factory method
 }
 
 public sealed class SettingsScreen
 {
-    private readonly WidgetFactory _factory;
+    private readonly IWidgetFactory _factory;
 
-    public SettingsScreen(WidgetFactory factory) => _factory = factory;
+    public SettingsScreen(IWidgetFactory factory) => _factory = factory;
 
     public string Render()
     {
-        Button button = _factory.CreateButton();
-        Dialog dialog = _factory.CreateDialog();
-        Input input = _factory.CreateInput();
+        IButton button = _factory.CreateButton();
+        IDialog dialog = _factory.CreateDialog();
+        IInput input = _factory.CreateInput();
         return $"{button.Render()} {dialog.Render()} {input.Render()}";
     }
 }
 
 // Test helper: controlled product family for deterministic tests.
-public sealed class FakeWidgetFactory : WidgetFactory
+public sealed class FakeWidgetFactory : IWidgetFactory
 {
-    public Button CreateButton() => new FakeButton();
-    public Dialog CreateDialog() => new FakeDialog();
-    public Input CreateInput() => new FakeInput();
+    public IButton CreateButton() => new FakeButton();
+    public IDialog CreateDialog() => new FakeDialog();
+    public IInput CreateInput() => new FakeInput();
 
-    private sealed class FakeButton : Button
+    private sealed class FakeButton : IButton
     {
         public string Render() => "[Fake Button]";
     }
 
-    private sealed class FakeDialog : Dialog
+    private sealed class FakeDialog : IDialog
     {
         public string Render() => "[Fake Dialog]";
     }
 
-    private sealed class FakeInput : Input
+    private sealed class FakeInput : IInput
     {
         public string Render() => "[Fake Input]";
     }
@@ -689,7 +689,7 @@ public static class Program
     {
         string theme = args.Length > 0 ? args[0] : "light";
 
-        WidgetFactory factory = theme.Equals("dark", StringComparison.OrdinalIgnoreCase)
+        IWidgetFactory factory = theme.Equals("dark", StringComparison.OrdinalIgnoreCase)
             ? new DarkWidgetFactory()
             : new LightWidgetFactory();
 
@@ -1312,7 +1312,7 @@ Reflection is often used in frameworks and tooling for tasks such as:
 
 ### Target Interface
 
-Both demos use the same idea: factory classes implement a shared interface (`IdeCommandFactory`) and expose a command key.
+Both demos use the same idea: factory classes implement a shared interface (`IIdeCommandFactory`) and expose a command key.
 
 ### C# Demonstration
 
@@ -1322,61 +1322,61 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-public interface IdeCommand
+public interface IIdeCommand
 {
     void Execute();
 }
 
-public interface IdeCommandFactory
+public interface IIdeCommandFactory
 {
     string CommandName { get; }
-    IdeCommand Create();
+    IIdeCommand Create();
 }
 
-public sealed class OpenFileCommand : IdeCommand
+public sealed class OpenFileCommand : IIdeCommand
 {
     public void Execute() => Console.WriteLine("Open file...");
 }
 
-public sealed class OpenFileCommandFactory : IdeCommandFactory
+public sealed class OpenFileCommandFactory : IIdeCommandFactory
 {
     public string CommandName => "open-file";
-    public IdeCommand Create() => new OpenFileCommand();
+    public IIdeCommand Create() => new OpenFileCommand();
 }
 
-public sealed class RunTestsCommand : IdeCommand
+public sealed class RunTestsCommand : IIdeCommand
 {
     public void Execute() => Console.WriteLine("Run tests...");
 }
 
-public sealed class RunTestsCommandFactory : IdeCommandFactory
+public sealed class RunTestsCommandFactory : IIdeCommandFactory
 {
     public string CommandName => "run-tests";
-    public IdeCommand Create() => new RunTestsCommand();
+    public IIdeCommand Create() => new RunTestsCommand();
 }
 
 public sealed class ReflectionCommandRegistry
 {
-    private readonly Dictionary<string, IdeCommandFactory> _registry =
+    private readonly Dictionary<string, IIdeCommandFactory> _registry =
         new(StringComparer.OrdinalIgnoreCase);
 
     public void RegisterFactoriesFromAssembly(Assembly assembly)
     {
         IEnumerable<Type> factoryTypes = assembly.GetTypes()
             .Where(t => !t.IsAbstract && !t.IsInterface)
-            .Where(t => typeof(IdeCommandFactory).IsAssignableFrom(t));
+            .Where(t => typeof(IIdeCommandFactory).IsAssignableFrom(t));
 
         foreach (Type type in factoryTypes)
         {
             // Convention: each factory has a parameterless constructor.
-            IdeCommandFactory factory = (IdeCommandFactory)Activator.CreateInstance(type)!;
+            IIdeCommandFactory factory = (IIdeCommandFactory)Activator.CreateInstance(type)!;
             _registry[factory.CommandName] = factory;
         }
     }
 
-    public IdeCommand CreateCommand(string commandName)
+    public IIdeCommand CreateCommand(string commandName)
     {
-        if (!_registry.TryGetValue(commandName, out IdeCommandFactory? factory))
+        if (!_registry.TryGetValue(commandName, out IIdeCommandFactory? factory))
             throw new NotSupportedException($"Unknown command '{commandName}'.");
 
         return factory.Create();
@@ -1390,7 +1390,7 @@ public static class Program
         var registry = new ReflectionCommandRegistry();
         registry.RegisterFactoriesFromAssembly(Assembly.GetExecutingAssembly());
 
-        IdeCommand command = registry.CreateCommand("run-tests");
+        IIdeCommand command = registry.CreateCommand("run-tests");
         command.Execute();
     }
 }

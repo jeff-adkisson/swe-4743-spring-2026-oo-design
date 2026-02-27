@@ -81,6 +81,69 @@ Legacy-->>Policy: result
 Policy-->>Controller: approved/declined
 ```
 
+Brief C# example:
+
+```csharp
+public static class Program
+{
+    public static void Main()
+    {
+        // Manual composition (no DI container/framework).
+        ICreditCheckGateway creditGateway = new LegacyCreditApiClient();
+        var policy = new OrderApprovalPolicy(creditGateway);
+        var controller = new OrderApprovalController(policy);
+
+        bool approved = controller.Post(new Order("ORD-1", "C-7", 200m));
+        Console.WriteLine($"Approved={approved}");
+    }
+}
+
+public sealed record Order(string Id, string CustomerId, decimal TotalAmount);
+
+public sealed class OrderApprovalController
+{
+    private readonly OrderApprovalPolicy _policy;
+
+    public OrderApprovalController(OrderApprovalPolicy policy)
+    {
+        _policy = policy;
+    }
+
+    public bool Post(Order order)
+    {
+        return _policy.Approve(order);
+    }
+}
+
+public sealed class OrderApprovalPolicy
+{
+    private readonly ICreditCheckGateway _creditGateway;
+
+    public OrderApprovalPolicy(ICreditCheckGateway creditGateway)
+    {
+        _creditGateway = creditGateway;
+    }
+
+    public bool Approve(Order order)
+    {
+        return _creditGateway.Check(order.CustomerId, order.TotalAmount);
+    }
+}
+
+public interface ICreditCheckGateway
+{
+    bool Check(string customerId, decimal amount);
+}
+
+public sealed class LegacyCreditApiClient : ICreditCheckGateway
+{
+    public bool Check(string customerId, decimal amount)
+    {
+        return amount <= 500m;
+    }
+}
+```
+
 ## 4. High-Level Policy vs Low-Level Detail (Violation)
 
 - `High-level policy`: business rules and use-case orchestration.

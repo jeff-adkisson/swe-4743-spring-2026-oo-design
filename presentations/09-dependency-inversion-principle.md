@@ -37,7 +37,6 @@ Dependency Injection (DI) is the implementation mechanism and is covered in the 
 - [12. Real-World Usage and Compromises](#12-real-world-usage-and-compromises)
 - [13. From DIP to Dependency Injection](#13-from-dip-to-dependency-injection)
 - [14. Dependency Inversion Principle Study Guide](#14-dependency-inversion-principle-study-guide)
-- [15. Out-of-Scope Appendix (Advanced)](#15-out-of-scope-appendix-advanced)
 
 ## 3. The Two Rules of DIP
 
@@ -65,7 +64,7 @@ DIP applies to **volatile dependencies**: those that are likely to change, cross
 | --- | :-: | :-: |
 | **Likely to vary** | Provider, environment, or test | Behavior is fixed<br>e.g. standard library |
 | **Crosses a boundary** | Network, file system, database, broker | Pure logic, in-process |
-| **You own both sides** | External system or third-party SDK | Internal class you control |
+| **Ownership** | External system or third-party SDK | Internal class you control |
 
 **Example from this lecture:**
 - `LegacyCreditApiClient` — volatile. It crosses an HTTP boundary, could be swapped for a different credit provider, and tests cannot call it without a live network. → Add `ICreditCheckGateway`.
@@ -148,7 +147,7 @@ Legacy-->>Policy: result
 Policy-->>Controller: approved/declined
 ```
 
-Brief C# example:
+Complete working example:
 
 ```csharp
 public static class Program
@@ -251,9 +250,9 @@ OrderApprovalPolicy --> FileAuditLogger : depends on detail
 
 Why this hurts:
 
-- policy changes when infrastructure changes
-- unit tests pull in infrastructure
-- provider/vendor swaps become expensive
+- Policy changes when infrastructure changes
+- Unit tests pull in infrastructure
+- Provider/vendor swaps become expensive
 
 ## 6. Inverting the Dependency Direction
 
@@ -417,15 +416,15 @@ This rubric operationalizes the volatile/stable distinction introduced in [Secti
 
 Add one when at least one is true:
 
-- external boundary exists (database, broker, external API)
-- implementation likely changes by vendor/tenant/environment
-- policy tests need seam without infrastructure
+- External boundary exists (database, broker, external API)
+- Implementation likely changes by vendor, tenant, or environment
+- Policy tests need a seam to avoid pulling in real infrastructure
 
 Do not add one when all are true:
 
-- behavior is local and stable
-- no realistic variation expected
-- indirection adds noise without reducing risk
+- Behavior is local and stable
+- No realistic variation expected
+- Indirection adds noise without reducing risk
 
 ## 9. DIP Across SOLID
 
@@ -440,11 +439,11 @@ DIP is the capstone that makes the other SOLID principles composable in larger s
 
 | Symptom | Likely DIP Cause | Refactoring Action |
 | --- | --- | --- |
-| Policy class constructs infrastructure objects | policy depends on details | extract abstraction and move creation to composition root |
-| Interface changes every vendor/tool change | abstraction is detail-shaped | redesign contract using business language |
-| Unit tests require DB/network | no test seam at boundary | inject abstraction and use fake implementation |
-| Business layer imports framework/container APIs | boundary leakage | keep framework usage at composition/boundary layer |
-| Vendor swap touches many policy files | dependency direction is still outward | re-point policy dependencies to policy-owned contracts |
+| Policy class constructs infrastructure objects | Policy depends on details | Extract abstraction and move creation to Composition Root |
+| Interface changes every vendor/tool change | Abstraction is detail-shaped | Redesign contract using business language |
+| Unit tests require DB/network | No test seam at boundary | Inject abstraction and use fake implementation |
+| Business layer imports framework/container APIs | Boundary leakage | Keep framework usage at Composition Root / boundary layer |
+| Vendor swap touches many policy files | Dependency direction is still outward | Re-point policy dependencies to policy-owned contracts |
 
 ## 11. Refactoring from "New Everywhere" to DIP
 
@@ -643,13 +642,3 @@ The next lecture covers containers, lifetime management, and startup validation 
 - [ ] I can explain how DIP enables OCP, requires LSP, and reinforces ISP — with a concrete example for each.
 - [ ] I can explain the distinction between DIP (the principle) and DI (the mechanism).
 - [ ] I can describe what a DI container adds beyond a hand-written Composition Root.
-
-## 15. Out-of-Scope Appendix (Advanced)
-
-These topics are intentionally beyond core lecture scope but useful for advanced students:
-
-- Architecture rule enforcement in CI (e.g., layer/dependency tests).
-- Contract tests for abstraction boundaries (to protect substitutability).
-- Anti-corruption layers for legacy/vendor integration.
-- Plugin/module systems where implementations are discovered at runtime.
-- Large-scale ports/adapters organization in multi-team codebases.

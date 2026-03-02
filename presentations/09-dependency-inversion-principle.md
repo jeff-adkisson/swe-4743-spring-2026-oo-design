@@ -10,13 +10,13 @@ The **D** in SOLI**D**
 
 The Dependency Inversion Principle (DIP) is about architecture: **high-level business policy should not depend directly on low-level technical details.**
 
-Many students start by creating dependencies directly inside consumer classes (`new` inside methods/constructors). DIP is the shift away from that habit.
+Many students (and professionals) start by creating dependencies directly inside consumer classes (`new` inside methods/constructors). DIP is the shift away from that habit.
 
 We previously introduced the Composition Root (the single location where concrete dependencies are constructed and wired) mainly as a way to keep `Main` slim. Here we expand that idea: Composition Root is an architectural boundary that protects dependency direction.
 
 We will refactor a concrete `BillingService` example from direct construction to DIP-compliant design in [Section 11](#11-refactoring-from-new-everywhere-to-dip).
 
-Dependency Injection (DI) is the implementation mechanism and is covered in the [dependency-injection](10-dependency-injection.md) lecture.
+Dependency Injection (DI) is the implementation mechanism and is covered in the dependency-injection lecture.
 
 ![image-20260302134225920](09-dependency-inversion-principle.assets/image-20260302134225920.png)
 
@@ -652,7 +652,7 @@ That approach works well for small programs. As a codebase grows, manual wiring 
 
 DIP makes DI possible: because policy classes depend only on interfaces, a container can substitute any registered implementation without the policy class knowing. DI makes DIP practical at scale: you configure the bindings once and the container handles construction everywhere.
 
-The next lecture covers containers, lifetime management, and startup validation in depth: [Dependency Injection](10-dependency-injection.md).
+The next lecture covers dependency injection containers, lifetime management, and startup validation *in depth*.
 
 ![image-20260302134846202](09-dependency-inversion-principle.assets/image-20260302134846202.png)
 

@@ -4,6 +4,8 @@ The **D** in SOLI**D**
 
 [Powerpoint Presentation](09-dependency-inversion-principle.pptx) | [PDF](09-dependency-inversion-principle.pdf)
 
+![image-20260302134048187](09-dependency-inversion-principle.assets/image-20260302134048187.png)
+
 ## 1. Introduction to the Dependency Inversion Principle
 
 The Dependency Inversion Principle (DIP) is about architecture: **high-level business policy should not depend directly on low-level technical details.**
@@ -15,6 +17,8 @@ We previously introduced the Composition Root (the single location where concret
 We will refactor a concrete `BillingService` example from direct construction to DIP-compliant design in [Section 11](#11-refactoring-from-new-everywhere-to-dip).
 
 Dependency Injection (DI) is the implementation mechanism and is covered in the [dependency-injection](10-dependency-injection.md) lecture.
+
+![image-20260302134225920](09-dependency-inversion-principle.assets/image-20260302134225920.png)
 
 ### Common Synonyms in Practice
 
@@ -45,6 +49,7 @@ Dependency Injection (DI) is the implementation mechanism and is covered in the 
 DIP has two distinct rules that work together:
 
 **Rule #1** — Module dependency direction:
+
 > "High-level modules should not depend on low-level modules. Both should depend on abstractions."
 > — Robert C. Martin
 
@@ -55,6 +60,8 @@ Rule #1 governs which modules depend on which. Covered in depth in [Section 4](#
 > — Robert C. Martin
 
 Rule #2 governs whether abstractions are truly independent of implementation details. Covered in depth in [Section 8](#8-rule-2-use-stable-abstractions).
+
+![image-20260302134153412](09-dependency-inversion-principle.assets/image-20260302134153412.png)
 
 ### DIP Applies to Volatile Dependencies, Not All Dependencies
 
@@ -124,6 +131,8 @@ flowchart LR
 4. **Core/Messaging seam**: core uses bus/event abstractions, not broker APIs.  
 5. **Core/Platform seam**: core depends on abstractions for time, config, filesystem, identity.
 
+![image-20260302134546033](09-dependency-inversion-principle.assets/image-20260302134546033.png)
+
 ### Dependency Direction at a Glance
 
 Before any code, here is the core architectural shift DIP produces:
@@ -165,6 +174,8 @@ ICreditCheckGateway <|.. LegacyCreditApiClient : implements
 ```
 
 Source dependencies point inward toward policy and stable abstractions — never outward toward infrastructure. In Clean Architecture this is called the **dependency rule**.
+
+![image-20260302134247068](09-dependency-inversion-principle.assets/image-20260302134247068.png)
 
 ## 4. Rule #1: What Is Actually Inverted
 
@@ -324,6 +335,8 @@ Why this hurts:
 - Unit tests pull in infrastructure
 - Provider/vendor swaps become expensive
 
+![image-20260302134608739](09-dependency-inversion-principle.assets/image-20260302134608739.png)
+
 ## 6. Inverting the Dependency Direction
 
 Policy depends on abstractions; details implement those abstractions.
@@ -403,6 +416,8 @@ ICreditCheckGateway <|.. LegacyCreditApiClient : realizes abstraction
 IAuditLogger <|.. FileAuditLogger : realizes abstraction
 ```
 
+![image-20260302134641729](09-dependency-inversion-principle.assets/image-20260302134641729.png)
+
 ## 7. Composition Root in DIP (Conceptual)
 
 Composition Root is the single application boundary where concrete implementations are created and wired to abstraction-based policy modules.
@@ -458,6 +473,8 @@ IAuditLogger <|.. FileAuditLogger
 
 Implementation depth (containers, lifetimes, startup validation) is in [10-dependency-injection.md](10-dependency-injection.md).
 
+![image-20260302134707185](09-dependency-inversion-principle.assets/image-20260302134707185.png)
+
 ## 8. Rule #2: Use Stable Abstractions
 
 Rule #2 states:
@@ -490,6 +507,8 @@ public interface IOrderReportGateway
 }
 ```
 
+![image-20260302134502879](09-dependency-inversion-principle.assets/image-20260302134502879.png)
+
 ### Quick Rubric: When to Add an Abstraction
 
 This rubric operationalizes the volatile/stable distinction introduced in [Section 3](#3-the-two-rules-of-dip).
@@ -506,6 +525,8 @@ Do not add one when all are true:
 - No realistic variation expected
 - Indirection adds noise without reducing risk
 
+![image-20260302134515940](09-dependency-inversion-principle.assets/image-20260302134515940.png)
+
 ## 9. DIP Across SOLID
 
 DIP is the capstone that makes the other SOLID principles composable in larger systems:
@@ -514,6 +535,8 @@ DIP is the capstone that makes the other SOLID principles composable in larger s
 - **OCP** — DIP is what enables OCP in practice: because `OrderApprovalPolicy` depends on `ICreditCheckGateway` rather than a concrete client, a new credit provider can be added without touching policy code at all.
 - **LSP** — Every concrete implementation injected through a DIP abstraction must satisfy LSP. Swapping `LegacyCreditApiClient` for `StripeCreditApiClient` must not break `OrderApprovalPolicy`'s expectations about what `ICreditCheckGateway.Check` returns.
 - **ISP** — Narrow, policy-shaped interfaces (ISP) are exactly the stable abstractions DIP requires. A fat interface forces policy to depend on methods it does not use, violating both ISP and DIP simultaneously.
+
+![image-20260302134727576](09-dependency-inversion-principle.assets/image-20260302134727576.png)
 
 ## 10. Failure Modes and Detection Matrix
 
@@ -524,6 +547,8 @@ DIP is the capstone that makes the other SOLID principles composable in larger s
 | Unit tests require DB/network | No test seam at boundary | Inject abstraction and use fake implementation |
 | Business layer imports framework/container APIs | Boundary leakage | Keep framework usage at Composition Root / boundary layer |
 | Vendor swap touches many policy files | Dependency direction is still outward | Re-point policy dependencies to policy-owned contracts |
+
+![image-20260302134826111](09-dependency-inversion-principle.assets/image-20260302134826111.png)
 
 ## 11. Refactoring from "New Everywhere" to DIP
 
@@ -623,6 +648,8 @@ DIP makes DI possible: because policy classes depend only on interfaces, a conta
 
 The next lecture covers containers, lifetime management, and startup validation in depth: [Dependency Injection](10-dependency-injection.md).
 
+![image-20260302134846202](09-dependency-inversion-principle.assets/image-20260302134846202.png)
+
 ## 14. Dependency Inversion Principle Study Guide
 
 ### Key Terms
@@ -660,7 +687,7 @@ The next lecture covers containers, lifetime management, and startup validation 
 - `Test seam`: the injection point created by a DIP abstraction that allows a test double to replace real infrastructure in unit tests without changing policy code.
 - `Test double / fake`: a lightweight, in-process implementation of a DIP abstraction used in tests in place of the production infrastructure class (e.g., `FakeCustomerRepository`).
 
-**Dependency Injection (preview — covered in §13 and the next lecture)**
+**Dependency Injection (covered in detail in the next lecture)**
 
 - `DI container`: a framework that reads constructor signatures and resolves the full object graph automatically, replacing hand-written Composition Root wiring.
 - `Lifetime management`: the container's responsibility to control how long each registered instance lives — transient, scoped, or singleton.
@@ -725,3 +752,5 @@ The next lecture covers containers, lifetime management, and startup validation 
 - [ ] I can explain how DIP enables OCP, requires LSP, and reinforces ISP — with a concrete example for each.
 - [ ] I can explain the distinction between DIP (the principle) and DI (the mechanism).
 - [ ] I can describe what a DI container adds beyond a hand-written Composition Root.
+
+![image-20260302134910022](09-dependency-inversion-principle.assets/image-20260302134910022.png)

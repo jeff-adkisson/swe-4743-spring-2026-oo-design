@@ -12,7 +12,7 @@ We previously introduced the Composition Root (the single location where concret
 
 We will refactor a concrete `BillingService` example from direct construction to DIP-compliant design in [Section 11](#11-refactoring-from-new-everywhere-to-dip).
 
-Dependency Injection (DI) is the implementation mechanism and is covered in the [Dependency Injection](10-dependency-injection.md) lecture.
+Dependency Injection (DI) is the implementation mechanism and is covered in the [dependency-injection](10-dependency-injection.md) lecture.
 
 ### Common Synonyms in Practice
 
@@ -60,7 +60,7 @@ A common misreading of Rule #2 — "details should depend on abstractions" — i
 
 DIP applies to **volatile dependencies**: those that are likely to change, cross an external boundary, or require a test seam. It does not apply to **stable dependencies**: those that are unlikely to change and that you own completely.
 
-|  | Volatile / Apply DIP | Stable / usually no extra abstraction needed |
+|  | Volatile / Apply DIP | Stable / Do not apply DIP |
 | --- | :-: | :-: |
 | **Likely to vary** | Provider, environment, or test | Behavior is fixed<br>e.g. standard library |
 | **Crosses a boundary** | Network, file system, database, broker | Pure logic, in-process |
@@ -76,15 +76,51 @@ DIP applies to **volatile dependencies**: those that are likely to change, cross
 2. Could a different implementation plausibly exist in production (different vendor, different tenant, different environment)?
 3. Would a unit test of the calling class be painful or impossible without replacing it?
 
-*If the answer to any of these is yes, treat it as volatile.*
+*If the answer to any of these is yes, treat the class as a volatile dependency.*
 
-Rule #2 is violated when an abstraction *that exists* leaks implementation details into its shape — not when an abstraction is absent where none is needed. [Section 8](#8-rule-2-use-stable-abstractions) covers abstraction shape; the Quick Rubric there operationalizes the volatile/stable distinction.
+Rule #2 is violated when an abstraction *that exists* leaks implementation details into its shape — not when an abstraction is absent where none is needed. [Section 8](#8-rule-2-use-stable-abstractions) covers abstraction shape; the [Quick Rubric](#quick-rubric-when-to-add-an-abstraction) there operationalizes the volatile/stable distinction.
 
-**Definitions:**
+**Definitions**
 
-- **Boundary** — the point where your code hands control to something you do not own: a network call, a database driver, a file system, an external SDK, the system clock. Code on the far side of a boundary can change, fail, or behave differently across environments without your knowledge.
+- **Boundary (external ownership boundary)** — the point where your code hands control to something you do not own (network, database driver, file system, external SDK, system clock). Behavior beyond that point can vary by environment and can fail independently.
+- **Composition boundary** — the point where your code builds and wires object graphs (startup/bootstrap, module loading, test setup). This is architectural, but not an external-ownership boundary.
+- **Seam** — a replaceable join point where one implementation can be swapped for another without changing the caller. DIP abstractions create seams (real implementations in production, fakes in tests).
 
-- **Seam** — an injection point in your code where one implementation can be swapped for another without modifying the calling class. A DIP abstraction creates a seam: in production you inject the real infrastructure; in tests you inject a fake.
+```mermaid
+flowchart LR
+    subgraph Codebase["Your Codebase"]
+        subgraph Core["Core / Policy Layer"]
+            U["Use Case / Policy"]
+            S["SEAM:<br>Gateway Interface (Port)"]
+            U -->|"depends on"| S
+        end
+
+        subgraph Infra["Infrastructure Layer"]
+            A["Concrete Adapter"]
+            A -. "implements" .-> S
+        end
+    end
+
+    E["BOUNDARY:<br>External System<br>(DB / API / Filesystem / SDK / Clock)"]
+    A -->|"crosses boundary"| E
+
+```
+
+**Common architectural boundaries**
+
+1. **Inbound interface boundary**: API/RPC/CLI/event handlers enter the system.  
+2. **Asynchronous processing boundary**: jobs, schedulers, queue consumers trigger workflows.  
+3. **Outbound integration boundary**: calls to databases, external services, storage, and third-party systems.  
+4. **Platform boundary**: runtime services such as clock, filesystem, environment/config, identity context.  
+5. **Composition/lifecycle boundary**: startup, module/plugin bootstrap, and test harness composition.
+
+**Common architectural seams**
+
+1. **Application/Core seam**: handlers delegate to use-case contracts.  
+2. **Core/Persistence seam**: core depends on repository abstractions, not drivers.  
+3. **Core/External-service seam**: core depends on gateways, not vendor SDKs.  
+4. **Core/Messaging seam**: core uses bus/event abstractions, not broker APIs.  
+5. **Core/Platform seam**: core depends on abstractions for time, config, filesystem, identity.
 
 ### Dependency Direction at a Glance
 
@@ -174,8 +210,6 @@ Legacy-->>Policy: result
 Policy-->>Controller: approved/declined
 ```
 
-`Gateway` represents the abstraction type in the diagram; at runtime the call is dispatched to the concrete implementation instance (`LegacyCreditApiClient`).
-
 Complete working example:
 
 ```csharp
@@ -197,9 +231,8 @@ public sealed record Order(string Id, string CustomerId, decimal TotalAmount);
 
 public sealed class OrderApprovalController
 {
-    // Note: depending on concrete OrderApprovalPolicy can be acceptable if this
-    // controller-layer dependency is stable and local. Introduce an abstraction
-    // only when volatility or boundary pressure justifies it.
+    // Note: depends on concrete OrderApprovalPolicy — acceptable at this thin
+    // controller layer, or inject IOrderApprovalPolicy for full DIP compliance.
     private readonly OrderApprovalPolicy _policy;
 
     public OrderApprovalController(OrderApprovalPolicy policy)
@@ -250,12 +283,12 @@ public sealed class LegacyCreditApiClient : ICreditCheckGateway
 A DIP violation happens when policy code creates and binds to details directly.
 
 ```csharp
-public sealed class OrderApprovalPolicyWithAudit
+public sealed class OrderApprovalPolicy
 {
     public bool Approve(Order order)
     {
-        var creditClient = new LegacyCreditApiClient();
-        var auditLogger = new FileAuditLogger();
+        var creditClient = new LegacyCreditApiClient("https://credit.internal");
+        var auditLogger = new FileAuditLogger("/var/log/order-approval.log");
 
         bool approved = creditClient.Check(order.CustomerId, order.TotalAmount);
         auditLogger.Write($"Order {order.Id} approved={approved}");
@@ -273,14 +306,14 @@ public sealed class OrderApprovalPolicyWithAudit
 classDiagram
 direction TB
 
-class OrderApprovalPolicyWithAudit {
+class OrderApprovalPolicy {
   +Approve(order) bool
 }
 class LegacyCreditApiClient
 class FileAuditLogger
 
-OrderApprovalPolicyWithAudit --> LegacyCreditApiClient : depends on detail
-OrderApprovalPolicyWithAudit --> FileAuditLogger : depends on detail
+OrderApprovalPolicy --> LegacyCreditApiClient : depends on detail
+OrderApprovalPolicy --> FileAuditLogger : depends on detail
 ```
 
 Why this hurts:
@@ -304,12 +337,12 @@ public interface IAuditLogger
     void Write(string message);
 }
 
-public sealed class OrderApprovalPolicyWithAudit
+public sealed class OrderApprovalPolicy
 {
     private readonly ICreditCheckGateway _creditGateway;
     private readonly IAuditLogger _auditLogger;
 
-    public OrderApprovalPolicyWithAudit(ICreditCheckGateway creditGateway, IAuditLogger auditLogger)
+    public OrderApprovalPolicy(ICreditCheckGateway creditGateway, IAuditLogger auditLogger)
     {
         _creditGateway = creditGateway;
         _auditLogger = auditLogger;
@@ -356,14 +389,14 @@ class IAuditLogger {
   <<interface>>
   +Write(message) void
 }
-class OrderApprovalPolicyWithAudit {
+class OrderApprovalPolicy {
   +Approve(order) bool
 }
 class LegacyCreditApiClient
 class FileAuditLogger
 
-OrderApprovalPolicyWithAudit --> ICreditCheckGateway : depends on abstraction
-OrderApprovalPolicyWithAudit --> IAuditLogger : depends on abstraction
+OrderApprovalPolicy --> ICreditCheckGateway : depends on abstraction
+OrderApprovalPolicy --> IAuditLogger : depends on abstraction
 ICreditCheckGateway <|.. LegacyCreditApiClient : realizes abstraction
 IAuditLogger <|.. FileAuditLogger : realizes abstraction
 ```
@@ -379,10 +412,10 @@ public static class Program
 {
     public static void Main()
     {
-        ICreditCheckGateway creditGateway = new LegacyCreditApiClient();
-        IAuditLogger auditLogger = new FileAuditLogger();
+        ICreditCheckGateway creditGateway = new LegacyCreditApiClient("https://credit.internal");
+        IAuditLogger auditLogger = new FileAuditLogger("/var/log/order-approval.log");
 
-        var policy = new OrderApprovalPolicyWithAudit(creditGateway, auditLogger);
+        var policy = new OrderApprovalPolicy(creditGateway, auditLogger);
         bool approved = policy.Approve(new Order("ORD-42", "C-10", 120.00m));
 
         Console.WriteLine($"Approved={approved}");
@@ -402,7 +435,7 @@ direction TB
 class CompositionRoot {
   +Main() void
 }
-class OrderApprovalPolicyWithAudit
+class OrderApprovalPolicy
 class ICreditCheckGateway {
   <<interface>>
 }
@@ -414,9 +447,9 @@ class FileAuditLogger
 
 CompositionRoot --> LegacyCreditApiClient : creates
 CompositionRoot --> FileAuditLogger : creates
-CompositionRoot --> OrderApprovalPolicyWithAudit : wires
-OrderApprovalPolicyWithAudit --> ICreditCheckGateway
-OrderApprovalPolicyWithAudit --> IAuditLogger
+CompositionRoot --> OrderApprovalPolicy : wires
+OrderApprovalPolicy --> ICreditCheckGateway
+OrderApprovalPolicy --> IAuditLogger
 ICreditCheckGateway <|.. LegacyCreditApiClient
 IAuditLogger <|.. FileAuditLogger
 ```
@@ -582,7 +615,7 @@ That approach works well for small programs. As a codebase grows, manual wiring 
 
 - Reads the constructor signatures of your classes and resolves the full object graph automatically
 - Manages object lifetimes (transient, scoped, singleton) according to configuration
-- Can validate that registered dependencies can be satisfied at startup (when configured), catching missing registrations before the first request
+- Validates that every registered dependency can be satisfied at startup, catching missing registrations before the first request
 
 DIP makes DI possible: because policy classes depend only on interfaces, a container can substitute any registered implementation without the policy class knowing. DI makes DIP practical at scale: you configure the bindings once and the container handles construction everywhere.
 

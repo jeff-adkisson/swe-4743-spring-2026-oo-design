@@ -80,6 +80,12 @@ DIP applies to **volatile dependencies**: those that are likely to change, cross
 
 Rule #2 is violated when an abstraction *that exists* leaks implementation details into its shape — not when an abstraction is absent where none is needed. [Section 8](#8-rule-2-use-stable-abstractions) covers abstraction shape; the Quick Rubric there operationalizes the volatile/stable distinction.
 
+**Definitions:**
+
+- **Boundary** — the point where your code hands control to something you do not own: a network call, a database driver, a file system, an external SDK, the system clock. Code on the far side of a boundary can change, fail, or behave differently across environments without your knowledge.
+
+- **Seam** — an injection point in your code where one implementation can be swapped for another without modifying the calling class. A DIP abstraction creates a seam: in production you inject the real infrastructure; in tests you inject a fake.
+
 ### Dependency Direction at a Glance
 
 Before any code, here is the core architectural shift DIP produces:
@@ -87,6 +93,12 @@ Before any code, here is the core architectural shift DIP produces:
 **Before DIP** — policy depends directly on infrastructure:
 
 ```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: true
+---
+
 classDiagram
 direction LR
 class OrderApprovalPolicy
@@ -97,6 +109,12 @@ OrderApprovalPolicy --> LegacyCreditApiClient : depends on
 **After DIP** — policy depends on a policy-owned abstraction; infrastructure implements it:
 
 ```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: true
+---
+
 classDiagram
 direction LR
 class OrderApprovalPolicy
@@ -119,7 +137,16 @@ DIP does not invert runtime execution order. It inverts **compile-time dependenc
 
 With DIP, runtime still reaches concrete implementations, but policy code depends only on abstractions.
 
+> **Policy code** is the part of a program that expresses *what* the system does — business rules, decisions, and use-case orchestration — independent of *how* those operations are carried out technically.
+>
+> Examples from this lecture: `OrderApprovalPolicy.Approve()` decides whether an order is approved; `BillingService.Calculate()` computes a billing total. Neither knows whether data comes from SQL, an API, or a file — that is the detail's job.
+
 ```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: true
+---
 classDiagram
 direction LR
 
@@ -235,8 +262,13 @@ public sealed class OrderApprovalPolicy
 ```
 
 ```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: true
+---
 classDiagram
-direction LR
+direction TB
 
 class OrderApprovalPolicy {
   +Approve(order) bool
@@ -305,6 +337,11 @@ public sealed class FileAuditLogger : IAuditLogger
 ```
 
 ```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: true
+---
 classDiagram
 direction TB
 
@@ -324,8 +361,8 @@ class FileAuditLogger
 
 OrderApprovalPolicy --> ICreditCheckGateway : depends on abstraction
 OrderApprovalPolicy --> IAuditLogger : depends on abstraction
-ICreditCheckGateway <|.. LegacyCreditApiClient
-IAuditLogger <|.. FileAuditLogger
+ICreditCheckGateway <|.. LegacyCreditApiClient : realizes abstraction
+IAuditLogger <|.. FileAuditLogger : realizes abstraction
 ```
 
 ## 7. Composition Root in DIP (Conceptual)
@@ -351,8 +388,13 @@ public static class Program
 ```
 
 ```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: true
+---
 classDiagram
-direction LR
+direction TB
 
 class CompositionRoot {
   +Main() void
@@ -553,6 +595,9 @@ The next lecture covers containers, lifetime management, and startup validation 
 - `Rule #1`: "High-level modules should not depend on low-level modules. Both should depend on abstractions." Governs which modules depend on which.
 - `Rule #2`: "Abstractions should not depend on details. Details should depend on abstractions." Governs whether an abstraction's shape is independent of implementation technology.
 - `Inversion`: DIP does not invert runtime execution order — it inverts compile-time dependency direction. Policy no longer points at a detail; both point at a shared abstraction.
+- `Boundary`: the point where your code hands control to something you do not own: a network call, a database driver, a file system, an external SDK, the system clock. Code on the far side of a boundary can change, fail, or behave differently across environments without your knowledge.
+
+- `Seam`: an injection point in your code where one implementation can be swapped for another without modifying the calling class. A DIP abstraction creates a seam: in production you inject the real infrastructure; in tests you inject a fake.
 
 **Dependencies**
 

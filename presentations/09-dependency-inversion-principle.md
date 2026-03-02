@@ -763,3 +763,5 @@ The next lecture covers dependency injection containers, lifetime management, an
 - [ ] I can describe what a DI container adds beyond a hand-written Composition Root.
 
 ![image-20260302134910022](09-dependency-inversion-principle.assets/image-20260302134910022.png)
+
+![image-20260302145214471](09-dependency-inversion-principle.assets/image-20260302145214471.png)

@@ -42,8 +42,7 @@ Dependency Injection (DI) is the implementation mechanism and is covered in the 
 - [11. Refactoring from "New Everywhere" to DIP](#11-refactoring-from-new-everywhere-to-dip)
 - [12. Real-World Usage and Compromises](#12-real-world-usage-and-compromises)
 - [13. From DIP to Dependency Injection](#13-from-dip-to-dependency-injection)
-
-- **[Dependency Inversion Principle Study Guide](#14-dependency-inversion-principle-study-guide)**
+- [Study Guide](#14-dependency-inversion-principle-study-guide)
 
 ## 3. The Two Rules of DIP
 
@@ -296,6 +295,8 @@ public sealed class LegacyCreditApiClient : ICreditCheckGateway
 
 A DIP violation happens when policy code creates and binds to details directly.
 
+>  From Ousterhout's "pull complexity downwards" lens (A Philosophy of Software Design, Chapter 8), this is exactly the wrong direction: infrastructure complexity gets pulled upward into policy code.
+
 ```csharp
 public sealed class OrderApprovalPolicy
 {
@@ -425,6 +426,8 @@ Composition Root is the single application boundary where concrete implementatio
 
 This is not just about short `Main` methods. It is where detail knowledge is intentionally localized.
 
+>  This is a direct application of Ousterhout's Chapter 8 guidance to pull complexity downward: keep volatile wiring and framework detail at the bottom boundary so policy code stays simple.
+
 ```csharp
 public static class Program
 {
@@ -486,6 +489,8 @@ Rule #2 states:
 Rule #2 is often missed: even with interfaces, you can still violate DIP if abstractions are shaped by details.
 
 A **stable abstraction** is one unlikely to change as implementations evolve — its shape is dictated by what the policy needs, not by how any particular technology delivers it. An unstable abstraction leaks implementation details (a technology type, a vendor concept, a framework construct) into the contract.
+
+>  This aligns with Ousterhout's interface-design argument in Chapter 8: a good interface keeps the surface simple and pushes mechanism complexity behind the abstraction.
 
 ### Bad (Detail-Shaped Contract)
 
@@ -653,7 +658,7 @@ The next lecture covers containers, lifetime management, and startup validation 
 
 ---
 
-## Dependency Inversion Principle Study Guide
+## Study Guide
 
 ### Key Terms
 
@@ -726,6 +731,7 @@ The next lecture covers containers, lifetime management, and startup validation 
 11. Identify the DIP failure mode and its corrective action for each symptom: (a) policy class calls `new SqlOrderRepo()` in a method body; (b) `IPaymentGateway` has a method `ExecuteStripeCharge(StripeRequest)`; (c) business layer references `Microsoft.Extensions.DependencyInjection`; (d) replacing a vendor requires changes across ten policy files.
 12. What is a DI container, and why does DIP make DI possible?
 13. What is startup validation, and what class of defect does it catch before production traffic reaches the application?
+14. Use Ousterhout's "pull complexity downwards" idea to justify why Composition Root exists and why detail-shaped interfaces violate Rule #2.
 
 ---
 

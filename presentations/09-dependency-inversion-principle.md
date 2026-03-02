@@ -2,6 +2,8 @@
 
 The **D** in SOLI**D**
 
+[Powerpoint Presentation](09-dependency-inversion-principle.pptx) | [PDF](09-dependency-inversion-principle.pdf)
+
 ## 1. Introduction to the Dependency Inversion Principle
 
 The Dependency Inversion Principle (DIP) is about architecture: **high-level business policy should not depend directly on low-level technical details.**

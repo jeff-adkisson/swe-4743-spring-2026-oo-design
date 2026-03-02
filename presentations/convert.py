@@ -8,7 +8,11 @@
 # USAGE
 # -----
 # From the presentations directory:
+#   To convert all...
 #   python3.12 convert.py
+#
+#   To convert only files starting with "09" (e.g. 09-advanced-topics.pptx)...
+#   python3.12 convert.py 09
 #
 # Prerequisites (one-time):
 #   - Python 3.12 (required, not 3.13)
@@ -100,13 +104,24 @@ def cleanup_temp_output() -> None:
             continue
 
 
-def convert_pptx(pptx_to_html: Path) -> None:
-    # Convert all PPTX files to HTML and PDF, overwriting outputs.
+def convert_pptx(pptx_to_html: Path, start_mask: str | None = None) -> None:
+    # Convert PPTX files to HTML and PDF, optionally filtering by filename prefix.
     pptx_files = sorted(Path(".").glob("*.pptx"))
-    for pptx in pptx_files:
-        if pptx.name.startswith("~$"):
-            print(f"Skipping temp file: {pptx.name}")
-            continue
+    selected_files = [
+        pptx
+        for pptx in pptx_files
+        if not pptx.name.startswith("~$")
+        and (start_mask is None or pptx.name.startswith(start_mask))
+    ]
+
+    if start_mask:
+        print(f"Applying start mask: {start_mask!r}")
+
+    if not selected_files:
+        print("No PPTX files matched the current selection.")
+        return
+
+    for pptx in selected_files:
 
         base = pptx.stem
         outdir = Path(f"{base}_html")
@@ -184,6 +199,19 @@ def main() -> int:
     # Orchestrate environment setup, conversion, and README update.
     print("== PPTX -> HTML + PDF batch conversion ==")
 
+    if len(sys.argv) > 2:
+        print("Usage: python3.12 convert.py [start-mask]")
+        return 2
+
+    if len(sys.argv) == 2 and sys.argv[1] in {"-h", "--help"}:
+        print("Usage: python3.12 convert.py [start-mask]")
+        print("Examples:")
+        print("  python3.12 convert.py")
+        print("  python3.12 convert.py 09")
+        return 0
+
+    start_mask = sys.argv[1] if len(sys.argv) == 2 else None
+
     script_dir = Path(__file__).resolve().parent
     os.chdir(script_dir)
 
@@ -194,7 +222,7 @@ def main() -> int:
     ensure_soffice()
 
     cleanup_temp_output()
-    convert_pptx(pptx_to_html)
+    convert_pptx(pptx_to_html, start_mask=start_mask)
     print("Conversions complete.")
 
     update_readme()

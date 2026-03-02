@@ -93,7 +93,7 @@ Design and implement a console-based Tea Shop application in C# or Java that int
 - [Lecture Material](presentations/08-factory-singleton.md)
 
 #### 09. Dependency Inversion Principle
-- [Lecture Material](presentations/09-dependency-inversion-principle.md)
-
-#### 10. Dependency Injection
-- [Lecture Material](presentations/10-dependency-injection.md)
+- [PowerPoint](presentations/09-dependency-inversion-principle.pptx)
+- [PDF](presentations/09-dependency-inversion-principle.pdf)
+- [HTML](presentations/09-dependency-inversion-principle_html/index.html)
+[Lecture Material](presentations/09-dependency-inversion-principle.md)

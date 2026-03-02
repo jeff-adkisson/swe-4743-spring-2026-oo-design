@@ -137,6 +137,10 @@ DIP does not invert runtime execution order. It inverts **compile-time dependenc
 
 With DIP, runtime still reaches concrete implementations, but policy code depends only on abstractions.
 
+> **Policy code** is the part of a program that expresses *what* the system does — business rules, decisions, and use-case orchestration — independent of *how* those operations are carried out technically.
+>
+> Examples from this lecture: `OrderApprovalPolicy.Approve()` decides whether an order is approved; `BillingService.Calculate()` computes a billing total. Neither knows whether data comes from SQL, an API, or a file — that is the detail's job.
+
 ```mermaid
 ---
   config:
@@ -264,7 +268,7 @@ public sealed class OrderApprovalPolicy
       hideEmptyMembersBox: true
 ---
 classDiagram
-direction LR
+direction TB
 
 class OrderApprovalPolicy {
   +Approve(order) bool
@@ -357,8 +361,8 @@ class FileAuditLogger
 
 OrderApprovalPolicy --> ICreditCheckGateway : depends on abstraction
 OrderApprovalPolicy --> IAuditLogger : depends on abstraction
-ICreditCheckGateway <|.. LegacyCreditApiClient
-IAuditLogger <|.. FileAuditLogger
+ICreditCheckGateway <|.. LegacyCreditApiClient : realizes abstraction
+IAuditLogger <|.. FileAuditLogger : realizes abstraction
 ```
 
 ## 7. Composition Root in DIP (Conceptual)

@@ -33,6 +33,10 @@
   .mermaid-copy:hover {
     text-decoration: underline;
   }
+
+  p img {
+    border: 2px solid #aaa;
+  }
 </style>
 
 <script type="module">
@@ -118,7 +122,6 @@
 
     // Render all newly created .mermaid blocks
     await mermaid.run({ querySelector: ".mermaid" });
-
   }
 
   if (document.readyState === "loading") {
@@ -126,5 +129,4 @@
   } else {
     renderMermaidFromCodeBlocks();
   }
-
 </script>

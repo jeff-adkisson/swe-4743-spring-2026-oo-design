@@ -12,7 +12,7 @@ We previously introduced the Composition Root (the single location where concret
 
 We will refactor a concrete `BillingService` example from direct construction to DIP-compliant design in [Section 11](#11-refactoring-from-new-everywhere-to-dip).
 
-Dependency Injection (DI) is the implementation mechanism and is covered in the [dependency-injection](10-dependency-injection.md) lecture.
+Dependency Injection (DI) is the implementation mechanism and is covered in the [Dependency Injection](10-dependency-injection.md) lecture.
 
 ### Common Synonyms in Practice
 
@@ -60,7 +60,7 @@ A common misreading of Rule #2 — "details should depend on abstractions" — i
 
 DIP applies to **volatile dependencies**: those that are likely to change, cross an external boundary, or require a test seam. It does not apply to **stable dependencies**: those that are unlikely to change and that you own completely.
 
-|  | Volatile / Apply DIP | Stable / Do not apply DIP |
+|  | Volatile / Apply DIP | Stable / usually no extra abstraction needed |
 | --- | :-: | :-: |
 | **Likely to vary** | Provider, environment, or test | Behavior is fixed<br>e.g. standard library |
 | **Crosses a boundary** | Network, file system, database, broker | Pure logic, in-process |
@@ -174,6 +174,8 @@ Legacy-->>Policy: result
 Policy-->>Controller: approved/declined
 ```
 
+`Gateway` represents the abstraction type in the diagram; at runtime the call is dispatched to the concrete implementation instance (`LegacyCreditApiClient`).
+
 Complete working example:
 
 ```csharp
@@ -195,8 +197,9 @@ public sealed record Order(string Id, string CustomerId, decimal TotalAmount);
 
 public sealed class OrderApprovalController
 {
-    // Note: depends on concrete OrderApprovalPolicy — acceptable at this thin
-    // controller layer, or inject IOrderApprovalPolicy for full DIP compliance.
+    // Note: depending on concrete OrderApprovalPolicy can be acceptable if this
+    // controller-layer dependency is stable and local. Introduce an abstraction
+    // only when volatility or boundary pressure justifies it.
     private readonly OrderApprovalPolicy _policy;
 
     public OrderApprovalController(OrderApprovalPolicy policy)
@@ -247,12 +250,12 @@ public sealed class LegacyCreditApiClient : ICreditCheckGateway
 A DIP violation happens when policy code creates and binds to details directly.
 
 ```csharp
-public sealed class OrderApprovalPolicy
+public sealed class OrderApprovalPolicyWithAudit
 {
     public bool Approve(Order order)
     {
-        var creditClient = new LegacyCreditApiClient("https://credit.internal");
-        var auditLogger = new FileAuditLogger("/var/log/order-approval.log");
+        var creditClient = new LegacyCreditApiClient();
+        var auditLogger = new FileAuditLogger();
 
         bool approved = creditClient.Check(order.CustomerId, order.TotalAmount);
         auditLogger.Write($"Order {order.Id} approved={approved}");
@@ -270,14 +273,14 @@ public sealed class OrderApprovalPolicy
 classDiagram
 direction TB
 
-class OrderApprovalPolicy {
+class OrderApprovalPolicyWithAudit {
   +Approve(order) bool
 }
 class LegacyCreditApiClient
 class FileAuditLogger
 
-OrderApprovalPolicy --> LegacyCreditApiClient : depends on detail
-OrderApprovalPolicy --> FileAuditLogger : depends on detail
+OrderApprovalPolicyWithAudit --> LegacyCreditApiClient : depends on detail
+OrderApprovalPolicyWithAudit --> FileAuditLogger : depends on detail
 ```
 
 Why this hurts:
@@ -301,12 +304,12 @@ public interface IAuditLogger
     void Write(string message);
 }
 
-public sealed class OrderApprovalPolicy
+public sealed class OrderApprovalPolicyWithAudit
 {
     private readonly ICreditCheckGateway _creditGateway;
     private readonly IAuditLogger _auditLogger;
 
-    public OrderApprovalPolicy(ICreditCheckGateway creditGateway, IAuditLogger auditLogger)
+    public OrderApprovalPolicyWithAudit(ICreditCheckGateway creditGateway, IAuditLogger auditLogger)
     {
         _creditGateway = creditGateway;
         _auditLogger = auditLogger;
@@ -353,14 +356,14 @@ class IAuditLogger {
   <<interface>>
   +Write(message) void
 }
-class OrderApprovalPolicy {
+class OrderApprovalPolicyWithAudit {
   +Approve(order) bool
 }
 class LegacyCreditApiClient
 class FileAuditLogger
 
-OrderApprovalPolicy --> ICreditCheckGateway : depends on abstraction
-OrderApprovalPolicy --> IAuditLogger : depends on abstraction
+OrderApprovalPolicyWithAudit --> ICreditCheckGateway : depends on abstraction
+OrderApprovalPolicyWithAudit --> IAuditLogger : depends on abstraction
 ICreditCheckGateway <|.. LegacyCreditApiClient : realizes abstraction
 IAuditLogger <|.. FileAuditLogger : realizes abstraction
 ```
@@ -376,10 +379,10 @@ public static class Program
 {
     public static void Main()
     {
-        ICreditCheckGateway creditGateway = new LegacyCreditApiClient("https://credit.internal");
-        IAuditLogger auditLogger = new FileAuditLogger("/var/log/order-approval.log");
+        ICreditCheckGateway creditGateway = new LegacyCreditApiClient();
+        IAuditLogger auditLogger = new FileAuditLogger();
 
-        var policy = new OrderApprovalPolicy(creditGateway, auditLogger);
+        var policy = new OrderApprovalPolicyWithAudit(creditGateway, auditLogger);
         bool approved = policy.Approve(new Order("ORD-42", "C-10", 120.00m));
 
         Console.WriteLine($"Approved={approved}");
@@ -399,7 +402,7 @@ direction TB
 class CompositionRoot {
   +Main() void
 }
-class OrderApprovalPolicy
+class OrderApprovalPolicyWithAudit
 class ICreditCheckGateway {
   <<interface>>
 }
@@ -411,9 +414,9 @@ class FileAuditLogger
 
 CompositionRoot --> LegacyCreditApiClient : creates
 CompositionRoot --> FileAuditLogger : creates
-CompositionRoot --> OrderApprovalPolicy : wires
-OrderApprovalPolicy --> ICreditCheckGateway
-OrderApprovalPolicy --> IAuditLogger
+CompositionRoot --> OrderApprovalPolicyWithAudit : wires
+OrderApprovalPolicyWithAudit --> ICreditCheckGateway
+OrderApprovalPolicyWithAudit --> IAuditLogger
 ICreditCheckGateway <|.. LegacyCreditApiClient
 IAuditLogger <|.. FileAuditLogger
 ```
@@ -579,7 +582,7 @@ That approach works well for small programs. As a codebase grows, manual wiring 
 
 - Reads the constructor signatures of your classes and resolves the full object graph automatically
 - Manages object lifetimes (transient, scoped, singleton) according to configuration
-- Validates that every registered dependency can be satisfied at startup, catching missing registrations before the first request
+- Can validate that registered dependencies can be satisfied at startup (when configured), catching missing registrations before the first request
 
 DIP makes DI possible: because policy classes depend only on interfaces, a container can substitute any registered implementation without the policy class knowing. DI makes DIP practical at scale: you configure the bindings once and the container handles construction everywhere.
 

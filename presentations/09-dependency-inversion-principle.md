@@ -69,7 +69,7 @@ A common misreading of Rule #2 — "details should depend on abstractions" — i
 
 DIP applies to **volatile dependencies**: those that are likely to change, cross an external boundary, or require a test seam. It does not apply to **stable dependencies**: those that are unlikely to change and that you own completely.
 
-|  | Volatile / Apply DIP | Stable / Do not apply DIP |
+| Criteria | Volatile / Apply DIP | Stable / Do not apply DIP |
 | --- | :-: | :-: |
 | **Likely to vary** | Provider, environment, or test | Behavior is fixed<br>e.g. standard library |
 | **Crosses a boundary** | Network, file system, database, broker | Pure logic, in-process |

@@ -42,7 +42,8 @@ Dependency Injection (DI) is the implementation mechanism and is covered in the 
 - [11. Refactoring from "New Everywhere" to DIP](#11-refactoring-from-new-everywhere-to-dip)
 - [12. Real-World Usage and Compromises](#12-real-world-usage-and-compromises)
 - [13. From DIP to Dependency Injection](#13-from-dip-to-dependency-injection)
-- [14. Dependency Inversion Principle Study Guide](#14-dependency-inversion-principle-study-guide)
+
+- **[Dependency Inversion Principle Study Guide](#14-dependency-inversion-principle-study-guide)**
 
 ## 3. The Two Rules of DIP
 
@@ -650,7 +651,9 @@ The next lecture covers containers, lifetime management, and startup validation 
 
 ![image-20260302134846202](09-dependency-inversion-principle.assets/image-20260302134846202.png)
 
-## 14. Dependency Inversion Principle Study Guide
+---
+
+## Dependency Inversion Principle Study Guide
 
 ### Key Terms
 

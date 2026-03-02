@@ -16,7 +16,7 @@ We previously introduced the Composition Root (the single location where concret
 
 We will refactor a concrete `BillingService` example from direct construction to DIP-compliant design in [Section 11](#11-refactoring-from-new-everywhere-to-dip).
 
-Dependency Injection (DI) is the implementation mechanism and is covered in the dependency-injection lecture.
+Dependency Injection (DI) is the implementation mechanism and is covered in the dependency injection lecture.
 
 ![image-20260302134225920](09-dependency-inversion-principle.assets/image-20260302134225920.png)
 

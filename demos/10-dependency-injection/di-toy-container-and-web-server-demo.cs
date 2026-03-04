@@ -112,28 +112,28 @@ public sealed class ConsoleMessageSender : IMessageSender
         Console.WriteLine($"[Email] To: {to} | {message}");
 }
 
-public abstract class OnboardingService
+public interface IOnboardingService
 {
-    public abstract void Onboard(string email);
+    void Onboard(string email);
 }
 
-public sealed class EmailOnboardingService : OnboardingService
+public sealed class EmailOnboardingService : IOnboardingService
 {
     private readonly IMessageSender _sender;
 
     public EmailOnboardingService(IMessageSender sender) => _sender = sender;
 
-    public override void Onboard(string email) => _sender.Send(email, "Welcome!");
+    public void Onboard(string email) => _sender.Send(email, "Welcome!");
 }
 
-public abstract class WelcomeService
+public interface IWelcomeService
 {
-    public abstract string SayHello(string? name = null);
+    public string SayHello(string? name = null);
 }
 
-public sealed class ConsoleWelcomeService : WelcomeService
+public sealed class ConsoleWelcomeService : IWelcomeService
 {
-    public override string SayHello(string? name = null)
+    public string SayHello(string? name = null)
     {
         var message = string.IsNullOrWhiteSpace(name) ? "Hello!" : $"Hello, {name}!";
         Console.WriteLine(message);
@@ -143,10 +143,10 @@ public sealed class ConsoleWelcomeService : WelcomeService
 
 public sealed class UsersController
 {
-    private readonly OnboardingService _onboarding;
-    private readonly WelcomeService _welcome;
+    private readonly IOnboardingService _onboarding;
+    private readonly IWelcomeService _welcome;
 
-    public UsersController(OnboardingService onboarding, WelcomeService welcome)
+    public UsersController(IOnboardingService onboarding, IWelcomeService welcome)
     {
         _onboarding = onboarding;
         _welcome = welcome;
@@ -236,8 +236,8 @@ public static class Program
         // DI setup (stable abstractions -> volatile details)
         var container = new MiniContainer();
         container.Register<IMessageSender, ConsoleMessageSender>();
-        container.Register<OnboardingService, EmailOnboardingService>();
-        container.Register<WelcomeService, ConsoleWelcomeService>();
+        container.Register<IOnboardingService, EmailOnboardingService>();
+        container.Register<IWelcomeService, ConsoleWelcomeService>();
 
         // App + routes
         var app = new ToyWebApp(container);

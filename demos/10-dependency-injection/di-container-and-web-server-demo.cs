@@ -9,8 +9,8 @@ builder.WebHost.UseUrls("http://localhost:5005");
 
 // DI setup (stable abstractions -> volatile details)
 builder.Services.AddTransient<IMessageSender, ConsoleMessageSender>();
-builder.Services.AddTransient<OnboardingService, EmailOnboardingService>();
-builder.Services.AddTransient<WelcomeService, ConsoleWelcomeService>();
+builder.Services.AddTransient<IOnboardingService, EmailOnboardingService>();
+builder.Services.AddTransient<IWelcomeService, ConsoleWelcomeService>();
 builder.Services.AddTransient<UsersController>();
 
 var app = builder.Build();
@@ -43,12 +43,12 @@ public sealed class ConsoleMessageSender : IMessageSender
         => Console.WriteLine($"[Email] To: {to} | {message}");
 }
 
-public abstract class OnboardingService
+public interface IOnboardingService
 {
-    public abstract void Onboard(string email);
+    void Onboard(string email);
 }
 
-public sealed class EmailOnboardingService : OnboardingService
+public sealed class EmailOnboardingService : IOnboardingService
 {
     private readonly IMessageSender _sender;
 
@@ -57,20 +57,21 @@ public sealed class EmailOnboardingService : OnboardingService
         _sender = sender;
     }
 
-    public override void Onboard(string email)
+    public void Onboard(string email)
     {
         _sender.Send(email, "Welcome!");
     }
 }
 
-public abstract class WelcomeService
+public interface IWelcomeService
 {
-    public abstract string SayHello(string? name = null);
+    string SayHello(string? name = null);
 }
 
-public sealed class ConsoleWelcomeService : WelcomeService
+
+public sealed class ConsoleWelcomeService : IWelcomeService
 {
-    public override string SayHello(string? name = null)
+    public string SayHello(string? name = null)
     {
         var message = string.IsNullOrWhiteSpace(name) ? "Hello!" : $"Hello, {name}!";
         Console.WriteLine(message);
@@ -80,10 +81,10 @@ public sealed class ConsoleWelcomeService : WelcomeService
 
 public sealed class UsersController
 {
-    private readonly OnboardingService _onboarding;
-    private readonly WelcomeService _welcome;
+    private readonly IOnboardingService _onboarding;
+    private readonly IWelcomeService _welcome;
 
-    public UsersController(OnboardingService onboarding, WelcomeService welcome)
+    public UsersController(IOnboardingService onboarding, IWelcomeService welcome)
     {
         _onboarding = onboarding;
         _welcome = welcome;

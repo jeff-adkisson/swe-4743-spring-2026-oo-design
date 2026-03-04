@@ -86,8 +86,8 @@ For the full DIP refactoring context, revisit Lecture 9:
 
 - [1. Introduction to Dependency Injection](#1-introduction-to-dependency-injection)
 - [2. Table of Contents](#2-table-of-contents)
-- [3. DI Terminology Quick Primer](#3-di-terminology-quick-primer)
-- [4. DI and DIP (Relationship Map)](#4-di-and-dip-relationship-map)
+- [3. DI and DIP (Relationship Map)](#3-di-and-dip-relationship-map)
+- [4. DI Terminology Quick Primer](#4-di-terminology-quick-primer)
 - [5. Core Mechanics: Object Graphs and Constructor Injection](#5-core-mechanics-object-graphs-and-constructor-injection)
 - [6. Composition Root Deep Dive](#6-composition-root-deep-dive)
 - [7. Manual Dependency Injection (No Container)](#7-manual-dependency-injection-no-container)
@@ -100,13 +100,62 @@ For the full DIP refactoring context, revisit Lecture 9:
 - [Appendix 1: Keyed Dependency Injection](#appendix-1-keyed-dependency-injection)
 
 ---
-## 3. DI Terminology Quick Primer
+## 3. DI and DIP (Relationship Map)
 
-Before comparing DI and DIP, align on core DI vocabulary:
+### DI vs DIP: Technique and Principle
+
+- `DIP` is the architectural principle: high-level policy depends on abstractions.
+- `DI` is the delivery mechanism: collaborators are provided from outside.
+- You can apply DIP without a container (manual DI).
+- You can use a container and still violate DIP if abstractions are weak.
+
+![image-20260303231116408](10-dependency-injection.assets/image-20260303231116408.png)
+
+This lecture does not re-teach DIP rules in depth. For the full analysis (Rule #1, Rule #2, volatility criteria, and failure matrix), revisit Lecture 9:
+
+- [The Two Rules of DIP](09-dependency-inversion-principle.md#3-the-two-rules-of-dip)
+- [Rule #2: Use Stable Abstractions](09-dependency-inversion-principle.md#8-rule-2-use-stable-abstractions)
+- [Failure Modes and Detection Matrix](09-dependency-inversion-principle.md#10-failure-modes-and-detection-matrix)
+
+What Lecture 10 adds on top of Lecture 9:
+
+- runtime object-graph construction
+- service lifetimes and scopes
+- container validation and common DI failure patterns
+
+Use the following diagram to keep the distinction clear: DIP is a dependency-direction rule, while DI is the runtime wiring mechanism.
+
+- Top (`DIP`) answers: "Who is allowed to depend on what in source code?"
+- Bottom (`DI`) answers: "Who creates and wires objects at runtime?"
+- The shared abstraction exists in both views: DIP constrains dependency direction; DI supplies the concrete implementation behind that abstraction.
+
+> Ousterhout reference (Ch. 7-8): DIP keeps abstraction layers clean; DI helps pull wiring complexity downward so policy layers remain simpler.
+
+```mermaid
+flowchart LR
+    subgraph DI["DI (Runtime Wiring Mechanism)"]
+        R[Composition Root / Container] --> POL[Policy Object]
+        R --> DET[Concrete Detail]
+        POL --> ABR[Abstraction Reference]
+        DET --> ABR
+    end
+
+    subgraph DIP["DIP (Design-Time Dependency Rule)"]
+        P[High-Level Policy] --> A[Abstraction]
+        D[Low-Level Detail] --> A
+    end
+
+
+```
+
+---
+## 4. DI Terminology Quick Primer
+
+With the DI/DIP relationship established, here is the core vocabulary used throughout this lecture:
 
 | Term | Brief definition |
 | --- | --- |
-| `Dependency` | A collaborator a class needs to do its job (`IOrderRepository`, `ILogger`). |
+| `Dependency` | A collaborator a class needs to do its job (`IOrderRepository`, `IAppLogger`). |
 | `Container` | The runtime component that *contains* dependency configuration and state: registrations, construction rules, and lifetime/scope caches used to build and reuse object graphs. |
 | `Registration` | The mapping from abstraction/service type to implementation and lifetime. |
 | `Resolution` | Asking the container to construct and return a service instance. |
@@ -173,55 +222,6 @@ flowchart TB
 ```
 
 ---
-## 4. DI and DIP (Relationship Map)
-
-### DI vs DIP: Technique and Principle
-
-- `DIP` is the architectural principle: high-level policy depends on abstractions.
-- `DI` is the delivery mechanism: collaborators are provided from outside.
-- You can apply DIP without a container (manual DI).
-- You can use a container and still violate DIP if abstractions are weak.
-
-![image-20260303231116408](10-dependency-injection.assets/image-20260303231116408.png)
-
-This lecture does not re-teach DIP rules in depth. For the full analysis (Rule #1, Rule #2, volatility criteria, and failure matrix), revisit Lecture 9:
-
-- [The Two Rules of DIP](09-dependency-inversion-principle.md#3-the-two-rules-of-dip)
-- [Rule #2: Use Stable Abstractions](09-dependency-inversion-principle.md#8-rule-2-use-stable-abstractions)
-- [Failure Modes and Detection Matrix](09-dependency-inversion-principle.md#10-failure-modes-and-detection-matrix)
-
-What Lecture 10 adds on top of Lecture 9:
-
-- runtime object-graph construction
-- service lifetimes and scopes
-- container validation and common DI failure patterns
-
-Use the following diagram to keep the distinction clear: DIP is a dependency-direction rule, while DI is the runtime wiring mechanism.
-
-- Top (`DIP`) answers: "Who is allowed to depend on what in source code?"
-- Bottom (`DI`) answers: "Who creates and wires objects at runtime?"
-- The shared abstraction exists in both views: DIP constrains dependency direction; DI supplies the concrete implementation behind that abstraction.
-
-> Ousterhout reference (Ch. 7-8): DIP keeps abstraction layers clean; DI helps pull wiring complexity downward so policy layers remain simpler.
-
-```mermaid
-flowchart LR
-    subgraph DI["DI (Runtime Wiring Mechanism)"]
-        R[Composition Root / Container] --> POL[Policy Object]
-        R --> DET[Concrete Detail]
-        POL --> ABR[Abstraction Reference]
-        DET --> ABR
-    end
-    
-    subgraph DIP["DIP (Design-Time Dependency Rule)"]
-        P[High-Level Policy] --> A[Abstraction]
-        D[Low-Level Detail] --> A
-    end
-
-
-```
-
----
 ## 5. Core Mechanics: Object Graphs and Constructor Injection
 
 ### Object Graphs: DI at Runtime
@@ -233,7 +233,7 @@ In an order-processing service, a root object often needs:
 - persistence (`IOrderRepository`)
 - policy (`IPricingPolicy`)
 - time source (`IClock`)
-- telemetry (`ILogger`)
+- telemetry (`IAppLogger`)
 
 ### Constructor Injection: Dependencies Become Explicit
 
@@ -269,7 +269,7 @@ class IClock {
   +UtcNow DateTime
 }
 
-class ILogger {
+class IAppLogger {
   <<interface>>
   +Info(message) void
 }
@@ -282,12 +282,12 @@ class ConsoleLogger
 OrderProcessor --> IOrderRepository
 OrderProcessor --> IPricingPolicy
 OrderProcessor --> IClock
-OrderProcessor --> ILogger
+OrderProcessor --> IAppLogger
 
 IOrderRepository <|.. SqlOrderRepository
 IPricingPolicy <|.. DynamicPricingPolicy
 IClock <|.. SystemClock
-ILogger <|.. ConsoleLogger
+IAppLogger <|.. ConsoleLogger
 ```
 
 ```mermaid
@@ -454,7 +454,7 @@ public interface IClock
     DateTime UtcNow { get; }
 }
 
-public interface ILogger
+public interface IAppLogger
 {
     void Info(string message);
 }
@@ -464,13 +464,13 @@ public sealed class OrderIngestionService
     private readonly IOrderRepository _repository;
     private readonly IPricingPolicy _pricing;
     private readonly IClock _clock;
-    private readonly ILogger _logger;
+    private readonly IAppLogger _logger;
 
     public OrderIngestionService(
         IOrderRepository repository,
         IPricingPolicy pricing,
         IClock clock,
-        ILogger logger)
+        IAppLogger logger)
     {
         _repository = repository;
         _pricing = pricing;
@@ -489,6 +489,8 @@ public sealed class OrderIngestionService
 }
 ```
 
+> **Naming note**: These examples use `IAppLogger` instead of `ILogger` to avoid ambiguity with `Microsoft.Extensions.Logging.ILogger`, which ships with the dotnet framework and is the standard logging abstraction in ASP.NET Core. In production codebases you would typically inject `ILogger<T>` from the framework rather than defining a custom logging interface.
+
 ```mermaid
 classDiagram
 direction TB
@@ -506,7 +508,7 @@ class IClock {
   <<interface>>
   +UtcNow DateTime
 }
-class ILogger {
+class IAppLogger {
   <<interface>>
   +Info(message) void
 }
@@ -518,12 +520,12 @@ class ConsoleLogger
 OrderIngestionService --> IOrderRepository
 OrderIngestionService --> IPricingPolicy
 OrderIngestionService --> IClock
-OrderIngestionService --> ILogger
+OrderIngestionService --> IAppLogger
 
 IOrderRepository <|.. SqlOrderRepository
 IPricingPolicy <|.. DynamicPricingPolicy
 IClock <|.. SystemClock
-ILogger <|.. ConsoleLogger
+IAppLogger <|.. ConsoleLogger
 ```
 
 ### 3) Composition Root in `Main()`
@@ -541,7 +543,7 @@ public static class Program
         var taxClient = new TaxRulesHttpClient("https://tax-rules.internal");
         IPricingPolicy pricing = new DynamicPricingPolicy(taxClient);
         IClock clock = new SystemClock();
-        ILogger logger = new ConsoleLogger();
+        IAppLogger logger = new ConsoleLogger();
 
         var ingestion = new OrderIngestionService(repository, pricing, clock, logger);
 
@@ -607,7 +609,7 @@ public sealed class FlatPricingPolicy : IPricingPolicy
     public decimal CalculateTotal(OrderMessage message) => 100m;
 }
 
-public sealed class CollectingLogger : ILogger
+public sealed class CollectingLogger : IAppLogger
 {
     public readonly List<string> Messages = new();
 
@@ -646,6 +648,8 @@ Generic container role: runtime DI composition and resolution (dotnet: `IService
 - `Per-resolution lifetime` (dotnet: `Transient` / Spring: `prototype`): new instance every resolution.
 - `Per-scope lifetime` (dotnet: `Scoped` / Spring: scope-bound bean such as `@RequestScope` in web apps): one instance per scope boundary.
 - `Application lifetime` (dotnet: `Singleton` / Spring: `singleton` default): one instance for application lifetime.
+
+> **Disposal difference (`Transient` vs `prototype`)**: These two lifetimes behave similarly at creation time but differ at cleanup time. Dotnet `Transient` services that implement `IDisposable` are tracked by the enclosing `IServiceScope` and disposed automatically when the scope ends. Spring `prototype` beans are **not** tracked after creation — the container releases them immediately and never calls their `destroy()` methods. Resources held by a Spring prototype bean (connections, file handles, etc.) must be cleaned up manually by the caller. Assuming parity here is a common source of resource leaks when porting patterns between the two ecosystems.
 
 Common failure pattern: singleton captures scoped dependency and holds stale/request-specific state.
 
@@ -796,7 +800,7 @@ public sealed class ShipmentService
     {
         var repo = _provider.GetRequiredService<IOrderRepository>();
         var notifier = _provider.GetRequiredService<ICustomerNotifier>();
-        var logger = _provider.GetRequiredService<ILogger>();
+        var logger = _provider.GetRequiredService<IAppLogger>();
 
         var order = repo.Load(orderId);
         notifier.Notify(order.CustomerId, $"Order {orderId} shipped");
@@ -825,14 +829,14 @@ class IOrderRepository {
 class ICustomerNotifier {
   <<interface>>
 }
-class ILogger {
+class IAppLogger {
   <<interface>>
 }
 
 ShipmentServiceLocatorStyle --> IServiceProvider : hidden deps
 ShipmentServiceExplicit --> IOrderRepository : explicit
 ShipmentServiceExplicit --> ICustomerNotifier : explicit
-ShipmentServiceExplicit --> ILogger : explicit
+ShipmentServiceExplicit --> IAppLogger : explicit
 ```
 
 When bounded use is acceptable:
@@ -861,7 +865,7 @@ public sealed class OrderWorkflowService
         IAuditLogger audit,
         INotificationService notifications,
         IClock clock,
-        ILogger logger,
+        IAppLogger logger,
         IOutbox outbox)
     {
         // Constructor bloat indicates mixed responsibilities.
@@ -882,7 +886,7 @@ class IPaymentGateway { <<interface>> }
 class IAuditLogger { <<interface>> }
 class INotificationService { <<interface>> }
 class IClock { <<interface>> }
-class ILogger { <<interface>> }
+class IAppLogger { <<interface>> }
 class IOutbox { <<interface>> }
 
 OrderWorkflowService --> IOrderRepository
@@ -893,7 +897,7 @@ OrderWorkflowService --> IPaymentGateway
 OrderWorkflowService --> IAuditLogger
 OrderWorkflowService --> INotificationService
 OrderWorkflowService --> IClock
-OrderWorkflowService --> ILogger
+OrderWorkflowService --> IAppLogger
 OrderWorkflowService --> IOutbox
 ```
 
@@ -1332,7 +1336,6 @@ flowchart LR
 
     APPLY --> MAN[Manual DI]
     APPLY --> CONT[Container DI]
-    APPLY --> SEL[Boundary Selector Pattern]
 ```
 
 ### Detection Checklist

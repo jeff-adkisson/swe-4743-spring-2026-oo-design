@@ -1,6 +1,34 @@
 # Dependency Injection (DI): Applying DIP in Practice
 
+This lecture continues directly from [Lecture 9: The Dependency Inversion Principle](09-dependency-inversion-principle.md), especially [Section 13 ("From DIP to Dependency Injection")](09-dependency-inversion-principle.md#13-from-dip-to-dependency-injection).
+
+---
 ## 1. Introduction to Dependency Injection
+
+### Continuity From Lecture 9
+
+Lecture 9 ended with a DIP-compliant `BillingService` and a manual composition root:
+
+```csharp
+public sealed class BillingService
+{
+    private readonly ICustomerRepository _customers;
+
+    public BillingService(ICustomerRepository customers)
+    {
+        _customers = customers;
+    }
+}
+
+ICustomerRepository customers = new SqlCustomerRepository("Server=prod;Database=Billing;");
+var billing = new BillingService(customers);
+```
+
+That was the architectural target for DIP. This lecture now answers the operational questions left open at the end of Lecture 9:
+
+- how to scale wiring beyond a small `Main` method
+- how containers resolve object graphs from constructor signatures
+- how lifetime rules and startup validation prevent production defects
 
 Dependency Injection (DI) is the technique of supplying a class with the collaborators it needs instead of creating those collaborators inside the class.
 
@@ -9,40 +37,17 @@ Dependency Injection (DI) is the technique of supplying a class with the collabo
 
 In other words, DI is not the principle itself; DI is how teams automate and scale DIP in real systems.
 
-Earlier in the course, Composition Root was introduced mostly as a way to keep `Main` short. In this lecture, we expand that understanding: Composition Root is the operational control point where DI policies are enforced for the full object graph.
+In Lecture 9, Composition Root was reframed as an architectural boundary, not just a way to keep `Main` short. In this lecture, we operationalize that boundary: Composition Root is the control point where DI policies are enforced for the full object graph.
 
 ### Canonical Definition
 
 > Dependency Injection: an object receives required collaborators from outside itself instead of creating them internally.
 
-### Quick Before-and-After
+### Quick Refresh (from Lecture 9)
+
+Lecture 9 already walked through the full before/after refactor for `OrderApprovalPolicy`, including the DIP rationale and diagrams. Here is the minimum DI shape we carry forward:
 
 ```csharp
-public sealed class OrderApprovalPolicy
-{
-    public bool Approve(Order order)
-    {
-        var credit = new LegacyCreditApiClient("https://credit.internal");
-        var audit = new FileAuditLogger("/var/log/order-approval.log");
-
-        bool approved = credit.Check(order.CustomerId, order.TotalAmount);
-        audit.Write($"Order {order.Id} approved={approved}");
-        return approved;
-    }
-}
-```
-
-```csharp
-public interface ICreditCheckGateway
-{
-    bool Check(string customerId, decimal amount);
-}
-
-public interface IAuditLogger
-{
-    void Write(string message);
-}
-
 public sealed class OrderApprovalPolicy
 {
     private readonly ICreditCheckGateway _credit;
@@ -53,70 +58,108 @@ public sealed class OrderApprovalPolicy
         _credit = credit;
         _audit = audit;
     }
-
-    public bool Approve(Order order)
-    {
-        bool approved = _credit.Check(order.CustomerId, order.TotalAmount);
-        _audit.Write($"Order {order.Id} approved={approved}");
-        return approved;
-    }
 }
 
-// Composition root
+// Composition root (manual DI)
 var policy = new OrderApprovalPolicy(
     new LegacyCreditApiClient("https://credit.internal"),
     new FileAuditLogger("/var/log/order-approval.log"));
 ```
 
-```mermaid
-classDiagram
-direction TB
+For the full DIP refactoring context, revisit Lecture 9:
 
-class ICreditCheckGateway {
-  <<interface>>
-  +Check(customerId, amount) bool
-}
+- [Rule #1: What Is Actually Inverted](09-dependency-inversion-principle.md#4-rule-1-what-is-actually-inverted)
+- [Refactoring from "New Everywhere" to DIP](09-dependency-inversion-principle.md#11-refactoring-from-new-everywhere-to-dip)
 
-class IAuditLogger {
-  <<interface>>
-  +Write(message) void
-}
-
-class OrderApprovalPolicy {
-  +Approve(order) bool
-}
-
-class LegacyCreditApiClient
-class FileAuditLogger
-class CompositionRoot {
-  +BuildGraph() OrderApprovalPolicy
-}
-
-ICreditCheckGateway <|.. LegacyCreditApiClient
-IAuditLogger <|.. FileAuditLogger
-OrderApprovalPolicy --> ICreditCheckGateway : depends on abstraction
-OrderApprovalPolicy --> IAuditLogger : depends on abstraction
-CompositionRoot --> OrderApprovalPolicy : wires
-CompositionRoot --> LegacyCreditApiClient : creates concrete
-CompositionRoot --> FileAuditLogger : creates concrete
-```
-
+---
 ## 2. Table of Contents
 
 - [1. Introduction to Dependency Injection](#1-introduction-to-dependency-injection)
 - [2. Table of Contents](#2-table-of-contents)
-- [3. DI and DIP (Relationship Map)](#3-di-and-dip-relationship-map)
-- [4. Core Mechanics: Object Graphs and Constructor Injection](#4-core-mechanics-object-graphs-and-constructor-injection)
-- [5. Composition Root Deep Dive](#5-composition-root-deep-dive)
-- [6. Manual Dependency Injection (No Container)](#6-manual-dependency-injection-no-container)
-- [7. DI Containers Conceptually (How Framework DI Works)](#7-di-containers-conceptually-how-framework-di-works)
-- [8. C# Demo: Microsoft.Extensions.DependencyInjection in a Console App](#8-c-demo-microsoftextensionsdependencyinjection-in-a-console-app)
-- [9. Anti-Patterns and Failure Modes](#9-anti-patterns-and-failure-modes)
-- [10. Factory and Abstract Factory with DI](#10-factory-and-abstract-factory-with-di)
-- [11. Real-World Summary](#11-real-world-summary)
-- [12. Dependency Injection Study Guide](#12-dependency-injection-study-guide)
+- [3. DI Terminology Quick Primer](#3-di-terminology-quick-primer)
+- [4. DI and DIP (Relationship Map)](#4-di-and-dip-relationship-map)
+- [5. Core Mechanics: Object Graphs and Constructor Injection](#5-core-mechanics-object-graphs-and-constructor-injection)
+- [6. Composition Root Deep Dive](#6-composition-root-deep-dive)
+- [7. Manual Dependency Injection (No Container)](#7-manual-dependency-injection-no-container)
+- [8. DI Containers Conceptually (How Framework DI Works)](#8-di-containers-conceptually-how-framework-di-works)
+- [9. C# Demo: Microsoft.Extensions.DependencyInjection in a Console App](#9-c-demo-microsoftextensionsdependencyinjection-in-a-console-app)
+- [10. Anti-Patterns and Failure Modes](#10-anti-patterns-and-failure-modes)
+- [11. Removing the Mystery: How does a DI container work?](#11-removing-the-mystery-how-does-a-di-container-work)
+- [12. Real-World Summary](#12-real-world-summary)
+- [Study Guide](#study-guide)
+- [Appendix 1: Keyed Dependency Injection](#appendix-1-keyed-dependency-injection)
 
-## 3. DI and DIP (Relationship Map)
+---
+## 3. DI Terminology Quick Primer
+
+Before comparing DI and DIP, align on core DI vocabulary:
+
+| Term | Brief definition |
+| --- | --- |
+| `Dependency` | A collaborator a class needs to do its job (`IOrderRepository`, `ILogger`). |
+| `Container` | The runtime component that *contains* dependency configuration and state: registrations, construction rules, and lifetime/scope caches used to build and reuse object graphs. |
+| `Registration` | The mapping from abstraction/service type to implementation and lifetime. |
+| `Resolution` | Asking the container to construct and return a service instance. |
+| `Object Graph` | The full runtime tree/network of objects created to satisfy a root service. |
+| `Lifetime` | Reuse policy for an instance (`transient`, `scoped`, `singleton`). |
+| `Scope` | A bounded lifetime context (for example, one HTTP request or one background job run) where scoped services share one instance within that boundary, then are disposed when the boundary ends. |
+| `Composition Root` | The application boundary where registrations and wiring decisions are centralized. |
+| `Constructor Injection` | Supplying required collaborators through constructor parameters. |
+| `Service Locator` | Pulling dependencies from a provider at runtime instead of declaring them explicitly. |
+
+### dotnet and Spring Boot Terminology Crosswalk
+
+Use this table as a translation layer while reading the rest of the lecture:
+
+| Concept | dotnet terminology | Spring Boot terminology |
+| --- | --- | --- |
+| Container | `IServiceCollection` + built `IServiceProvider` | `ApplicationContext` (or `BeanFactory`) |
+| Registration | `services.AddTransient/AddScoped/AddSingleton` | `@Component` / `@Service` / `@Repository` or `@Bean` methods |
+| Resolution | constructor injection, or `GetRequiredService<T>()` | constructor injection, or `ApplicationContext.getBean(...)` |
+| Scoped boundary | one `IServiceScope` per request/job boundary | one configured scope boundary (for example, `@RequestScope` in web apps, or a custom scope) |
+| Lifetime names | `Transient`, `Scoped`, `Singleton` | `prototype`, `request` (web), `singleton` (default) |
+| Composition root | `Program.cs` / `builder.Services` startup wiring | `@SpringBootApplication` bootstrap + `@Configuration` wiring |
+| Background DI entry point | `IHostedService` / `BackgroundService` | `@Scheduled`, `ApplicationRunner`, `CommandLineRunner` |
+
+### dotnet and Spring DI Container Functional Equivalence
+
+At the architectural level, the two DI systems are functionally equivalent: both maintain dependency registrations, construct object graphs through constructor injection, enforce lifetimes/scopes, and fail when required dependencies cannot be resolved. The differences are mostly in API style, defaults, and framework conventions.
+
+| Behavior/Detail | dotnet capabilities | Spring capabilities |
+| --- | --- | --- |
+| Core container role | `IServiceCollection` describes registrations; built `IServiceProvider` resolves graphs | `ApplicationContext`/`BeanFactory` stores bean definitions and resolves graphs |
+| Registration style | imperative code (`AddTransient/AddScoped/AddSingleton`, extension methods) | annotation/config style (`@Component` scanning, `@Bean` methods) |
+| Primary injection style | constructor injection (preferred), optional runtime lookup | constructor injection (preferred), optional runtime lookup |
+| Runtime lookup API | `GetRequiredService<T>()`, `GetRequiredKeyedService<T>(key)` | `getBean(...)`, `ObjectProvider`, and named-bean selection via injected `Map<String, T>` |
+| Lifetime model | per-registration lifetimes (`Transient`, `Scoped`, `Singleton`) | scopes (`prototype`, `request`, `singleton` default) |
+| Request boundary behavior | web request creates scope; `Scoped` reused within request | web request creates request context; `@RequestScope` reused within request |
+| Multi-implementation selection | keyed services (`AddKeyed...`, `[FromKeyedServices]`) | qualifiers/named beans (`@Qualifier`, bean names, `@Primary`) |
+| Startup failure behavior | unresolved graphs/lifetime violations can fail at startup with validation options | unresolved bean dependencies fail context startup by default |
+| Circular dependency handling | constructor cycles are detected and fail resolution | constructor cycles are detected and fail context creation |
+
+Typical DI flow:
+
+1. Register services and lifetimes at startup.
+2. Create a scope (for example, per request/job).
+3. Resolve one root service.
+4. Let the container build the full object graph.
+5. Dispose the scope and scoped/transient disposables.
+
+The concept map below shows how the core terms connect during runtime composition:
+
+```mermaid
+flowchart LR
+    CR[Composition Root] --> REG[Registrations]
+    REG --> C[Container]
+    C --> RES[Resolution]
+    RES --> OG[Object Graph]
+    C --> LIFE[Lifetimes]
+    LIFE --> SCOPE[Scope]
+    SCOPE --> OG
+```
+
+---
+## 4. DI and DIP (Relationship Map)
 
 ### DI vs DIP: Technique and Principle
 
@@ -125,41 +168,43 @@ CompositionRoot --> FileAuditLogger : creates concrete
 - You can apply DIP without a container (manual DI).
 - You can use a container and still violate DIP if abstractions are weak.
 
+This lecture does not re-teach DIP rules in depth. For the full analysis (Rule #1, Rule #2, volatility criteria, and failure matrix), revisit Lecture 9:
+
+- [The Two Rules of DIP](09-dependency-inversion-principle.md#3-the-two-rules-of-dip)
+- [Rule #2: Use Stable Abstractions](09-dependency-inversion-principle.md#8-rule-2-use-stable-abstractions)
+- [Failure Modes and Detection Matrix](09-dependency-inversion-principle.md#10-failure-modes-and-detection-matrix)
+
+What Lecture 10 adds on top of Lecture 9:
+
+- runtime object-graph construction
+- service lifetimes and scopes
+- container validation and common DI failure patterns
+
+Use the following diagram to keep the distinction clear: DIP is a dependency-direction rule, while DI is the runtime wiring mechanism.
+
+- Top (`DIP`) answers: "Who is allowed to depend on what in source code?"
+- Bottom (`DI`) answers: "Who creates and wires objects at runtime?"
+- The shared abstraction exists in both views: DIP constrains dependency direction; DI supplies the concrete implementation behind that abstraction.
+
 ```mermaid
-classDiagram
-direction LR
+flowchart LR
+    subgraph DI["DI (Runtime Wiring Mechanism)"]
+        R[Composition Root / Container] --> POL[Policy Object]
+        R --> DET[Concrete Detail]
+        POL --> ABR[Abstraction Reference]
+        DET --> ABR
+    end
+    
+    subgraph DIP["DIP (Design-Time Dependency Rule)"]
+        P[High-Level Policy] --> A[Abstraction]
+        D[Low-Level Detail] --> A
+    end
 
-class CheckoutOrchestrator {
-  +PlaceOrder(command) Receipt
-}
 
-class IPaymentGateway {
-  <<interface>>
-  +Authorize(request) Authorization
-}
-
-class StripePaymentGateway {
-  +Authorize(request) Authorization
-}
-
-CheckoutOrchestrator --> IPaymentGateway : depends on
-IPaymentGateway <|.. StripePaymentGateway
 ```
 
-### SOLID Relationship Map
-
-- `SRP`: constructor bloat often reveals mixed responsibilities.
-- `OCP`: DI enables implementation swaps while policy remains stable.
-- `LSP`: replacement implementations must honor contract behavior.
-- `ISP`: narrow interfaces produce cleaner DI graphs and less coupling.
-
-What DI does not automatically fix:
-
-- poor domain boundaries
-- unstable abstractions
-- transactional consistency design mistakes
-
-## 4. Core Mechanics: Object Graphs and Constructor Injection
+---
+## 5. Core Mechanics: Object Graphs and Constructor Injection
 
 ### Object Graphs: DI at Runtime
 
@@ -244,25 +289,39 @@ Main->>Processor: new OrderProcessor(repo, policy, clock, log)
 Main->>Processor: Process(command)
 ```
 
-## 5. Composition Root Deep Dive
+---
+## 6. Composition Root Deep Dive
 
-Composition Root is where an application decides how abstractions map to concrete implementations. It is the boundary where object-graph construction is centralized and controlled.
+Lecture 9 established Composition Root as the architectural boundary for wiring. Here we narrow to DI-specific operational concerns.
 
-### Why This Is More Than a "Slim Main"
+For the full conceptual treatment and manual composition examples, see [Lecture 9, "Composition Root in DIP (Conceptual)"](09-dependency-inversion-principle.md#7-composition-root-in-dip-conceptual).
 
-Keeping `Main` short is a formatting concern. Composition Root is an architectural concern:
+### DI-Specific Responsibilities
 
-- it controls dependency direction at runtime
-- it enforces lifetime and ownership rules
-- it keeps framework/infrastructure mechanics out of domain code
-- it provides one auditable place for wiring decisions
+- define registrations (abstraction to implementation mappings)
+- choose lifetimes (`transient`, `scoped`, `singleton`) intentionally
+- build/validate the provider at startup
+- create/dispose scopes at boundary edges
 
-### Responsibilities of the Composition Root
+This boundary diagram clarifies what belongs in the Composition Root versus what belongs in runtime business code:
 
-- register or create concrete implementations
-- compose root services and transitive dependencies
-- validate startup wiring where possible
-- keep business decisions out of composition logic
+```mermaid
+flowchart TB
+    subgraph ROOT["Composition Root (Startup Boundary)"]
+        R1[Register mappings]
+        R2[Set lifetimes]
+        R3[Validate provider]
+        R4[Create and dispose scopes]
+    end
+
+    subgraph APP["Application and Domain Runtime"]
+        A1[Use Cases and Policies]
+        A2[Infrastructure Adapters]
+    end
+
+    ROOT -->|injects dependencies into| APP
+    A1 -. "no registration code here" .-> ROOT
+```
 
 ### What Should Not Be in Composition Root
 
@@ -270,80 +329,22 @@ Keeping `Main` short is a formatting concern. Composition Root is an architectur
 - ad hoc per-feature service lookup in domain classes
 - scattered "mini roots" throughout feature code
 
-### C# Manual Composition Example
+### Container-Oriented Sketch
+
+This minimal startup sketch shows the Composition Root expressed with a DI container: register abstractions, assign lifetimes, then build a validated provider once at application startup.
 
 ```csharp
-public static class Program
-{
-    public static void Main()
+var services = new ServiceCollection();
+services.AddScoped<IOrderRepository, SqlOrderRepository>();
+services.AddScoped<IPricingPolicy, DynamicPricingPolicy>();
+services.AddSingleton<IClock, SystemClock>();
+
+using ServiceProvider provider = services.BuildServiceProvider(
+    new ServiceProviderOptions
     {
-        ICreditCheckGateway creditGateway = new LegacyCreditApiClient("https://credit.internal");
-        IAuditLogger auditLogger = new FileAuditLogger("/var/log/order-approval.log");
-
-        var approvalPolicy = new OrderApprovalPolicy(creditGateway, auditLogger);
-
-        bool approved = approvalPolicy.Approve(new Order("ORD-1001", "C-9", 120.00m));
-        Console.WriteLine($"Approved={approved}");
-    }
-}
-```
-
-### Java Manual Composition Example
-
-```java
-import java.math.BigDecimal;
-
-public final class Main {
-    public static void main(String[] args) {
-        CreditCheckGateway creditGateway = new LegacyCreditApiClient("https://credit.internal");
-        AuditLogger auditLogger = new FileAuditLogger("/var/log/order-approval.log");
-
-        OrderApprovalPolicy approvalPolicy = new OrderApprovalPolicy(creditGateway, auditLogger);
-
-        boolean approved = approvalPolicy.approve(new Order("ORD-1001", "C-9", new BigDecimal("120.00")));
-        System.out.println("Approved=" + approved);
-    }
-}
-```
-
-```mermaid
-classDiagram
-direction LR
-
-class CompositionRoot {
-  +Main() void
-}
-class OrderApprovalPolicy
-class ICreditCheckGateway {
-  <<interface>>
-}
-class IAuditLogger {
-  <<interface>>
-}
-class LegacyCreditApiClient
-class FileAuditLogger
-
-CompositionRoot --> LegacyCreditApiClient : creates
-CompositionRoot --> FileAuditLogger : creates
-CompositionRoot --> OrderApprovalPolicy : wires
-OrderApprovalPolicy --> ICreditCheckGateway
-OrderApprovalPolicy --> IAuditLogger
-ICreditCheckGateway <|.. LegacyCreditApiClient
-IAuditLogger <|.. FileAuditLogger
-```
-
-```mermaid
-sequenceDiagram
-participant Main as CompositionRoot
-participant Credit as LegacyCreditApiClient
-participant Audit as FileAuditLogger
-participant Policy as OrderApprovalPolicy
-
-Main->>Credit: create gateway
-Main->>Audit: create logger
-Main->>Policy: new OrderApprovalPolicy(credit, audit)
-Main->>Policy: Approve(order)
-Policy-->>Main: approved
+        ValidateOnBuild = true,
+        ValidateScopes = true
+    });
 ```
 
 ### Boundary Rule
@@ -357,13 +358,18 @@ Use one composition root per application boundary:
 
 This gives predictable wiring, easier diagnostics, and clean dependency boundaries.
 
-## 6. Manual Dependency Injection (No Container)
+---
+## 7. Manual Dependency Injection (No Container)
 
 ### Scenario: Order Ingestion Pipeline
+
+We will use one concrete scenario and evolve it through three stages. This keeps the DI mechanics anchored to the same business flow.
 
 A batch pipeline ingests marketplace orders, enriches with pricing rules, and stores normalized orders.
 
 ### 1) BAD Version: Tight Coupling and Direct Instantiation
+
+Start with the anti-pattern baseline. The business service constructs its own infrastructure dependencies, which hides requirements and prevents isolated testing.
 
 ```csharp
 public sealed class OrderIngestionService
@@ -405,6 +411,8 @@ DynamicPricingPolicy --> TaxRulesHttpClient : new
 ```
 
 ### 2) REFACTORED Version: Constructor Injection with Interfaces
+
+Now move dependency creation out of the business class and into constructor parameters. The service depends on abstractions, making required collaborators explicit.
 
 ```csharp
 public interface IOrderRepository
@@ -496,6 +504,8 @@ ILogger <|.. ConsoleLogger
 
 ### 3) Composition Root in `Main()`
 
+With constructor injection in place, object wiring moves to the composition boundary. This is where concrete implementations are selected and assembled.
+
 ```csharp
 public static class Program
 {
@@ -539,6 +549,8 @@ ProgramMain --> OrderIngestionService : wires
 
 ### Why This Is Better
 
+The improvement is not only stylistic; it changes maintainability and testability characteristics of the codebase.
+
 Manual DI improves production quality by:
 
 - `Testability`: business logic can be tested with in-memory fakes.
@@ -546,6 +558,10 @@ Manual DI improves production quality by:
 - `Explicit dependencies`: constructor signatures document operational requirements.
 
 ### Testing Without a Mocking Framework
+
+This final step closes the loop by proving the refactor with a small deterministic test. The example shows that constructor injection enables simple hand-written test doubles without a mocking library or container setup in the test.
+
+> A **mock** is a test double used to stand in for a real collaborator and verify expected interactions or behavior in a test. A **mocking framework** is a library that generates and configures these test doubles dynamically instead of writing them by hand.
 
 ```csharp
 public sealed class FakeOrderRepository : IOrderRepository
@@ -584,23 +600,46 @@ sut.Ingest(new OrderMessage("ORD-1", "C-1", 10m, "US"));
 Console.WriteLine(repo.Saved.Count == 1 ? "PASS" : "FAIL");
 ```
 
-## 7. DI Containers Conceptually (How Framework DI Works)
+---
+## 8. DI Containers Conceptually (How Framework DI Works)
 
 A DI container is one tool for scaling DI. Conceptually, it does five things:
 
 - `Registration`: map service type to implementation/factory.
-- `Lifetime`: define reuse rules (transient/scoped/singleton).
+- `Lifetime`: define reuse rules.
 - `Resolution`: build requested object and its dependencies.
 - `Constructor selection`: choose a usable constructor and resolve parameters.
 - `Cycle detection`: fail when dependency graphs loop.
 
+Generic container role: runtime DI composition and resolution (dotnet: `IServiceCollection` + `IServiceProvider` / Spring: `ApplicationContext` with stereotypes and/or `@Bean` definitions).
+
 ### Lifetime and Scope in Practice
 
-- `Transient`: new instance every resolution.
-- `Scoped`: one instance per scope (in ASP.NET Core, typically one per request).
-- `Singleton`: one instance for application lifetime.
+- `Per-resolution lifetime` (dotnet: `Transient` / Spring: `prototype`): new instance every resolution.
+- `Per-scope lifetime` (dotnet: `Scoped` / Spring: scope-bound bean such as `@RequestScope` in web apps): one instance per scope boundary.
+- `Application lifetime` (dotnet: `Singleton` / Spring: `singleton` default): one instance for application lifetime.
 
 Common failure pattern: singleton captures scoped dependency and holds stale/request-specific state.
+
+The timeline below shows how each lifetime behaves across two different scopes:
+
+```mermaid
+sequenceDiagram
+participant App as Application
+participant Scope1 as Scope 1
+participant Scope2 as Scope 2
+
+App->>App: Create singleton instance (once)
+Note over App: Singleton reused in all scopes
+Scope1->>Scope1: Create scoped instance A
+Scope1->>Scope1: Resolve transient T1
+Scope1->>Scope1: Resolve transient T2
+Scope1-->>Scope1: Dispose scoped instance A
+Scope2->>Scope2: Create scoped instance B
+Scope2->>Scope2: Resolve transient T3
+Scope2-->>Scope2: Dispose scoped instance B
+Note over Scope1,Scope2: Scoped differs per scope...<br>transient is always new
+```
 
 Registration happens first:
 
@@ -686,9 +725,49 @@ ServiceProvider --> ScopeCache : uses
 - Lifetime bugs are subtle and appear under concurrency.
 - Overusing container APIs (`IServiceProvider` everywhere) drifts toward service locator.
 
-## 8. C# Demo: Microsoft.Extensions.DependencyInjection in a Console App
+---
+## 9. C# Demo: Microsoft.Extensions.DependencyInjection in a Console App
 
 Goal: show constructor resolution using the same abstractions used by ASP.NET Core.
+
+> Demo prerequisites:
+> - Use an SDK that supports file-based apps (`dotnet run <file.cs>`) and `#:package` directives.
+> - If your SDK does not support that mode, use a normal console project with the NuGet commands below.
+> - Internet access is required for NuGet restore.
+
+### NuGet Requirements and Installation
+
+This demo requires these NuGet packages:
+
+- `Microsoft.Extensions.DependencyInjection`
+- `Microsoft.Extensions.DependencyInjection.Abstractions`
+
+Install them in a normal console project with:
+
+```bash
+dotnet add package Microsoft.Extensions.DependencyInjection
+dotnet add package Microsoft.Extensions.DependencyInjection.Abstractions
+```
+
+### C# 14 Standalone Script Usage
+
+For a single-file C# 14 app (no `.csproj`), add package directives at the top of the file:
+
+```csharp
+#!/usr/bin/dotnet run
+#:package Microsoft.Extensions.DependencyInjection@10.0.0
+#:package Microsoft.Extensions.DependencyInjection.Abstractions@10.0.0
+
+using Microsoft.Extensions.DependencyInjection;
+```
+
+Then place the demo code below those directives and run it with:
+
+```bash
+dotnet run di-demo.cs
+```
+
+> You can find the complete script at `demos/10-dependency-injection/di-demo.cs`
 
 ### Complete `Program.cs`
 
@@ -899,11 +978,49 @@ builder.Services.AddTransient<IComplianceReportGenerator, ComplianceReportGenera
 
 Controllers, endpoints, and hosted services receive these dependencies through constructor injection.
 
-## 9. Anti-Patterns and Failure Modes
+### Spring Boot Mapping (Concept)
+
+The closest Spring Boot equivalent is bean registration in `@Configuration` (or component scanning with stereotypes):
+
+```java
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+
+@Configuration
+public class DiConfig {
+
+    @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public AuditClock auditClock() {
+        return new SystemAuditClock();
+    }
+
+    @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    public AuditLogger auditLogger(AuditClock clock) {
+        return new ConsoleAuditLogger(clock);
+    }
+
+    @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    public ComplianceReportGenerator complianceReportGenerator(AuditLogger logger) {
+        return new ComplianceReportGenerator(logger);
+    }
+}
+```
+
+Constructor injection entry points are equivalent: dotnet: controllers/endpoints and hosted services / Spring: MVC controllers and scheduled/background components.
+
+---
+## 10. Anti-Patterns and Failure Modes
 
 ### 1) Service Locator
 
 Service Locator means a class requests dependencies from a global provider/container at runtime instead of declaring them in the constructor.
+
+Equivalent service-locator calls in business/domain code create the same hidden-dependency problem (dotnet: `IServiceProvider.GetRequiredService(...)` / Spring: `ApplicationContext.getBean(...)` or `ObjectProvider.getObject()`).
 
 Why teams drift toward it:
 
@@ -1060,7 +1177,7 @@ public sealed class CheckoutPipeline
 
 ### 3) Captive Dependency / Lifetime Mismatch
 
-A singleton should not capture request-scoped state.
+An application-lifetime dependency should not capture request-lifetime state (dotnet: `Singleton` depending on `Scoped` / Spring: `singleton` depending on `@RequestScope`).
 
 ```csharp
 // Registration
@@ -1163,276 +1280,167 @@ public sealed class InvoicePaymentProjectionHandler : IDomainEventHandler<Paymen
 }
 ```
 
-## 10. Factory and Abstract Factory with DI
+---
+## 11. Removing the Mystery: How does a DI container work?
 
-### Factory Pattern with DI
+This section uses a tiny, inspectable demo container and web server so students can step through DI behavior line by line:
 
-Factory encapsulates creation so clients depend on creation abstractions rather than construction details.
+- script: `demos/10-dependency-injection/di-simple-container-and-web-server-demo.cs`
+- goal: make constructor-based recursive resolution visible
 
-Use Factory when:
+### What the Demo Contains
 
-- implementation choice is runtime-dependent (region, tenant, feature flag)
-- creation has non-trivial setup
-- clients should not know concrete types
+| Component | Responsibility | Key behavior |
+| --- | --- | --- |
+| `MiniContainer` | minimal DI container | stores registrations and recursively resolves constructor graphs |
+| `ToyWebApp` | tiny router + controller activator | maps route to controller action and activates controller via DI |
+| `TinyServer` | HTTP listener loop | converts HTTP requests into `Request` objects and writes text responses |
+| `UsersController` + services | app layer example | demonstrates transitive dependency graph: controller -> abstract service -> concrete implementation |
+| `Program` | composition root | registers abstractions to implementations and starts app/server |
 
-Relationship to DI:
+### How the Recursive Resolution Works
 
-- a DI container behaves like a generalized factory for object graphs
-- domain-specific factories remain useful for business-driven selection rules
+The core method is `Resolve(Type serviceType)` in `MiniContainer`:
 
-```mermaid
-classDiagram
-direction TB
+1. Look up the requested type in registrations (for example, `OnboardingService -> EmailOnboardingService`).
+   If no registration exists and the type is concrete (for example, `UsersController`), use that type directly.
+2. Choose a constructor (this demo picks the public constructor with most parameters).
+3. For each constructor parameter, call `Resolve(...)` again.
+4. After dependencies are resolved, construct the current object with `Activator.CreateInstance(...)`.
+5. Return to the previous stack frame (recursive unwind).
 
-class PaymentOrchestrator {
-  +Authorize(request) Authorization
-}
-
-class IPaymentGatewayFactory {
-  <<interface>>
-  +Create(regionCode) IPaymentGateway
-}
-
-class PaymentGatewayFactory
-class IPaymentGateway {
-  <<interface>>
-  +Authorize(request) Authorization
-}
-
-class StripeGateway
-class AdyenGateway
-
-PaymentOrchestrator --> IPaymentGatewayFactory
-IPaymentGatewayFactory <|.. PaymentGatewayFactory
-PaymentGatewayFactory --> IPaymentGateway
-IPaymentGateway <|.. StripeGateway
-IPaymentGateway <|.. AdyenGateway
-```
-
-```csharp
-public interface IPaymentGateway
-{
-    Authorization Authorize(PaymentRequest request);
-}
-
-public sealed class StripeGateway : IPaymentGateway
-{
-    public Authorization Authorize(PaymentRequest request) => Authorization.Approved("stripe");
-}
-
-public sealed class AdyenGateway : IPaymentGateway
-{
-    public Authorization Authorize(PaymentRequest request) => Authorization.Approved("adyen");
-}
-
-public interface IPaymentGatewayFactory
-{
-    IPaymentGateway Create(string regionCode);
-}
-
-public sealed class PaymentGatewayFactory : IPaymentGatewayFactory
-{
-    private readonly StripeGateway _stripe;
-    private readonly AdyenGateway _adyen;
-
-    public PaymentGatewayFactory(StripeGateway stripe, AdyenGateway adyen)
-    {
-        _stripe = stripe;
-        _adyen = adyen;
-    }
-
-    public IPaymentGateway Create(string regionCode)
-    {
-        return regionCode switch
-        {
-            "EU" => _adyen,
-            _ => _stripe
-        };
-    }
-}
-```
-
-### Abstract Factory with DI
-
-Scenario: multi-region compliance where each region needs a compatible pair of services (`tax + invoice`).
-
-Canonical GoF structure:
+This means one top-level resolve can create an entire object graph.
 
 ```mermaid
-classDiagram
-direction LR
+sequenceDiagram
+participant App as ToyWebApp
+participant C as MiniContainer
 
-class AbstractFactory {
-  <<interface>>
-  +CreateProductA() AbstractProductA
-  +CreateProductB() AbstractProductB
-}
-
-class ConcreteFactoryA
-class ConcreteFactoryB
-class AbstractProductA {
-  <<interface>>
-}
-class AbstractProductB {
-  <<interface>>
-}
-class ProductA1
-class ProductA2
-class ProductB1
-class ProductB2
-class Client
-
-AbstractFactory <|.. ConcreteFactoryA
-AbstractFactory <|.. ConcreteFactoryB
-AbstractProductA <|.. ProductA1
-AbstractProductA <|.. ProductA2
-AbstractProductB <|.. ProductB1
-AbstractProductB <|.. ProductB2
-ConcreteFactoryA --> ProductA1
-ConcreteFactoryA --> ProductB1
-ConcreteFactoryB --> ProductA2
-ConcreteFactoryB --> ProductB2
-Client --> AbstractFactory
+App->>C: Resolve(UsersController)
+C->>C: select ctor UsersController(OnboardingService, WelcomeService)
+C->>C: Resolve(OnboardingService)
+C->>C: map OnboardingService -> EmailOnboardingService
+C->>C: select ctor EmailOnboardingService(IMessageSender)
+C->>C: Resolve(IMessageSender)
+C->>C: map interface to ConsoleMessageSender
+C->>C: select ctor ConsoleMessageSender()
+C-->>C: new ConsoleMessageSender()
+C-->>C: new EmailOnboardingService(sender)
+C->>C: Resolve(WelcomeService)
+C->>C: map WelcomeService -> ConsoleWelcomeService
+C->>C: select ctor ConsoleWelcomeService()
+C-->>C: new ConsoleWelcomeService()
+C-->>App: new UsersController(onboarding, welcome)
 ```
 
-Enterprise mapping:
+### Request to Response Flow (Including DI Activation)
+
+The recursion above happens inside the request pipeline when a route matches.
 
 ```mermaid
-classDiagram
-direction TB
+sequenceDiagram
+participant Browser
+participant Server as TinyServer
+participant App as ToyWebApp
+participant C as MiniContainer
+participant Ctrl as UsersController
+participant Onb as EmailOnboardingService
+participant Wel as ConsoleWelcomeService
+participant Msg as ConsoleMessageSender
 
-class IComplianceSuiteFactory {
-  <<AbstractFactory>>
-  +CreateTaxCalculator() ITaxCalculator
-  +CreateInvoiceRenderer() IInvoiceRenderer
-}
-
-class UsComplianceSuiteFactory {
-  <<ConcreteFactoryA>>
-}
-
-class EuComplianceSuiteFactory {
-  <<ConcreteFactoryB>>
-}
-
-class ITaxCalculator {
-  <<AbstractProductA>>
-  +Calculate(order) decimal
-}
-
-class IInvoiceRenderer {
-  <<AbstractProductB>>
-  +Render(order) string
-}
-
-class UsTaxCalculator {
-  <<ConcreteProductA1>>
-}
-class EuTaxCalculator {
-  <<ConcreteProductA2>>
-}
-class UsInvoiceRenderer {
-  <<ConcreteProductB1>>
-}
-class EuInvoiceRenderer {
-  <<ConcreteProductB2>>
-}
-
-class ComplianceBillingService {
-  +Bill(order) Invoice
-}
-
-IComplianceSuiteFactory <|.. UsComplianceSuiteFactory
-IComplianceSuiteFactory <|.. EuComplianceSuiteFactory
-ITaxCalculator <|.. UsTaxCalculator
-ITaxCalculator <|.. EuTaxCalculator
-IInvoiceRenderer <|.. UsInvoiceRenderer
-IInvoiceRenderer <|.. EuInvoiceRenderer
-
-UsComplianceSuiteFactory --> UsTaxCalculator
-UsComplianceSuiteFactory --> UsInvoiceRenderer
-EuComplianceSuiteFactory --> EuTaxCalculator
-EuComplianceSuiteFactory --> EuInvoiceRenderer
-
-ComplianceBillingService --> IComplianceSuiteFactory
-ComplianceBillingService --> ITaxCalculator
-ComplianceBillingService --> IInvoiceRenderer
+Browser->>Server: GET /users/create
+Server->>App: Handle(Request)
+App->>C: Resolve(UsersController)
+C->>Msg: resolve IMessageSender -> ConsoleMessageSender
+C->>Onb: build EmailOnboardingService (via OnboardingService registration)
+C->>Wel: build ConsoleWelcomeService (via WelcomeService registration)
+C-->>App: UsersController(onboarding, welcome)
+App->>Ctrl: Create()
+Ctrl->>Onb: Onboard("user@example.com")
+Onb->>Msg: Send(...)
+Msg-->>Server: writes console output
+App-->>Server: "201 Created ..."
+Server-->>Browser: HTTP 200 + response text
 ```
 
-```csharp
-public interface IComplianceSuiteFactory
-{
-    ITaxCalculator CreateTaxCalculator();
-    IInvoiceRenderer CreateInvoiceRenderer();
-}
+### Why This Removes the Mystery
 
-public interface ITaxCalculator
-{
-    decimal Calculate(Order order);
-}
+- students can see that container resolution is deterministic recursion, not magic
+- controller activation is just object construction at request time
+- transitive dependencies are discovered from constructor signatures
 
-public interface IInvoiceRenderer
-{
-    string Render(Order order);
-}
+### Demo Prerequisites
 
-public sealed class UsComplianceSuiteFactory : IComplianceSuiteFactory
-{
-    public ITaxCalculator CreateTaxCalculator() => new UsTaxCalculator();
-    public IInvoiceRenderer CreateInvoiceRenderer() => new UsInvoiceRenderer();
-}
+> - Run from the repository root so relative demo paths work as written.
+> - Ensure port `5005` is available, or change the `prefix` value in the script.
+> - On some systems, `HttpListener` may require extra URL binding permissions.
 
-public sealed class EuComplianceSuiteFactory : IComplianceSuiteFactory
-{
-    public ITaxCalculator CreateTaxCalculator() => new EuTaxCalculator();
-    public IInvoiceRenderer CreateInvoiceRenderer() => new EuInvoiceRenderer();
-}
+### How to Run the Demo
 
-public sealed class ComplianceBillingService
-{
-    private readonly IComplianceSuiteFactory _factory;
+File-based run (recommended):
 
-    public ComplianceBillingService(IComplianceSuiteFactory factory)
-    {
-        _factory = factory;
-    }
-
-    public string Bill(Order order)
-    {
-        ITaxCalculator taxes = _factory.CreateTaxCalculator();
-        IInvoiceRenderer renderer = _factory.CreateInvoiceRenderer();
-
-        decimal tax = taxes.Calculate(order);
-        return renderer.Render(order with { Tax = tax });
-    }
-}
+```bash
+dotnet run demos/10-dependency-injection/di-simple-container-and-web-server-demo.cs
 ```
 
-DI can select the concrete abstract factory per tenant/environment while keeping billing logic stable:
+Then call the endpoints:
 
-```csharp
-services.AddScoped<UsComplianceSuiteFactory>();
-services.AddScoped<EuComplianceSuiteFactory>();
-
-services.AddScoped<IComplianceSuiteFactory>(sp =>
-{
-    var tenant = sp.GetRequiredService<ITenantContext>();
-    return tenant.RegionCode == "EU"
-        ? sp.GetRequiredService<EuComplianceSuiteFactory>()
-        : sp.GetRequiredService<UsComplianceSuiteFactory>();
-});
+```bash
+curl http://localhost:5005/users/create
+curl http://localhost:5005/users/hello
+curl "http://localhost:5005/users/hello?name=Jeff"
 ```
 
-## 11. Real-World Summary
+Expected behavior:
+
+- terminal prints route instructions and `Listening...`
+- `/users/create` prints a simulated email line to console and returns `201 Created ...`
+- `/users/hello` writes `Hello!` to console and returns that same text
+- `/users/hello?name=Jeff` writes `Hello, Jeff!` to console and returns that same text
+
+If port `5005` is already in use, change the `prefix` constant near the bottom of the script and rerun.
+
+### Step-Through Debugging Plan
+
+Set breakpoints in this order:
+
+1. `ToyWebApp.Handle(...)`
+2. `MiniContainer.Resolve(Type serviceType)` (first line)
+3. `UsersController.Create()`
+
+Then hit `/users/create` and watch:
+
+- recursive calls build `UsersController -> OnboardingService -> EmailOnboardingService -> ConsoleMessageSender`
+- the same resolve also builds `WelcomeService -> ConsoleWelcomeService` for the same controller constructor
+- stack frames unwind as each dependency instance is created
+- action invocation happens only after full controller construction
+
+---
+## 12. Real-World Summary
 
 ### Practical Guidance
 
 - Start with `manual DI` for smaller jobs/services and explicit composition roots.
 - Use a `container` when object graphs become large and lifetime rules matter.
 - Keep one `composition root` per app boundary (startup/bootstrap).
-- Keep `IServiceProvider` out of domain code.
+- Keep service-locator APIs out of domain code (dotnet: `IServiceProvider` / Spring: `ApplicationContext` or `ObjectProvider`).
 - Treat `lifetimes` as correctness constraints, not performance knobs.
 - Use DI to automate DIP consistently across environments and deployments.
+
+Use this decision flow when choosing between manual DI and container DI:
+
+```mermaid
+flowchart TD
+    A[Need dependency wiring?] --> B{Small graph and simple lifetimes?}
+    B -- Yes --> M[Manual DI in Composition Root]
+    B -- No --> C{Need scope control and startup validation?}
+    C -- Yes --> D[Use DI Container]
+    C -- No --> M
+    D --> E{Need runtime selection among multiple implementations?}
+    M --> E
+    E -- Yes --> F[Use boundary selector pattern (Appendix: keyed DI)]
+    E -- No --> G[Keep constructor injection only]
+```
 
 ### Common Misconceptions
 
@@ -1442,7 +1450,8 @@ services.AddScoped<IComplianceSuiteFactory>(sp =>
 - "Service locator is equivalent to constructor injection." (false: dependencies become hidden)
 - "Singleton is always better for performance." (false: captive dependency bugs are costly)
 
-## 12. Dependency Injection Study Guide
+---
+## Study Guide
 
 ### Core Definitions
 
@@ -1450,16 +1459,42 @@ services.AddScoped<IComplianceSuiteFactory>(sp =>
 - `Constructor Injection`: requiring collaborators through constructor parameters.
 - `Composition Root`: the boundary where concrete object graphs are wired.
 - `Object Graph`: runtime network of resolved instances.
-- `Container`: tooling that registers, resolves, and manages lifetimes.
-- `Lifetime`: reuse boundary (`transient`, `scoped`, `singleton`).
+- `Container`: tooling that registers, resolves, and manages lifetimes (dotnet: `IServiceCollection` + `IServiceProvider` / Spring: `ApplicationContext`).
+- `Lifetime`: reuse boundary (dotnet: `Transient`, `Scoped`, `Singleton` / Spring: `prototype`, `request`, `singleton`).
 - `Service Locator`: runtime lookup pattern that hides dependencies.
+
+This visual recap organizes the study guide into the four ideas students most often need to recall quickly:
+
+```mermaid
+flowchart TB
+    DI[Dependency Injection]
+    DI --> MECH[Mechanics]
+    DI --> BOUND[Boundaries]
+    DI --> RISKS[Failure Modes]
+    DI --> APPLY[Application]
+
+    MECH --> CI[Constructor Injection]
+    MECH --> OG2[Object Graph]
+    MECH --> LIF[Lifetime and Scope]
+
+    BOUND --> CR2[Composition Root]
+    BOUND --> START[Startup Validation]
+
+    RISKS --> SL[Service Locator]
+    RISKS --> CAP[Captive Dependency]
+    RISKS --> CYCLE[Cyclic Dependencies]
+
+    APPLY --> MAN[Manual DI]
+    APPLY --> CONT[Container DI]
+    APPLY --> SEL[Boundary Selector Pattern]
+```
 
 ### Detection Checklist
 
 - Do classes create infrastructure dependencies directly inside business methods?
 - Are constructor dependencies explicit and cohesive?
 - Are lifetime rules compatible across dependency chains?
-- Is `IServiceProvider` limited to boundaries/composition?
+- Are service-locator APIs (dotnet: `IServiceProvider` / Spring: `ApplicationContext`) limited to boundaries/composition?
 - Are circular dependencies blocked early?
 
 ### Refactoring Playbook
@@ -1475,8 +1510,188 @@ services.AddScoped<IComplianceSuiteFactory>(sp =>
 ### Exam-Focused Recall Prompts
 
 1. Explain the difference between DIP and DI in two sentences.
-2. Draw the resolution flow from `GetRequiredService<T>()` to object graph creation.
+2. Draw the resolution flow from a service lookup call (dotnet: `GetRequiredService<T>()` / Spring: `ApplicationContext.getBean(...)`) to object graph creation.
 3. Compare manual DI and container DI with one tradeoff each.
 4. Give one example of service locator and explain why it is risky.
 5. Explain captive dependency and one practical fix.
-6. Describe when a factory still adds value even when using DI.
+6. Describe one sign of over-injection and one refactoring option.
+
+---
+## Appendix 1: Keyed Dependency Injection
+
+This appendix is enrichment material and is **out of scope for the exam**.
+
+Because you already learned Strategy Pattern, read keyed dependency injection as a **runtime strategy-selection mechanism provided by the DI container**.
+
+Keyed dependency injection is a DI pattern where multiple implementations of the same abstraction are registered, and one implementation is selected using a key (for example: `"email"`, `"sms"`, `"EU"`).
+
+Strategy mapping in this appendix:
+
+- strategy interface: `INotificationSender` / `NotificationSender`
+- concrete strategies: `EmailSender`, `SmsSender`
+- strategy selector: key (`"email"`, `"sms"`)
+- context/boundary resolver: endpoint, router, or boundary factory that resolves by key
+
+Use keyed DI when:
+
+- the abstraction is the same, but behavior varies by channel/tenant/region
+- selection is configuration-driven or request-driven
+- you want to avoid large `switch` statements that manually construct concrete types
+
+Avoid keyed DI when:
+
+- there are only one or two stable implementations and selection never changes
+- a simple constructor-injected strategy/factory already expresses the variation cleanly
+- string keys would spread through domain logic
+
+### Strategy Pattern View of Keyed DI
+
+The model is the same across frameworks:
+
+1. Register multiple concrete strategies under different keys.
+2. Select the strategy key at a boundary (controller/handler/factory), not inside core policy code.
+3. Resolve the strategy by key through the container.
+4. Keep keys centralized and typed where possible.
+
+```mermaid
+flowchart LR
+    R[Registration] --> K1[Key: email]
+    R --> K2[Key: sms]
+    K1 --> I1[EmailSender]
+    K2 --> I2[SmsSender]
+    B[Boundary: controller/factory] --> SEL[Select key]
+    SEL --> RES[Resolve by key]
+    RES --> I1
+    RES --> I2
+    I1 --> CORE[Core policy uses abstraction]
+    I2 --> CORE
+```
+
+### Terminology Mapping
+
+| Generic concept | dotnet | Spring |
+| --- | --- | --- |
+| Keyed registration | `AddKeyedTransient/AddKeyedScoped/AddKeyedSingleton` | named beans (`@Component("email")`, `@Bean("email")`) and qualifiers |
+| Keyed lookup API | `GetRequiredKeyedService<T>(key)` | `@Qualifier("email")` for static selection, or `Map<String, T>` / `ApplicationContext.getBean(name, type)` for runtime selection |
+| Route-level key injection | `[FromKeyedServices("email")]` (ASP.NET Core endpoints/controllers) | `@Qualifier("email")` in constructor parameters |
+| Default implementation | non-keyed registration or explicit key convention | `@Primary` (default bean) |
+
+### dotnet Example
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+
+public interface INotificationSender
+{
+    Task SendAsync(string recipient, string body);
+}
+
+public sealed class EmailSender : INotificationSender
+{
+    public Task SendAsync(string recipient, string body) => Task.CompletedTask;
+}
+
+public sealed class SmsSender : INotificationSender
+{
+    public Task SendAsync(string recipient, string body) => Task.CompletedTask;
+}
+
+var services = new ServiceCollection();
+services.AddKeyedScoped<INotificationSender, EmailSender>("email");
+services.AddKeyedScoped<INotificationSender, SmsSender>("sms");
+```
+
+Static key at endpoint boundary:
+
+```csharp
+app.MapPost(
+    "/notify/email",
+    async ([FromKeyedServices("email")] INotificationSender sender, NotifyRequest req) =>
+    {
+        await sender.SendAsync(req.Recipient, req.Body);
+    });
+```
+
+Runtime key selection via boundary factory:
+
+```csharp
+public interface INotificationSenderSelector
+{
+    INotificationSender For(string channelKey);
+}
+
+public sealed class NotificationSenderSelector : INotificationSenderSelector
+{
+    private readonly IServiceProvider _services;
+
+    public NotificationSenderSelector(IServiceProvider services)
+    {
+        _services = services;
+    }
+
+    public INotificationSender For(string channelKey)
+    {
+        return _services.GetRequiredKeyedService<INotificationSender>(channelKey);
+    }
+}
+```
+
+### Spring Example
+
+```java
+public interface NotificationSender {
+    void send(String recipient, String body);
+}
+
+@Component("email")
+public final class EmailSender implements NotificationSender {
+    public void send(String recipient, String body) { }
+}
+
+@Component("sms")
+public final class SmsSender implements NotificationSender {
+    public void send(String recipient, String body) { }
+}
+```
+
+Static key with qualifier:
+
+```java
+@Service
+public final class BillingNotifier {
+    private final NotificationSender sender;
+
+    public BillingNotifier(@Qualifier("email") NotificationSender sender) {
+        this.sender = sender;
+    }
+}
+```
+
+Runtime key selection with bean map:
+
+```java
+@Service
+public final class NotificationRouter {
+    private final Map<String, NotificationSender> senders;
+
+    public NotificationRouter(Map<String, NotificationSender> senders) {
+        this.senders = senders;
+    }
+
+    public void send(String channelKey, String recipient, String body) {
+        NotificationSender sender = Optional.ofNullable(senders.get(channelKey))
+            .orElseThrow(() -> new IllegalArgumentException("Unsupported channel: " + channelKey));
+
+        sender.send(recipient, body);
+    }
+}
+```
+
+### Design Guidance
+
+- treat keyed DI as a strategy resolver at boundaries, not as a replacement for good strategy interfaces
+- keep key selection at composition and boundary layers
+- keep domain/policy services constructor-injected with explicit abstractions
+- centralize key names as constants/enums/value objects to avoid string drift
+- validate key-to-implementation mapping at startup when possible
+- treat keyed lookup APIs as boundary tools, not domain defaults

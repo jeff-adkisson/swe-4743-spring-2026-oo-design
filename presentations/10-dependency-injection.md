@@ -237,7 +237,9 @@ In an order-processing service, a root object often needs:
 
 ### Constructor Injection: Dependencies Become Explicit
 
-Constructor injection means a class cannot be created without required collaborators.
+Constructor injection means a class cannot be created without required collaborators. 
+
+> Property injection and method injection also exist, but they hide dependencies — a caller can construct the object and forget to set required properties — which weakens the explicit contract and makes tests harder to write reliably. Constructor injection is the default preference in both dotnet and Spring ecosystems.
 
 Technical effects:
 
@@ -413,6 +415,8 @@ public sealed class OrderIngestionService
     }
 }
 ```
+
+> **Resource leak**: `new TaxRulesHttpClient("https://tax-rules.internal")` is constructed on every `Ingest()` call. `TaxRulesHttpClient` almost certainly wraps an `HttpClient` (or a socket/connection pool), which implements `IDisposable`. Because the instance is never disposed, each call leaks a connection handle. This compounds the hidden-dependency problem: not only is the dependency invisible, it actively misbehaves under load.
 
 ```mermaid
 classDiagram
@@ -626,6 +630,9 @@ var sut = new OrderIngestionService(repo, pricing, clock, logger);
 sut.Ingest(new OrderMessage("ORD-1", "C-1", 10m, "US"));
 
 Console.WriteLine(repo.Saved.Count == 1 ? "PASS" : "FAIL");
+//  Manual assertion avoids pulling in a test-framework dependency for this sketch.
+//  In a real project use: Assert.Equal(1, repo.Saved.Count)  (xUnit) or
+//                         Assert.That(repo.Saved.Count, Is.EqualTo(1))  (NUnit)
 ```
 
 ---
@@ -1000,40 +1007,6 @@ PaymentService --> InvoiceService
 InvoiceService --> PaymentService
 ```
 
-Break cycles with events, mediator, or explicit responsibility split:
-
-```csharp
-public sealed class PaymentService
-{
-    private readonly IDomainEventPublisher _events;
-
-    public PaymentService(IDomainEventPublisher events)
-    {
-        _events = events;
-    }
-
-    public void Capture(string invoiceId)
-    {
-        _events.Publish(new PaymentCaptured(invoiceId));
-    }
-}
-
-public sealed class InvoicePaymentProjectionHandler : IDomainEventHandler<PaymentCaptured>
-{
-    private readonly IInvoiceRepository _invoices;
-
-    public InvoicePaymentProjectionHandler(IInvoiceRepository invoices)
-    {
-        _invoices = invoices;
-    }
-
-    public void Handle(PaymentCaptured evt)
-    {
-        _invoices.MarkPaid(evt.InvoiceId);
-    }
-}
-```
-
 ---
 ## 10. Demo #1: dotnet DI Container in a Minimal Web App
 
@@ -1079,7 +1052,9 @@ Expected behavior:
 
 1. Composition root registration happens in `builder.Services` (abstractions mapped to implementations).
 2. `UsersController` depends on abstractions (`IOnboardingService`, `IWelcomeService`), not concrete collaborators.
-3. Endpoint handlers request `UsersController` via `[FromServices]`, which resolves from the request service provider (`HttpContext.RequestServices`).
+3. Endpoint handlers request `UsersController` via `[FromServices]`, which resolves from the request service provider (`HttpContext.RequestServices`). 
+
+   > This is technically service-locator behavior, but it is acceptable here because the framework infrastructure — not domain code — is performing the lookup. The business classes (`UsersController`, `EmailOnboardingService`, etc.) remain unaware of `IServiceProvider`. See Section 9 for the rule of thumb: service locator is acceptable at framework boundaries and composition roots; it becomes an anti-pattern when domain code starts calling `GetRequiredService(...)` directly.
 4. Query string value `name` is bound by minimal API parameter binding and forwarded to `UsersController.Hello(name)`.
 5. `ConsoleWelcomeService` encapsulates greeting behavior and writes to both response and console.
 
@@ -1124,7 +1099,7 @@ Web-->>Browser: 200 text/plain "Hello, Jeff!"
 ### Mapping Back to Lecture Concepts
 
 - `Composition Root`: `builder.Services` registrations and endpoint wiring at startup.
-- `Resolution`: request scope resolves `UsersController` when endpoint asks for `[FromServices]`.
+- `Resolution` / `[FromServices]`: request scope resolves `UsersController` when the endpoint asks for it — framework-boundary service locator, not domain-code service locator (see Section 9: *When bounded use is acceptable*).
 - `Object Graph`: `UsersController -> IOnboardingService/IWelcomeService -> IMessageSender`.
 - `DIP`: abstractions are stable contracts; concrete implementations are selected in startup.
 

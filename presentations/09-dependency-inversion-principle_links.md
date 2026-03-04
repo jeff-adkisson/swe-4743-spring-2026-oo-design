@@ -1,1 +1,1 @@
-[Lecture Material](presentations/09-dependency-inversion-principle.md)
+- [Lecture Material](presentations/09-dependency-inversion-principle.md)

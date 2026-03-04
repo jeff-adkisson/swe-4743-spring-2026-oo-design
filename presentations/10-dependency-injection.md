@@ -47,6 +47,8 @@ In other words, DI is not the principle itself; DI is how teams automate and sca
 
 In Lecture 9, Composition Root was reframed as an architectural boundary, not just a way to keep `Main` short. In this lecture, we operationalize that boundary: Composition Root is the control point where DI policies are enforced for the full object graph.
 
+> Ousterhout reference (Ch. 2-3): DI is a complexity-management tactic, not just a syntax preference. The strategic value is lowering long-term change cost in policy code.
+
 ### Canonical Definition
 
 > Dependency Injection: an object receives required collaborators from outside itself instead of creating them internally.
@@ -114,6 +116,8 @@ Before comparing DI and DIP, align on core DI vocabulary:
 | `Composition Root` | The application boundary where registrations and wiring decisions are centralized. |
 | `Constructor Injection` | Supplying required collaborators through constructor parameters. |
 | `Service Locator` | Pulling dependencies from a provider at runtime instead of declaring them explicitly. |
+
+> Ousterhout reference (Ch. 4-5): this vocabulary supports deep modules by keeping interfaces focused and implementation mechanics hidden.
 
 ### dotnet and Spring Boot Terminology Crosswalk
 
@@ -197,6 +201,8 @@ Use the following diagram to keep the distinction clear: DIP is a dependency-dir
 - Top (`DIP`) answers: "Who is allowed to depend on what in source code?"
 - Bottom (`DI`) answers: "Who creates and wires objects at runtime?"
 - The shared abstraction exists in both views: DIP constrains dependency direction; DI supplies the concrete implementation behind that abstraction.
+
+> Ousterhout reference (Ch. 7-8): DIP keeps abstraction layers clean; DI helps pull wiring complexity downward so policy layers remain simpler.
 
 ```mermaid
 flowchart LR
@@ -316,6 +322,8 @@ For the full conceptual treatment and manual composition examples, see [Lecture 
 - choose lifetimes (`transient`, `scoped`, `singleton`) intentionally
 - build/validate the provider at startup
 - create/dispose scopes at boundary edges
+
+> Ousterhout reference (Ch. 7-8): Composition Root keeps volatile wiring detail in lower layers instead of leaking it into business policy code.
 
 This boundary diagram clarifies what belongs in the Composition Root versus what belongs in runtime business code:
 
@@ -756,6 +764,8 @@ ServiceProvider --> ScopeCache : uses
 
 Service Locator means a class requests dependencies from a global provider/container at runtime instead of declaring them in the constructor.
 
+> Ousterhout reference (Ch. 5): service locator erodes information hiding by exposing construction/lookup mechanics to business code.
+
 Equivalent service-locator calls in business/domain code create the same hidden-dependency problem (dotnet: `IServiceProvider.GetRequiredService(...)` / Spring: `ApplicationContext.getBean(...)` or `ObjectProvider.getObject()`).
 
 Why teams drift toward it:
@@ -836,6 +846,8 @@ Guidance: keep locator use in boundaries/composition only, not in core domain lo
 ### 2) Over-injection / Constructor Bloat
 
 If a constructor takes 9-12 dependencies, SRP is usually drifting.
+
+> Ousterhout reference (Ch. 2): overly broad constructor surfaces increase cognitive complexity and reduce maintainability.
 
 ```csharp
 public sealed class OrderWorkflowService
@@ -1260,6 +1272,17 @@ Then hit `/users/create` and watch:
 - Keep service-locator APIs out of domain code (dotnet: `IServiceProvider` / Spring: `ApplicationContext` or `ObjectProvider`).
 - Treat `lifetimes` as correctness constraints, not performance knobs.
 - Use DI to automate DIP consistently across environments and deployments.
+
+### Ousterhout Reference Map (Chapters 1-8)
+
+- Ch. 1 (`Introduction`): design quality is about sustaining change, not just making code run today.
+- Ch. 2 (`The Nature of Complexity`): DI reduces dependency-related cognitive load and change risk.
+- Ch. 3 (`Working Code Isn't Enough`): composition-root discipline is a strategic investment.
+- Ch. 4 (`Modules Should Be Deep`): stable abstractions + hidden wiring details produce deeper modules.
+- Ch. 5 (`Information Hiding`): constructor injection exposes requirements while hiding construction mechanics.
+- Ch. 6 (`General-Purpose Modules Are Deeper`): DI containers provide reusable composition infrastructure.
+- Ch. 7 (`Different Layer, Different Abstraction`): policy, composition, and infrastructure should stay at distinct abstraction levels.
+- Ch. 8 (`Pull Complexity Downwards`): DI and composition root move volatility away from policy code.
 
 ![image-20260303231849951](10-dependency-injection.assets/image-20260303231849951.png)
 

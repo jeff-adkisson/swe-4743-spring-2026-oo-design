@@ -4,7 +4,11 @@ The **D** in SOLI**D**
 
 [Powerpoint Presentation](09-dependency-inversion-principle.pptx) | [PDF](09-dependency-inversion-principle.pdf)
 
+---
+
 ![image-20260302134048187](09-dependency-inversion-principle.assets/image-20260302134048187.png)
+
+---
 
 ## 1. Introduction to the Dependency Inversion Principle
 

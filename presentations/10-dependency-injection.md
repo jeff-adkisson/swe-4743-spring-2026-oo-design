@@ -444,6 +444,7 @@ Now move dependency creation out of the business class and into constructor para
 ```csharp
 public interface IOrderRepository
 {
+    Order Load(string orderId);
     void Save(Order order);
 }
 
@@ -501,6 +502,7 @@ direction TB
 class OrderIngestionService
 class IOrderRepository {
   <<interface>>
+  +Load(orderId) Order
   +Save(order) void
 }
 class IPricingPolicy {
@@ -599,6 +601,7 @@ public sealed class FakeOrderRepository : IOrderRepository
 {
     public readonly List<Order> Saved = new();
 
+    public Order Load(string orderId) => return new Order(orderId);
     public void Save(Order order) => Saved.Add(order);
 }
 
@@ -831,6 +834,8 @@ class ShipmentServiceExplicit {
 }
 class IOrderRepository {
   <<interface>>
+  +Load(orderId) Order
+  +Save(order) void
 }
 class ICustomerNotifier {
   <<interface>>

@@ -1078,10 +1078,10 @@ Expected behavior:
 ### Key Points to Inspect in the Script
 
 1. Composition root registration happens in `builder.Services` (abstractions mapped to implementations).
-2. `UsersController` depends on abstractions (`OnboardingService`, `WelcomeService`), not concrete collaborators.
+2. `UsersController` depends on abstractions (`IOnboardingService`, `IWelcomeService`), not concrete collaborators.
 3. Endpoint handlers request `UsersController` via `[FromServices]`, which resolves from the request service provider (`HttpContext.RequestServices`).
 4. Query string value `name` is bound by minimal API parameter binding and forwarded to `UsersController.Hello(name)`.
-5. `WelcomeService` encapsulates greeting behavior and writes to both response and console.
+5. `ConsoleWelcomeService` encapsulates greeting behavior and writes to both response and console.
 
 ### Registration and Activation Flow
 
@@ -1095,8 +1095,8 @@ participant Endpoint as Minimal API Endpoint
 participant Ctrl as UsersController
 
 Startup->>Services: AddTransient(IMessageSender, ConsoleMessageSender)
-Startup->>Services: AddTransient(OnboardingService, EmailOnboardingService)
-Startup->>Services: AddTransient(WelcomeService, ConsoleWelcomeService)
+Startup->>Services: AddTransient(IOnboardingService, EmailOnboardingService)
+Startup->>Services: AddTransient(IWelcomeService, ConsoleWelcomeService)
 Startup->>Services: AddTransient(UsersController)
 Startup->>Root: Build WebApplication host
 Endpoint->>Scope: Resolve UsersController ([FromServices])
@@ -1125,7 +1125,7 @@ Web-->>Browser: 200 text/plain "Hello, Jeff!"
 
 - `Composition Root`: `builder.Services` registrations and endpoint wiring at startup.
 - `Resolution`: request scope resolves `UsersController` when endpoint asks for `[FromServices]`.
-- `Object Graph`: `UsersController -> OnboardingService/WelcomeService -> IMessageSender`.
+- `Object Graph`: `UsersController -> IOnboardingService/IWelcomeService -> IMessageSender`.
 - `DIP`: abstractions are stable contracts; concrete implementations are selected in startup.
 
 ---
@@ -1152,7 +1152,7 @@ Section 10 showed the same feature set running on the standard Microsoft DI cont
 
 The core method is `Resolve(Type serviceType)` in `MiniContainer`:
 
-1. Look up the requested type in registrations (for example, `OnboardingService -> EmailOnboardingService`).
+1. Look up the requested type in registrations (for example, `IOnboardingService -> EmailOnboardingService`).
    If no registration exists and the type is concrete (for example, `UsersController`), use that type directly.
 2. Choose a constructor (this demo picks the public constructor with most parameters).
 3. For each constructor parameter, call `Resolve(...)` again.
@@ -1167,17 +1167,17 @@ participant App as ToyWebApp
 participant C as MiniContainer
 
 App->>C: Resolve(UsersController)
-C->>C: select ctor UsersController(OnboardingService, WelcomeService)
-C->>C: Resolve(OnboardingService)
-C->>C: map OnboardingService -> EmailOnboardingService
+C->>C: select ctor UsersController(IOnboardingService, IWelcomeService)
+C->>C: Resolve(IOnboardingService)
+C->>C: map IOnboardingService -> EmailOnboardingService
 C->>C: select ctor EmailOnboardingService(IMessageSender)
 C->>C: Resolve(IMessageSender)
 C->>C: map interface to ConsoleMessageSender
 C->>C: select ctor ConsoleMessageSender()
 C-->>C: new ConsoleMessageSender()
 C-->>C: new EmailOnboardingService(sender)
-C->>C: Resolve(WelcomeService)
-C->>C: map WelcomeService -> ConsoleWelcomeService
+C->>C: Resolve(IWelcomeService)
+C->>C: map IWelcomeService -> ConsoleWelcomeService
 C->>C: select ctor ConsoleWelcomeService()
 C-->>C: new ConsoleWelcomeService()
 C-->>App: new UsersController(onboarding, welcome)
@@ -1202,8 +1202,8 @@ Browser->>Server: GET /users/create
 Server->>App: Handle(Request)
 App->>C: Resolve(UsersController)
 C->>Msg: resolve IMessageSender -> ConsoleMessageSender
-C->>Onb: build EmailOnboardingService (via OnboardingService registration)
-C->>Wel: build ConsoleWelcomeService (via WelcomeService registration)
+C->>Onb: build EmailOnboardingService (via IOnboardingService registration)
+C->>Wel: build ConsoleWelcomeService (via IWelcomeService registration)
 C-->>App: UsersController(onboarding, welcome)
 App->>Ctrl: Create()
 Ctrl->>Onb: Onboard("user@example.com")
@@ -1260,8 +1260,8 @@ Set breakpoints in this order:
 
 Then hit `/users/create` and watch:
 
-- recursive calls build `UsersController -> OnboardingService -> EmailOnboardingService -> ConsoleMessageSender`
-- the same resolve also builds `WelcomeService -> ConsoleWelcomeService` for the same controller constructor
+- recursive calls build `UsersController -> IOnboardingService -> EmailOnboardingService -> ConsoleMessageSender`
+- the same resolve also builds `IWelcomeService -> ConsoleWelcomeService` for the same controller constructor
 - stack frames unwind as each dependency instance is created
 - action invocation happens only after full controller construction
 

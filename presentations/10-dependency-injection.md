@@ -82,9 +82,9 @@ For the full DIP refactoring context, revisit Lecture 9:
 - [6. Composition Root Deep Dive](#6-composition-root-deep-dive)
 - [7. Manual Dependency Injection (No Container)](#7-manual-dependency-injection-no-container)
 - [8. DI Containers Conceptually (How Framework DI Works)](#8-di-containers-conceptually-how-framework-di-works)
-- [9. C# Demo: Microsoft.Extensions.DependencyInjection in a Console App](#9-c-demo-microsoftextensionsdependencyinjection-in-a-console-app)
-- [10. Anti-Patterns and Failure Modes](#10-anti-patterns-and-failure-modes)
-- [11. Removing the Mystery: How does a DI container work?](#11-removing-the-mystery-how-does-a-di-container-work)
+- [9. Anti-Patterns and Failure Modes](#9-anti-patterns-and-failure-modes)
+- [10. Demo #1: dotnet DI Container in a Minimal Web App](#10-demo-1-dotnet-di-container-in-a-minimal-web-app)
+- [11. Demo #2: How does a DI container work?](#11-demo-2-how-does-a-di-container-work)
 - [12. Real-World Summary](#12-real-world-summary)
 - [Study Guide](#study-guide)
 - [Appendix 1: Keyed Dependency Injection](#appendix-1-keyed-dependency-injection)
@@ -148,7 +148,7 @@ Typical DI flow:
 The concept map below shows how the core terms connect during runtime composition:
 
 ```mermaid
-flowchart LR
+flowchart TB
     CR[Composition Root] --> REG[Registrations]
     REG --> C[Container]
     C --> RES[Resolution]
@@ -726,295 +726,7 @@ ServiceProvider --> ScopeCache : uses
 - Overusing container APIs (`IServiceProvider` everywhere) drifts toward service locator.
 
 ---
-## 9. C# Demo: Microsoft.Extensions.DependencyInjection in a Console App
-
-Goal: show constructor resolution using the same abstractions used by ASP.NET Core.
-
-> Demo prerequisites:
-> - Use an SDK that supports file-based apps (`dotnet run <file.cs>`) and `#:package` directives.
-> - If your SDK does not support that mode, use a normal console project with the NuGet commands below.
-> - Internet access is required for NuGet restore.
-
-### NuGet Requirements and Installation
-
-This demo requires these NuGet packages:
-
-- `Microsoft.Extensions.DependencyInjection`
-- `Microsoft.Extensions.DependencyInjection.Abstractions`
-
-Install them in a normal console project with:
-
-```bash
-dotnet add package Microsoft.Extensions.DependencyInjection
-dotnet add package Microsoft.Extensions.DependencyInjection.Abstractions
-```
-
-### C# 14 Standalone Script Usage
-
-For a single-file C# 14 app (no `.csproj`), add package directives at the top of the file:
-
-```csharp
-#!/usr/bin/dotnet run
-#:package Microsoft.Extensions.DependencyInjection@10.0.0
-#:package Microsoft.Extensions.DependencyInjection.Abstractions@10.0.0
-
-using Microsoft.Extensions.DependencyInjection;
-```
-
-Then place the demo code below those directives and run it with:
-
-```bash
-dotnet run di-demo.cs
-```
-
-> You can find the complete script at `demos/10-dependency-injection/di-demo.cs`
-
-### Complete `Program.cs`
-
-```csharp
-using System;
-using Microsoft.Extensions.DependencyInjection;
-
-public interface IAuditClock
-{
-    DateTime UtcNow { get; }
-}
-
-public sealed class SystemAuditClock : IAuditClock
-{
-    public SystemAuditClock()
-    {
-        Console.WriteLine("Constructed: SystemAuditClock (Singleton)");
-    }
-
-    public DateTime UtcNow => DateTime.UtcNow;
-}
-
-public interface IAuditLogger
-{
-    void Write(string message);
-}
-
-public sealed class ConsoleAuditLogger : IAuditLogger
-{
-    private readonly IAuditClock _clock;
-
-    public ConsoleAuditLogger(IAuditClock clock)
-    {
-        _clock = clock;
-        Console.WriteLine("Constructed: ConsoleAuditLogger (depends on IAuditClock)");
-    }
-
-    public void Write(string message)
-    {
-        Console.WriteLine($"[{_clock.UtcNow:O}] AUDIT {message}");
-    }
-}
-
-public interface IComplianceReportGenerator
-{
-    string Generate(string orderId);
-}
-
-public sealed class ComplianceReportGenerator : IComplianceReportGenerator
-{
-    private readonly IAuditLogger _auditLogger;
-
-    public ComplianceReportGenerator(IAuditLogger auditLogger)
-    {
-        _auditLogger = auditLogger;
-        Console.WriteLine("Constructed: ComplianceReportGenerator (depends on IAuditLogger)");
-    }
-
-    public string Generate(string orderId)
-    {
-        string reportId = $"RPT-{orderId}";
-        _auditLogger.Write($"Generated compliance report {reportId}");
-        return reportId;
-    }
-}
-
-public sealed class NightlyComplianceJob
-{
-    private readonly IComplianceReportGenerator _generator;
-
-    public NightlyComplianceJob(IComplianceReportGenerator generator)
-    {
-        _generator = generator;
-        Console.WriteLine("Constructed: NightlyComplianceJob (depends on IComplianceReportGenerator)");
-    }
-
-    public void Run(string orderId)
-    {
-        string reportId = _generator.Generate(orderId);
-        Console.WriteLine($"Job completed with {reportId}");
-    }
-}
-
-public static class Program
-{
-    public static void Main()
-    {
-        var services = new ServiceCollection();
-
-        services.AddSingleton<IAuditClock, SystemAuditClock>();
-        services.AddTransient<IAuditLogger, ConsoleAuditLogger>();
-        services.AddTransient<IComplianceReportGenerator, ComplianceReportGenerator>();
-        services.AddTransient<NightlyComplianceJob>();
-
-        using ServiceProvider provider = services.BuildServiceProvider();
-
-        Console.WriteLine("Resolving NightlyComplianceJob...");
-        NightlyComplianceJob job = provider.GetRequiredService<NightlyComplianceJob>();
-
-        Console.WriteLine("Running job...");
-        job.Run("ORD-2026-00042");
-    }
-}
-```
-
-Sample output shape:
-
-```text
-Resolving NightlyComplianceJob...
-Constructed: SystemAuditClock (Singleton)
-Constructed: ConsoleAuditLogger (depends on IAuditClock)
-Constructed: ComplianceReportGenerator (depends on IAuditLogger)
-Constructed: NightlyComplianceJob (depends on IComplianceReportGenerator)
-Running job...
-[2026-02-20T...] AUDIT Generated compliance report RPT-ORD-2026-00042
-Job completed with RPT-ORD-2026-00042
-```
-
-```mermaid
-classDiagram
-direction TB
-
-class IAuditClock {
-  <<interface>>
-  +UtcNow DateTime
-}
-
-class IAuditLogger {
-  <<interface>>
-  +Write(message) void
-}
-
-class IComplianceReportGenerator {
-  <<interface>>
-  +Generate(orderId) string
-}
-
-class SystemAuditClock
-class ConsoleAuditLogger
-class ComplianceReportGenerator
-class NightlyComplianceJob
-
-IAuditClock <|.. SystemAuditClock
-IAuditLogger <|.. ConsoleAuditLogger
-IComplianceReportGenerator <|.. ComplianceReportGenerator
-
-ConsoleAuditLogger --> IAuditClock
-ComplianceReportGenerator --> IAuditLogger
-NightlyComplianceJob --> IComplianceReportGenerator
-```
-
-Registration flow (before `GetRequiredService(...)`):
-
-```mermaid
-sequenceDiagram
-participant Main
-participant Services as ServiceCollection
-participant Registry as DescriptorRegistry
-participant Provider as ServiceProvider
-
-Main->>Services: new ServiceCollection()
-Main->>Services: AddSingleton(IAuditClock, SystemAuditClock)
-Services->>Registry: store descriptor
-Main->>Services: AddTransient(IAuditLogger, ConsoleAuditLogger)
-Services->>Registry: store descriptor
-Main->>Services: AddTransient(IComplianceReportGenerator, ComplianceReportGenerator)
-Services->>Registry: store descriptor
-Main->>Services: AddTransient(NightlyComplianceJob)
-Services->>Registry: store descriptor
-Main->>Services: BuildServiceProvider()
-Services->>Provider: create provider
-Provider-->>Main: provider
-```
-
-Resolution flow:
-
-```mermaid
-sequenceDiagram
-participant Main
-participant Provider as ServiceProvider
-participant Job as NightlyComplianceJob
-participant Gen as ComplianceReportGenerator
-participant Sink as ConsoleAuditLogger
-participant Clock as SystemAuditClock
-
-Main->>Provider: GetRequiredService<NightlyComplianceJob>()
-Provider->>Provider: resolve IComplianceReportGenerator
-Provider->>Provider: resolve IAuditLogger
-Provider->>Provider: resolve IAuditClock
-Provider->>Clock: new SystemAuditClock()
-Provider->>Sink: new ConsoleAuditLogger(clock)
-Provider->>Gen: new ComplianceReportGenerator(sink)
-Provider->>Job: new NightlyComplianceJob(generator)
-Provider-->>Main: job
-Main->>Job: Run("ORD-2026-00042")
-```
-
-### ASP.NET Core Mapping (Concept)
-
-The same registrations map directly into ASP.NET Core startup:
-
-```csharp
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton<IAuditClock, SystemAuditClock>();
-builder.Services.AddTransient<IAuditLogger, ConsoleAuditLogger>();
-builder.Services.AddTransient<IComplianceReportGenerator, ComplianceReportGenerator>();
-```
-
-Controllers, endpoints, and hosted services receive these dependencies through constructor injection.
-
-### Spring Boot Mapping (Concept)
-
-The closest Spring Boot equivalent is bean registration in `@Configuration` (or component scanning with stereotypes):
-
-```java
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-
-@Configuration
-public class DiConfig {
-
-    @Bean
-    @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
-    public AuditClock auditClock() {
-        return new SystemAuditClock();
-    }
-
-    @Bean
-    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public AuditLogger auditLogger(AuditClock clock) {
-        return new ConsoleAuditLogger(clock);
-    }
-
-    @Bean
-    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public ComplianceReportGenerator complianceReportGenerator(AuditLogger logger) {
-        return new ComplianceReportGenerator(logger);
-    }
-}
-```
-
-Constructor injection entry points are equivalent: dotnet: controllers/endpoints and hosted services / Spring: MVC controllers and scheduled/background components.
-
----
-## 10. Anti-Patterns and Failure Modes
+## 9. Anti-Patterns and Failure Modes
 
 ### 1) Service Locator
 
@@ -1281,12 +993,104 @@ public sealed class InvoicePaymentProjectionHandler : IDomainEventHandler<Paymen
 ```
 
 ---
-## 11. Removing the Mystery: How does a DI container work?
+## 10. Demo #1: dotnet DI Container in a Minimal Web App
 
-This section uses a tiny, inspectable demo container and web server so students can step through DI behavior line by line:
+This demo establishes the baseline behavior using the standard dotnet hosting model and built-in DI container. Section 11 then decomposes the same behavior into a toy app so students can inspect the mechanics directly.
 
-- script: `demos/10-dependency-injection/di-simple-container-and-web-server-demo.cs`
-- goal: make constructor-based recursive resolution visible
+- script: `demos/10-dependency-injection/di-container-and-web-server-demo.cs`
+- runtime model: ASP.NET Core minimal API + Microsoft DI container
+- routes:
+  - `GET /users/create`
+  - `GET /users/hello`
+  - `GET /users/hello?name=Jeff`
+
+### How to Run
+
+> Prerequisites:
+> - Use an SDK that supports file-based apps (`dotnet run <file.cs>`) and `#:sdk` directives.
+> - Run from the repository root so relative paths work as written.
+
+Start the demo:
+
+```bash
+dotnet run demos/10-dependency-injection/di-container-and-web-server-demo.cs
+```
+
+Call the endpoints:
+
+```bash
+curl http://localhost:5005/users/create
+curl http://localhost:5005/users/hello
+curl "http://localhost:5005/users/hello?name=Jeff"
+```
+
+Expected behavior:
+
+- `/users/create` returns `200 OK` with body `201 Created (onboarded user@example.com)` and logs a simulated email line.
+- `/users/hello` returns `Hello!` and writes `Hello!` to console.
+- `/users/hello?name=Jeff` returns `Hello, Jeff!` and writes `Hello, Jeff!` to console.
+- If `5005` is already in use, change `UseUrls("http://localhost:5005")` in the script.
+
+### Key Points to Inspect in the Script
+
+1. Composition root registration happens in `builder.Services` (abstractions mapped to implementations).
+2. `UsersController` depends on abstractions (`OnboardingService`, `WelcomeService`), not concrete collaborators.
+3. Endpoint handlers request `UsersController` via `[FromServices]`, which resolves from the request service provider (`HttpContext.RequestServices`).
+4. Query string value `name` is bound by minimal API parameter binding and forwarded to `UsersController.Hello(name)`.
+5. `WelcomeService` encapsulates greeting behavior and writes to both response and console.
+
+### Registration and Activation Flow
+
+```mermaid
+sequenceDiagram
+participant Startup as Program Startup
+participant Services as IServiceCollection
+participant Root as Root IServiceProvider
+participant Scope as Request IServiceProvider
+participant Endpoint as Minimal API Endpoint
+participant Ctrl as UsersController
+
+Startup->>Services: AddTransient(IMessageSender, ConsoleMessageSender)
+Startup->>Services: AddTransient(OnboardingService, EmailOnboardingService)
+Startup->>Services: AddTransient(WelcomeService, ConsoleWelcomeService)
+Startup->>Services: AddTransient(UsersController)
+Startup->>Root: Build WebApplication host
+Endpoint->>Scope: Resolve UsersController ([FromServices])
+Scope-->>Ctrl: UsersController(onboarding, welcome)
+```
+
+### Request Flow Example: `GET /users/hello?name=Jeff`
+
+```mermaid
+sequenceDiagram
+participant Browser
+participant Web as ASP.NET Core Endpoint
+participant Ctrl as UsersController
+participant Wel as ConsoleWelcomeService
+
+Browser->>Web: GET /users/hello?name=Jeff
+Web->>Ctrl: Hello("Jeff")
+Ctrl->>Wel: SayHello("Jeff")
+Wel-->>Wel: Console.WriteLine("Hello, Jeff!")
+Wel-->>Ctrl: "Hello, Jeff!"
+Ctrl-->>Web: "Hello, Jeff!"
+Web-->>Browser: 200 text/plain "Hello, Jeff!"
+```
+
+### Mapping Back to Lecture Concepts
+
+- `Composition Root`: `builder.Services` registrations and endpoint wiring at startup.
+- `Resolution`: request scope resolves `UsersController` when endpoint asks for `[FromServices]`.
+- `Object Graph`: `UsersController -> OnboardingService/WelcomeService -> IMessageSender`.
+- `DIP`: abstractions are stable contracts; concrete implementations are selected in startup.
+
+---
+## 11. Demo #2: How does a DI container work?
+
+Section 10 showed the same feature set running on the standard Microsoft DI container and minimal web host. This section decomposes that functionality into a tiny toy container + toy web app so students can inspect each DI step directly and remove the "black box" feeling.
+
+- script: `demos/10-dependency-injection/di-toy-container-and-web-server-demo.cs`
+- goal: make constructor-based recursive resolution and controller activation visible line by line
 
 ### What the Demo Contains
 
@@ -1380,7 +1184,7 @@ Server-->>Browser: HTTP 200 + response text
 File-based run (recommended):
 
 ```bash
-dotnet run demos/10-dependency-injection/di-simple-container-and-web-server-demo.cs
+dotnet run demos/10-dependency-injection/di-toy-container-and-web-server-demo.cs
 ```
 
 Then call the endpoints:
@@ -1394,7 +1198,7 @@ curl "http://localhost:5005/users/hello?name=Jeff"
 Expected behavior:
 
 - terminal prints route instructions and `Listening...`
-- `/users/create` prints a simulated email line to console and returns `201 Created ...`
+- `/users/create` prints a simulated email line to console and returns `200 OK` with body `201 Created ...`
 - `/users/hello` writes `Hello!` to console and returns that same text
 - `/users/hello?name=Jeff` writes `Hello, Jeff!` to console and returns that same text
 
@@ -1438,7 +1242,7 @@ flowchart TD
     C -- No --> M
     D --> E{Need runtime selection among multiple implementations?}
     M --> E
-    E -- Yes --> F[Use boundary selector pattern (Appendix: keyed DI)]
+    E -- Yes --> F[Use boundary selector pattern - Appendix: keyed DI]
     E -- No --> G[Keep constructor injection only]
 ```
 
@@ -1466,7 +1270,7 @@ flowchart TD
 This visual recap organizes the study guide into the four ideas students most often need to recall quickly:
 
 ```mermaid
-flowchart TB
+flowchart LR
     DI[Dependency Injection]
     DI --> MECH[Mechanics]
     DI --> BOUND[Boundaries]
@@ -1554,7 +1358,7 @@ The model is the same across frameworks:
 4. Keep keys centralized and typed where possible.
 
 ```mermaid
-flowchart LR
+flowchart TB
     R[Registration] --> K1[Key: email]
     R --> K2[Key: sms]
     K1 --> I1[EmailSender]

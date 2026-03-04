@@ -1,7 +1,6 @@
 // Tiny DI-powered web server demo
-// Run: dotnet new console -n TinyDiServer
-//      replace Program.cs with this file
-//      dotnet run
+//
+// dotnet run
 //
 // Then open:
 //   http://localhost:5005/users/create
@@ -11,13 +10,8 @@
 // Note: HttpListener may require permission on some systems. If you get an access error,
 // try running as admin, or change the prefix/port.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 
 // ===== Mini DI container (auto constructor injection) =====
 public sealed class MiniContainer

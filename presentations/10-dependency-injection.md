@@ -366,8 +366,7 @@ services.AddSingleton<IClock, SystemClock>();
 using ServiceProvider provider = services.BuildServiceProvider(
     new ServiceProviderOptions
     {
-        ValidateOnBuild = true,
-        ValidateScopes = true
+        ValidateOnBuild = true
     });
 ```
 
@@ -1308,6 +1307,7 @@ flowchart LR
     RISKS --> SL[Service Locator]
     RISKS --> CAP[Captive Dependency]
     RISKS --> CYCLE[Cyclic Dependencies]
+    RISKS --> OVR[Over-injection]
 
     APPLY --> MAN[Manual DI]
     APPLY --> CONT[Container DI]
@@ -1459,6 +1459,8 @@ public sealed class NotificationSenderSelector : INotificationSenderSelector
     }
 }
 ```
+
+> `NotificationSenderSelector` uses `IServiceProvider` directly, which is technically service-locator behavior. This is acceptable for the same reason `[FromServices]` is acceptable in Demo #1: the selector is an infrastructure boundary component whose entire job is runtime key dispatch, and the domain code that calls `selector.For(channelKey)` remains unaware of `IServiceProvider`. The Section 9 anti-pattern applies when *domain or business* classes pull dependencies from the container; a dedicated boundary factory that encapsulates key-based resolution is not that case.
 
 ### Spring Example
 

@@ -1,6 +1,14 @@
 # Dependency Injection (DI): Applying DIP in Practice
 
+How to realistically make the **D** in SOLI**D** achievable in non-trivial applications
+
+[Powerpoint Presentation](10-dependency-injection.pptx) | [PDF](10-dependency-injection.pdf)
+
+----
+
 This lecture continues directly from [Lecture 9: The Dependency Inversion Principle](09-dependency-inversion-principle.md), especially [Section 13 ("From DIP to Dependency Injection")](09-dependency-inversion-principle.md#13-from-dip-to-dependency-injection).
+
+![image-20260303231035036](10-dependency-injection.assets/image-20260303231035036.png)
 
 ---
 ## 1. Introduction to Dependency Injection
@@ -137,7 +145,9 @@ At the architectural level, the two DI systems are functionally equivalent: both
 | Startup failure behavior | unresolved graphs/lifetime violations can fail at startup with validation options | unresolved bean dependencies fail context startup by default |
 | Circular dependency handling | constructor cycles are detected and fail resolution | constructor cycles are detected and fail context creation |
 
-Typical DI flow:
+![image-20260303231205550](10-dependency-injection.assets/image-20260303231205550.png)
+
+#### Typical DI flow
 
 1. Register services and lifetimes at startup.
 2. Create a scope (for example, per request/job).
@@ -167,6 +177,8 @@ flowchart TB
 - `DI` is the delivery mechanism: collaborators are provided from outside.
 - You can apply DIP without a container (manual DI).
 - You can use a container and still violate DIP if abstractions are weak.
+
+![image-20260303231116408](10-dependency-injection.assets/image-20260303231116408.png)
 
 This lecture does not re-teach DIP rules in depth. For the full analysis (Rule #1, Rule #2, volatility criteria, and failure matrix), revisit Lecture 9:
 
@@ -289,6 +301,8 @@ Main->>Processor: new OrderProcessor(repo, policy, clock, log)
 Main->>Processor: Process(command)
 ```
 
+![image-20260303231228610](10-dependency-injection.assets/image-20260303231228610.png)
+
 ---
 ## 6. Composition Root Deep Dive
 
@@ -370,6 +384,8 @@ A batch pipeline ingests marketplace orders, enriches with pricing rules, and st
 ### 1) BAD Version: Tight Coupling and Direct Instantiation
 
 Start with the anti-pattern baseline. The business service constructs its own infrastructure dependencies, which hides requirements and prevents isolated testing.
+
+![image-20260303231319826](10-dependency-injection.assets/image-20260303231319826.png)
 
 ```csharp
 public sealed class OrderIngestionService
@@ -506,6 +522,8 @@ ILogger <|.. ConsoleLogger
 
 With constructor injection in place, object wiring moves to the composition boundary. This is where concrete implementations are selected and assembled.
 
+![image-20260303231334637](10-dependency-injection.assets/image-20260303231334637.png)
+
 ```csharp
 public static class Program
 {
@@ -612,6 +630,8 @@ A DI container is one tool for scaling DI. Conceptually, it does five things:
 - `Cycle detection`: fail when dependency graphs loop.
 
 Generic container role: runtime DI composition and resolution (dotnet: `IServiceCollection` + `IServiceProvider` / Spring: `ApplicationContext` with stereotypes and/or `@Bean` definitions).
+
+![image-20260303231423578](10-dependency-injection.assets/image-20260303231423578.png)
 
 ### Lifetime and Scope in Practice
 
@@ -725,8 +745,12 @@ ServiceProvider --> ScopeCache : uses
 - Lifetime bugs are subtle and appear under concurrency.
 - Overusing container APIs (`IServiceProvider` everywhere) drifts toward service locator.
 
+![image-20260303231449226](10-dependency-injection.assets/image-20260303231449226.png)
+
 ---
 ## 9. Anti-Patterns and Failure Modes
+
+![image-20260303231513538](10-dependency-injection.assets/image-20260303231513538.png)
 
 ### 1) Service Locator
 
@@ -931,6 +955,8 @@ Fix options:
 - pass request-specific data as method arguments
 - create operation scopes only at boundaries
 
+![image-20260303231533392](10-dependency-injection.assets/image-20260303231533392.png)
+
 ### 4) Cyclic Dependencies
 
 Cycles indicate tangled responsibilities.
@@ -1003,6 +1029,8 @@ This demo establishes the baseline behavior using the standard dotnet hosting mo
   - `GET /users/create`
   - `GET /users/hello`
   - `GET /users/hello?name=Jeff`
+
+![image-20260303231553767](10-dependency-injection.assets/image-20260303231553767.png)
 
 ### How to Run
 
@@ -1091,6 +1119,8 @@ Section 10 showed the same feature set running on the standard Microsoft DI cont
 
 - script: `demos/10-dependency-injection/di-toy-container-and-web-server-demo.cs`
 - goal: make constructor-based recursive resolution and controller activation visible line by line
+
+![image-20260303231633149](10-dependency-injection.assets/image-20260303231633149.png)
 
 ### What the Demo Contains
 
@@ -1231,20 +1261,7 @@ Then hit `/users/create` and watch:
 - Treat `lifetimes` as correctness constraints, not performance knobs.
 - Use DI to automate DIP consistently across environments and deployments.
 
-Use this decision flow when choosing between manual DI and container DI:
-
-```mermaid
-flowchart TD
-    A[Need dependency wiring?] --> B{Small graph and simple lifetimes?}
-    B -- Yes --> M[Manual DI in Composition Root]
-    B -- No --> C{Need scope control and startup validation?}
-    C -- Yes --> D[Use DI Container]
-    C -- No --> M
-    D --> E{Need runtime selection among multiple implementations?}
-    M --> E
-    E -- Yes --> F[Use boundary selector pattern - Appendix: keyed DI]
-    E -- No --> G[Keep constructor injection only]
-```
+![image-20260303231849951](10-dependency-injection.assets/image-20260303231849951.png)
 
 ### Common Misconceptions
 
@@ -1253,6 +1270,8 @@ flowchart TD
 - "More injected services always means more decoupling." (false: often SRP drift)
 - "Service locator is equivalent to constructor injection." (false: dependencies become hidden)
 - "Singleton is always better for performance." (false: captive dependency bugs are costly)
+
+![image-20260303231713609](10-dependency-injection.assets/image-20260303231713609.png)
 
 ---
 ## Study Guide

@@ -1,6 +1,6 @@
 # Assignment 3
 
-## Tea Shop MVC Application Using SOLID Architecture
+## Tea Shop MVC Web Application Using SOLID Architecture
 
 ### Including Factory, Singleton, Strategy, Decorator, and Dependency Injection
 

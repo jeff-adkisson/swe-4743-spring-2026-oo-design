@@ -440,6 +440,7 @@ Thread-safety requirements:
 
   > A good use of an AI is to generate an integration test that validates your solution handles this challenging (yet highly relevant) condition.
 
+
 Expected repository operation shape:
 
 - `TryDecreaseQuantity(itemId, requestedQuantity)` (or equivalent) returns success/failure atomically
@@ -459,6 +460,56 @@ Implementation guidance:
 
 - C#: `lock`, `Monitor`, `Interlocked`, or equivalent thread-safe mechanism
 - Java: `synchronized`, `ReentrantLock`, `AtomicInteger`, or equivalent thread-safe mechanism
+
+### Race condition example (without atomic mutation)
+
+```mermaid
+sequenceDiagram
+    participant A as Request A
+    participant B as Request B
+    participant Repo as InventoryRepository (Singleton)
+
+    Note over Repo: Initial quantity = 1
+    A->>Repo: Check quantity >= 1 (reads 1)
+    B->>Repo: Check quantity >= 1 (reads 1)
+
+    par Non-atomic update path
+        A->>Repo: Decrement and save (quantity -> 0)
+        B->>Repo: Decrement and save based on stale check
+    end
+
+    A-->>A: Checkout success (quantity >= 0)
+    B-->>B: Checkout success (INCORRECT! quantity dropped below 0)
+    Note over Repo: One unit can be sold twice (oversell).<br/>Stale checks plus unsafe updates can violate the quantity >= 0 invariant.
+    Note over Repo: Fix with atomic TryDecreaseQuantity(...)<br/>inside one lock/synchronized critical section.
+```
+
+### Race condition example (with atomic mutation and one failed transaction)
+
+```mermaid
+sequenceDiagram
+    participant A as Request A
+    participant B as Request B
+    participant Repo as InventoryRepository (Singleton)
+
+    Note over Repo: Initial quantity = 1
+
+    A->>Repo: TryDecreaseQuantity(itemId, 1)
+    activate Repo
+    Note over Repo: Enter lock/synchronized critical section
+    Repo-->>A: Success (quantity -> 0)
+    deactivate Repo
+
+    B->>Repo: TryDecreaseQuantity(itemId, 1)
+    activate Repo
+    Note over Repo: Enter lock/synchronized critical section
+    Repo-->>B: Failure (insufficient inventory)
+    deactivate Repo
+
+    A-->>A: Checkout success (quantity >= 0)
+    B-->>B: Checkout failed (CORRECT! quantity unchanged and client informed requested inventory was not available)
+    Note over Repo: Correct behavior: one success, one failure, quantity never below zero.
+```
 
 ---
 

@@ -25,6 +25,8 @@ Spring 2026
   Design and implement a simplified Crazy 8’s console game in C# or Java that intentionally demonstrates inheritance, polymorphism, encapsulation, dynamic dispatch, interface realization, and sound object-oriented design principles.
 - [**Assignment 2: SRP, OCP, Strategy, and Decorator**](assignments/assignment-2.md)<br>
 Design and implement a console-based Tea Shop application in C# or Java that intentionally demonstrates the Single Responsibility Principle, Open–Closed Principle, Strategy Pattern, and Decorator Pattern through inventory searching, filtering, sorting, and simulated checkout, with clear separation of domain logic and user interface concerns.
+- [**Assignment 3: SOLID, DI, and MVC Web Evolution**](assignments/assignment-3.md)<br>
+Design and implement a moderately complex, server-rendered Tea Shop web application in C#/ASP.NET Core MVC or Java/Spring Boot with Maven that evolves Assignment 2 from a console application into a web-based application. Your solution will intentionally demonstrate SOLID principles, sound dependency injection practice, Factory and Decorator patterns, and a DI-managed thread-safe Singleton inventory repository through searching, filtering, sorting, and simulated checkout.
 
 ## Project
 

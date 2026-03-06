@@ -92,7 +92,7 @@ Constantly work to evolve your solution not only to achieve a working result, bu
 - [README.md Requirements](#readmemd-requirements)
 - [Coding Standards](#coding-standards)
 - [Program Entry Point / Composition Root Requirements](#program-entry-point--composition-root-requirements)
-- [Constraints (Important)](#constraints-important)
+- [Constraints](#constraints)
 - [Code Smells to Avoid](#code-smells-to-avoid)
 - [FAQ](#faq)
 - [Final Advice](#final-advice)
@@ -906,7 +906,7 @@ Keep concrete wiring localized to this boundary.
 
 ---
 
-## Constraints (Important)
+## Constraints
 
 **Do NOT:**
 

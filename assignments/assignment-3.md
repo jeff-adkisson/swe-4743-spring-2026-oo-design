@@ -86,10 +86,10 @@ Constantly work to evolve your solution not only to achieve a working result, bu
 - [Dependency Injection Requirements](#dependency-injection-requirements)
 - [Web MVC Requirements](#web-mvc-requirements)
 - [File Organization (Required)](#file-organization-required)
-- [Starter Repository Structure (Required)](#starter-repository-structure-required)
+- [Starter Project Structure](#starter-project-structure)
 - [Sequence Diagram](#sequence-diagram)
 - [Technical Requirements](#technical-requirements)
-- [README.md Requirements (Mandatory)](#readmemd-requirements-mandatory)
+- [README.md Requirements](#readmemd-requirements)
 - [Coding Standards (Required)](#coding-standards-required)
 - [Program Entry Point / Composition Root Requirements](#program-entry-point--composition-root-requirements)
 - [Constraints (Important)](#constraints-important)
@@ -580,7 +580,7 @@ Prohibited:
 
 ---
 
-## Starter Repository Structure (Required)
+## Starter Project Structure
 
 `.gitignore` is essential. Proper source control hygiene is required for this assignment.
 
@@ -767,6 +767,8 @@ Required outcomes:
 - Container must start the web app successfully
 - README must include exact Docker commands
 
+> Note: This is an excellent place to let your AI help. AI tools are outstanding at producing Dockerfiles.
+
 ### Repository and Submission
 
 - Submit via public GitHub repository
@@ -798,7 +800,7 @@ I recommend using an AI to generate your unit tests. Codex (OpenAI) and Claude C
 
 ---
 
-## README.md Requirements (Mandatory)
+## README.md Requirements
 
 Your repository **must include a `README.md`** consistent with Assignment 2 documentation expectations.
 

@@ -11,7 +11,7 @@ Spring 2026
 
 ## Course
 
-- [Syllabus](syllabus.md)
+- [Syllabus](https://kennesaw.simplesyllabus.com/en-US/doc/ni1m5ieqe/Spring-Semester-2026-SWE-4743-Section-01-%2814314%29-Object-Oriented-Development)
 - [Calendar](calendar.md)
 - [Terminology](terminology.md)
 

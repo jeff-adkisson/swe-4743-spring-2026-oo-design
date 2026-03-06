@@ -82,6 +82,8 @@ Do not be a bystander in your career - use this time to become the expert engine
 - [FAQ](#faq)
 - [Final Advice](#final-advice)
 - [Submitting Your Assignment](#submitting-your-assignment)
+- Assignment 3 Solution
+  *Coming soon!*
 - [Appendix: Seed Data](#appendix-seed-data)
 
 ---

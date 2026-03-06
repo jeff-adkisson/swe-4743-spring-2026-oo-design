@@ -85,12 +85,12 @@ Constantly work to evolve your solution not only to achieve a working result, bu
 - [Singleton Inventory Repository Requirements](#singleton-inventory-repository-requirements)
 - [Dependency Injection Requirements](#dependency-injection-requirements)
 - [Web MVC Requirements](#web-mvc-requirements)
-- [File Organization (Required)](#file-organization-required)
+- [File Organization](#file-organization)
 - [Starter Project Structure](#starter-project-structure)
 - [Sequence Diagram](#sequence-diagram)
 - [Technical Requirements](#technical-requirements)
 - [README.md Requirements](#readmemd-requirements)
-- [Coding Standards (Required)](#coding-standards-required)
+- [Coding Standards](#coding-standards)
 - [Program Entry Point / Composition Root Requirements](#program-entry-point--composition-root-requirements)
 - [Constraints (Important)](#constraints-important)
 - [Code Smells to Avoid](#code-smells-to-avoid)
@@ -572,7 +572,7 @@ Prohibited:
 
 ---
 
-## File Organization (Required)
+## File Organization
 
 - Each class should be in its own file
 - Use cohesive package/namespace structure by responsibility
@@ -862,7 +862,11 @@ If tests are implemented, include how to run them.
 
 ---
 
-## Coding Standards (Required)
+## Coding Standards
+
+Learn the coding standards for your chosen language and framework. Professional work requires adherence to the language and framework standard. 
+
+When you show your work to an employer or internship opportunity, you do not want the reviewer looking at your repository and concluding "this applicant claims they know Java, but clearly they do not."
 
 ### C#
 

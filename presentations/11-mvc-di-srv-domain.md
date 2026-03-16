@@ -1537,10 +1537,10 @@ That includes:
 
 If it came from the client, it can be manipulated.
 
-This trust-boundary view is the security mindset in one picture:
+This trust boundary view is the security mindset in one picture:
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph Outside["Outside the trust boundary"]
         Browser[Browser]
         Script[Script / API client]

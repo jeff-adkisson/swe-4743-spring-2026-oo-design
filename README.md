@@ -105,3 +105,9 @@ Design and implement a moderately complex, server-rendered Tea Shop web applicat
 - [PDF](presentations/10-dependency-injection.pdf)
 - [HTML](presentations/10-dependency-injection_html/index.html)
 - [Lecture Material](presentations/10-dependency-injection.md)
+
+#### 11. Mvc Di Srv Domain
+- [PowerPoint](presentations/11-mvc-di-srv-domain.pptx)
+- [PDF](presentations/11-mvc-di-srv-domain.pdf)
+- [HTML](presentations/11-mvc-di-srv-domain_html/index.html)
+- [Lecture Material](presentations/11-mvc-di-srv-domain.md)

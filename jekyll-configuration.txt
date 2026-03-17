@@ -1,0 +1,141 @@
+Local Jekyll setup for this repository
+======================================
+
+This repository uses Jekyll with the GitHub Pages toolchain and the remote theme defined in _config.yml.
+
+Files used by the site:
+- _config.yml
+- _includes/head-custom.html
+- head-custom.css
+- head-custom.js
+- Gemfile
+- jekyll-build.sh
+
+macOS setup
+-----------
+Recommended approach: install Ruby with Homebrew and rbenv instead of using the system Ruby.
+
+1. Install Xcode Command Line Tools:
+
+   xcode-select --install
+
+2. Install Homebrew if it is not already installed:
+
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+3. Install rbenv and ruby-build:
+
+   brew update
+   brew install rbenv ruby-build
+
+4. Add rbenv to your shell startup file.
+   If you use zsh, add this line to ~/.zshrc:
+
+   eval "$(rbenv init - zsh)"
+
+   Then reload the shell:
+
+   source ~/.zshrc
+
+5. Install a current Ruby version and make it global:
+
+   rbenv install 3.3.6
+   rbenv global 3.3.6
+   ruby -v
+
+6. Install Bundler:
+
+   gem install bundler
+
+Repository setup
+----------------
+Run this once from the repository root:
+
+   bundle install
+
+Fast local workflow
+-------------------
+Use the helper script from the repository root:
+
+   ./jekyll-build.sh
+
+What the script does:
+- Runs `bundle install`
+- Starts `bundle exec jekyll serve --livereload` if a server is not already running on port 4000
+- Opens the site home page in the default macOS browser
+
+If the script is not executable yet, run:
+
+   chmod +x jekyll-build.sh
+
+Manual local test command
+-------------------------
+If you want to run Jekyll manually instead of using the script, run this from the repository root:
+
+   bundle exec jekyll serve --livereload
+
+Then open:
+
+   http://127.0.0.1:4000/
+
+Suggested pages to verify
+-------------------------
+Mermaid page:
+
+   http://127.0.0.1:4000/presentations/11-mvc-di-srv-domain.html
+
+Image-heavy page:
+
+   http://127.0.0.1:4000/assignments/assignment-3.html
+
+What to test
+------------
+1. Mermaid diagrams render correctly.
+2. Each Mermaid diagram shows a "Copy Mermaid" button.
+3. Clicking a regular image opens it in a new tab.
+4. Clicking a Mermaid SVG opens it in a new tab.
+5. Clicking "Copy Mermaid" copies the Mermaid source text.
+6. Wide tables scroll horizontally without breaking the page border.
+7. Tables wider than 960px and narrower than 1200px auto-squeeze to 960px.
+8. Tables with horizontal scrolling show the "Squeeze" button.
+9. Clicking a table header squeezes the table only when the "Squeeze" button is visible.
+10. Clicking the site header returns to the home page, except for the "View on GitHub" button.
+11. The blue "Top" button appears only after the heading leaves the viewport and only when the viewport is at least 800px wide.
+12. On viewports narrower than 960px, the main content remains responsive and does not force horizontal page overflow.
+
+Typical workflow
+----------------
+1. Edit the site files.
+2. Run:
+
+   ./jekyll-build.sh
+
+3. Refresh the test page and confirm the behavior.
+
+Troubleshooting
+---------------
+- If the shell still uses the system Ruby, run:
+
+   which ruby
+   rbenv versions
+   rbenv rehash
+
+- If Bundler reports that it is missing, run:
+
+   gem install bundler
+
+- If gem installation fails because of permissions, you are probably using the system Ruby instead of the rbenv Ruby.
+
+- If the browser does not pick up CSS or JS changes, do a hard refresh.
+
+- If port 4000 is already in use, run:
+
+   bundle exec jekyll serve --livereload --port 4001
+
+- If Jekyll complains about WEBrick, the Gemfile already includes webrick, so re-run:
+
+   bundle install
+
+- If `./jekyll-build.sh` reports that the server did not start, inspect the Jekyll log in:
+
+   /tmp/jekyll-serve.log

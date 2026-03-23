@@ -8,6 +8,19 @@ How to model objects whose behavior changes based on internal state, using the S
 
 State machines are one of the oldest ideas in computer science — and one of the most invisible. The regex engine that validates your input is a state machine. The network protocol that delivered this page is a state machine. The `async/await` syntax in most modern languages compiles down to a state machine. The checkout flow on every e-commerce site is a state machine. You interact with dozens of them every day without recognizing the pattern.
 
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Red
+    Red --> Green : timer expired (no walk request)
+    Red --> Walk : timer expired (walk button pressed)
+    Walk --> Green : walk phase complete
+    Green --> Yellow : timer expired
+    Yellow --> Red : timer expired
+```
+
+A traffic light is a state machine. It has a finite set of states (`Red`, `Walk`, `Green`, `Yellow`), transitions triggered by events (timers, a pedestrian pressing the walk button), and behavior that changes with each state. Cars stop, pedestrians cross, cars go — depending entirely on the current state.
+
 Despite being everywhere, state machines are rarely taught as a *design* skill. Theory of Computation covers them as math; this lecture covers them as a practical tool you reach for when an object's behavior depends on its history and your if/else chains are starting to rot. The State pattern is one of the few design patterns where an object appears to *change its class* at runtime — calling the same method on the same object produces completely different behavior depending on what has happened to it before.
 
 ---
@@ -201,27 +214,57 @@ Three roles:
 
 ```mermaid
 classDiagram
- 		direction LR
+    direction TB
+    class ActionEnum {
+        <<enumeration>>
+        DoWork
+        Cancel
+        Finish
+        Revert
+    }
+
+    class Transition {
+        <<record>>
+        +Action : ActionEnum
+        +Description : string
+    }
+
+    class TransitionResult {
+        <<record>>
+        +Success : bool
+        +Message : string
+    }
+
     class Context {
         -state : IState
-        +Request()
-        +SetState(IState)
+        +AvailableActions : IReadOnlyList~Transition~
+        +Execute(action : ActionEnum) TransitionResult
+        ~SetState(IState)
     }
 
     class IState {
         <<interface>>
-        +Handle(context : Context)
+        +Name : string
+        +AvailableTransitions : IReadOnlyList~Transition~
+        +Execute(action : ActionEnum, context : Context) TransitionResult
     }
 
     class ConcreteStateA {
-        +Handle(context : Context)
+        +Name : string
+        +AvailableTransitions : IReadOnlyList~Transition~
+        +Execute(action : ActionEnum, context : Context) TransitionResult
     }
 
     class ConcreteStateB {
-        +Handle(context : Context)
+        +Name : string
+        +AvailableTransitions : IReadOnlyList~Transition~
+        +Execute(action : ActionEnum, context : Context) TransitionResult
     }
 
     Context --> IState : delegates to
+    Context ..> TransitionResult : returns
+    IState ..> Transition : advertises
+    Transition --> ActionEnum : uses
     IState <|.. ConcreteStateA
     IState <|.. ConcreteStateB
 ```
@@ -229,10 +272,12 @@ classDiagram
 ### How It Works
 
 1. The context holds a reference to the current state object.
-2. When a client calls a method on the context, the context delegates to the current state.
-3. The concrete state object — not the context — decides what happens next. It performs the action and determines the next state. If a transition is needed, the state object calls `context.SetState(new NextState())` to install the new state. The context's `SetState` method is just a setter — it stores whatever state object it is given. The *decision* of which state to transition to is made entirely inside the concrete state class. This is the critical distinction: the context does not choose the next state; the current state does.
-4. The next state can be a forward transition, a backward transition to a previously visited state, or a self-transition (same state, with side effects).
-5. The next call to the same method on the context will be handled by the new state object.
+2. The caller asks the context for its **available actions** — the list of transitions valid in the current state. The caller does not need to know what state the context is in; the state advertises what it can do.
+3. The caller picks an action from that list and calls `context.Execute(action)`. The context delegates to the current state's `Execute` method.
+4. The concrete state object — not the context — decides what happens. It performs the action, determines the next state, and calls `context.SetState(new NextState())` to install it. The context's `SetState` method is just a setter — it stores whatever state object it is given. The *decision* of which state to transition to is made entirely inside the concrete state class.
+5. If the caller passes an action that is not in the available list, the state returns a failure result. But because the caller was given the valid list upfront, this should not happen in normal operation.
+6. The next state can be a forward transition, a backward transition to a previously visited state, or a self-transition (same state, with side effects).
+7. After a transition, the caller asks for available actions again — and gets a *different* list, because the state has changed.
 
 ### Canonical Sequence Diagram
 
@@ -243,24 +288,39 @@ sequenceDiagram
     participant StateA as ConcreteStateA
     participant StateB as ConcreteStateB
 
-    Client->>Context: Request()
-    Context->>StateA: Handle(this)
-    StateA->>Context: SetState(new ConcreteStateB())
-    Note over Context: state is now ConcreteStateB
+    Client->>Context: AvailableActions
+    Context->>StateA: AvailableTransitions
+    StateA-->>Context: [DoWork, Cancel]
+    Context-->>Client: [DoWork, Cancel]
 
-    Client->>Context: Request()
-    Context->>StateB: Handle(this)
-    StateB->>Context: SetState(new ConcreteStateA())
+    Client->>Context: Execute(ActionEnum.DoWork)
+    Context->>StateA: Execute(ActionEnum.DoWork, this)
+    StateA->>Context: SetState(ConcreteStateB)
+    StateA-->>Context: TransitionResult(true, "Work done.")
+    Note over Context: state is now ConcreteStateB
+    Context-->>Client: TransitionResult(true, ...)
+
+    Client->>Context: AvailableActions
+    Context->>StateB: AvailableTransitions
+    StateB-->>Context: [Finish, Revert]
+    Context-->>Client: [Finish, Revert]
+
+    Client->>Context: Execute(ActionEnum.Revert)
+    Context->>StateB: Execute(ActionEnum.Revert, this)
+    StateB->>Context: SetState(ConcreteStateA)
+    StateB-->>Context: TransitionResult(true, "Reverted.")
     Note over Context: backward transition: state is ConcreteStateA again
+    Context-->>Client: TransitionResult(true, ...)
 ```
 
 ### Key Design Decisions
 
-- **Who owns transitions?** The concrete state classes do. Each state class decides whether a transition is valid and which state comes next. The context's `SetState` method is passive — it accepts whatever state object the concrete state gives it. This is a common source of confusion: `SetState` does not choose the next state; the current state class does, and it *tells* the context what the next state is. In rare cases, transition logic can be centralized in the context, but the default ownership belongs to the concrete states because they know which transitions are valid from their own state.
+- **The state drives the caller, not the other way around.** The caller never guesses which operations are valid — it asks the state for its available transitions, presents them (in a UI, API response, or workflow engine), and passes the user's choice back. The state is the single authority over both *what is valid* and *how to execute it*.
+- **Who owns transitions?** The concrete state classes do. Each state class decides which transitions it offers and where each one leads. The context's `SetState` method is passive — it accepts whatever state object the concrete state gives it. The context does not choose the next state; the current state does, and it *tells* the context what the next state is.
 - **How is state created?** States can be created fresh on each transition or reused if they carry no per-instance data.
-- **What does the state interface look like?** It should contain exactly the operations whose behavior varies by state. Operations that do not vary should stay on the context.
+- **What does the state interface look like?** A narrow, uniform interface: `AvailableTransitions` (what can I do?) and `Execute(action, context)` (do it). This replaces the wide interface problem where every state must implement `Pay`, `Ship`, `Deliver`, `Cancel`, etc. — most of which return "not valid" for that state.
 
-> **Ousterhout:** Each concrete state class is a **deep module** — it has a simple interface (`Process` or `Pay`/`Ship`/etc.) but encapsulates significant internal behavior (*A Philosophy of Software Design*, Ch. 4). The caller does not need to know *how* a shipped order handles a cancellation request; it only needs to call `Cancel()` and inspect the result. This is also an example of **defining errors out of existence** (Ch. 10) — rather than forcing callers to know which operations are valid in which state, the state object handles every operation and returns a meaningful result. The caller never has to ask "is this allowed?" because the answer is built into the contract.
+> **Ousterhout:** Each concrete state class is a **deep module** — it has a simple, narrow interface (`Execute` + `AvailableTransitions`) but encapsulates significant internal behavior (*A Philosophy of Software Design*, Ch. 4). The caller does not need to know *how* a shipped order handles a delivery — it only needs to pick from the offered transitions and inspect the result. This is also an example of **defining errors out of existence** (Ch. 10) — by advertising only valid transitions, the state eliminates the possibility of the caller making an invalid request under normal operation.
 
 ---
 ## 4. Implementation Walkthrough: Order Processing
@@ -385,18 +445,31 @@ Notice the problems:
 
 The State pattern implementation below solves all of these problems by giving each state its own class.
 
-Notice that the if/then code also uses exceptions (`throw new InvalidOperationException(...)`) to handle invalid transitions. The State pattern implementation replaces these with a `TransitionResult` record that returns a success/failure flag and a message. This is a deliberate design choice:
+There is one more problem the if/then code has that is easy to miss: **the caller must know which operations are valid.** The if/then class exposes `Pay()`, `Ship()`, `Deliver()`, `PaymentDeclined()`, and `Cancel()` unconditionally. The caller has to know (or guess) which ones are valid for the current state, then handle the exception when they guess wrong. A well-designed state machine should tell the caller what it *can* do — the valid operations should be a product of the current state, not a fixed menu the caller navigates blind.
 
-- **Invalid transitions are expected, not exceptional.** Asking "can I ship this order?" when the order is already delivered is a normal question with a normal answer ("no"). Exceptions are for truly unexpected failures — a database crash, a null reference — not for a predictable business rule outcome.
-- **Liskov Substitution.** If the interface promises `TransitionResult Pay(Order order)`, every implementation can fulfill that contract — returning success or failure is always valid. An interface that promises `void Pay(Order order)` but whose implementations throw on most calls does not genuinely fulfill the contract; callers cannot substitute one state for another without wrapping every call in try/catch.
-- **Composability.** A `TransitionResult` can be inspected, logged, returned to a caller, or aggregated. An exception forces the caller into try/catch control flow, which is harder to compose and obscures the intended logic.
-- **Testability.** Asserting `result.Success.Should().BeFalse()` is clearer and more expressive than asserting that a method throws a specific exception type with a specific message.
+The State pattern implementation below uses a **transition-driven design**: each state advertises its available transitions, and the caller selects from that list. The caller never needs to know what state the order is in — it asks "what can I do?" and the state answers.
 
 ### UML Class Diagram for the Order State Machine
 
 ```mermaid
 classDiagram
 		direction LR
+	
+    class OrderAction {
+        <<enumeration>>
+        Pay
+        Ship
+        Deliver
+        PaymentDeclined
+        Cancel
+    }
+
+    class Transition {
+        <<record>>
+        +Action : OrderAction
+        +Description : string
+    }
+
     class TransitionResult {
         <<record>>
         +Success : bool
@@ -405,72 +478,53 @@ classDiagram
 
     class Order {
         -state : IOrderState
-        +Pay() TransitionResult
-        +Ship() TransitionResult
-        +Deliver() TransitionResult
-        +PaymentDeclined() TransitionResult
-        +Cancel() TransitionResult
-        ~SetState(IOrderState)
         +StatusName : string
+        +AvailableActions : IReadOnlyList~Transition~
+        +Execute(action : OrderAction) TransitionResult
+        ~SetState(IOrderState)
     }
 
     class IOrderState {
         <<interface>>
-        +Pay(order : Order) TransitionResult
-        +Ship(order : Order) TransitionResult
-        +Deliver(order : Order) TransitionResult
-        +PaymentDeclined(order : Order) TransitionResult
-        +Cancel(order : Order) TransitionResult
         +Name : string
+        +AvailableTransitions : IReadOnlyList~Transition~
+        +Execute(action : OrderAction, order : Order) TransitionResult
     }
 
     class NewOrderState {
-        +Pay(order : Order) TransitionResult
-        +Ship(order : Order) TransitionResult
-        +Deliver(order : Order) TransitionResult
-        +PaymentDeclined(order : Order) TransitionResult
-        +Cancel(order : Order) TransitionResult
         +Name : string
+        +AvailableTransitions : IReadOnlyList~Transition~
+        +Execute(action : OrderAction, order : Order) TransitionResult
     }
 
     class PaidOrderState {
-        +Pay(order : Order) TransitionResult
-        +Ship(order : Order) TransitionResult
-        +Deliver(order : Order) TransitionResult
-        +PaymentDeclined(order : Order) TransitionResult
-        +Cancel(order : Order) TransitionResult
         +Name : string
+        +AvailableTransitions : IReadOnlyList~Transition~
+        +Execute(action : OrderAction, order : Order) TransitionResult
     }
 
     class ShippedOrderState {
-        +Pay(order : Order) TransitionResult
-        +Ship(order : Order) TransitionResult
-        +Deliver(order : Order) TransitionResult
-        +PaymentDeclined(order : Order) TransitionResult
-        +Cancel(order : Order) TransitionResult
         +Name : string
+        +AvailableTransitions : IReadOnlyList~Transition~
+        +Execute(action : OrderAction, order : Order) TransitionResult
     }
 
     class DeliveredOrderState {
-        +Pay(order : Order) TransitionResult
-        +Ship(order : Order) TransitionResult
-        +Deliver(order : Order) TransitionResult
-        +PaymentDeclined(order : Order) TransitionResult
-        +Cancel(order : Order) TransitionResult
         +Name : string
+        +AvailableTransitions : IReadOnlyList~Transition~
+        +Execute(action : OrderAction, order : Order) TransitionResult
     }
 
     class CancelledOrderState {
-        +Pay(order : Order) TransitionResult
-        +Ship(order : Order) TransitionResult
-        +Deliver(order : Order) TransitionResult
-        +PaymentDeclined(order : Order) TransitionResult
-        +Cancel(order : Order) TransitionResult
         +Name : string
+        +AvailableTransitions : IReadOnlyList~Transition~
+        +Execute(action : OrderAction, order : Order) TransitionResult
     }
 
     Order --> IOrderState : delegates to
     Order ..> TransitionResult : returns
+    IOrderState ..> Transition : advertises
+    Transition --> OrderAction : uses
     IOrderState <|.. NewOrderState
     IOrderState <|.. PaidOrderState
     IOrderState <|.. ShippedOrderState
@@ -482,17 +536,20 @@ classDiagram
 
 ```csharp
 using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public enum OrderAction { Pay, Ship, Deliver, PaymentDeclined, Cancel }
+
+public record Transition(OrderAction Action, string Description);
 
 public record TransitionResult(bool Success, string Message);
 
 public interface IOrderState
 {
     string Name { get; }
-    TransitionResult Pay(Order order);
-    TransitionResult Ship(Order order);
-    TransitionResult Deliver(Order order);
-    TransitionResult PaymentDeclined(Order order);
-    TransitionResult Cancel(Order order);
+    IReadOnlyList<Transition> AvailableTransitions { get; }
+    TransitionResult Execute(OrderAction action, Order order);
 }
 
 public sealed class Order
@@ -508,6 +565,17 @@ public sealed class Order
 
     public string StatusName => _state.Name;
 
+    /// <summary>
+    /// The caller asks the order what it can do — the state drives the options.
+    /// </summary>
+    public IReadOnlyList<Transition> AvailableActions => _state.AvailableTransitions;
+
+    /// <summary>
+    /// The caller picks an action from AvailableActions and passes it here.
+    /// The current state decides what to do and where to transition.
+    /// </summary>
+    public TransitionResult Execute(OrderAction action) => _state.Execute(action, this);
+
     // internal: state classes in this assembly can call SetState, but outside
     // consumers cannot bypass the state machine by forcing a state directly.
     // Demo simplification: the Console.WriteLine couples domain logic to console
@@ -517,34 +585,32 @@ public sealed class Order
         Console.WriteLine($"  [{_state.Name}] -> [{state.Name}]");
         _state = state;
     }
-
-    public TransitionResult Pay() => _state.Pay(this);
-    public TransitionResult Ship() => _state.Ship(this);
-    public TransitionResult Deliver() => _state.Deliver(this);
-    public TransitionResult PaymentDeclined() => _state.PaymentDeclined(this);
-    public TransitionResult Cancel() => _state.Cancel(this);
 }
 
 public sealed class NewOrderState : IOrderState
 {
     public string Name => "New";
 
-    public TransitionResult Pay(Order order)
+    public IReadOnlyList<Transition> AvailableTransitions =>
+    [
+        new(OrderAction.Pay, "Submit payment for this order"),
+        new(OrderAction.Cancel, "Cancel this order")
+    ];
+
+    public TransitionResult Execute(OrderAction action, Order order) => action switch
+    {
+        OrderAction.Pay => Pay(order),
+        OrderAction.Cancel => Cancel(order),
+        _ => new(false, $"{action} is not valid for a new order.")
+    };
+
+    private static TransitionResult Pay(Order order)
     {
         order.SetState(new PaidOrderState());
         return new(true, "Payment recorded.");
     }
 
-    public TransitionResult Ship(Order order)
-        => new(false, "Cannot ship an unpaid order.");
-
-    public TransitionResult Deliver(Order order)
-        => new(false, "Cannot deliver an unpaid order.");
-
-    public TransitionResult PaymentDeclined(Order order)
-        => new(false, "No payment to decline.");
-
-    public TransitionResult Cancel(Order order)
+    private static TransitionResult Cancel(Order order)
     {
         order.SetState(new CancelledOrderState());
         return new(true, "Order cancelled.");
@@ -555,25 +621,34 @@ public sealed class PaidOrderState : IOrderState
 {
     public string Name => "Paid";
 
-    public TransitionResult Pay(Order order)
-        => new(false, "Order is already paid.");
+    public IReadOnlyList<Transition> AvailableTransitions =>
+    [
+        new(OrderAction.Ship, "Ship this order"),
+        new(OrderAction.PaymentDeclined, "Payment was declined by processor"),
+        new(OrderAction.Cancel, "Cancel this order and refund payment")
+    ];
 
-    public TransitionResult Ship(Order order)
+    public TransitionResult Execute(OrderAction action, Order order) => action switch
+    {
+        OrderAction.Ship => Ship(order),
+        OrderAction.PaymentDeclined => PaymentDeclined(order),
+        OrderAction.Cancel => Cancel(order),
+        _ => new(false, $"{action} is not valid for a paid order.")
+    };
+
+    private static TransitionResult Ship(Order order)
     {
         order.SetState(new ShippedOrderState());
         return new(true, "Order shipped.");
     }
 
-    public TransitionResult Deliver(Order order)
-        => new(false, "Cannot deliver before shipping.");
-
-    public TransitionResult PaymentDeclined(Order order)
+    private static TransitionResult PaymentDeclined(Order order)
     {
         order.SetState(new NewOrderState());
         return new(true, "Payment declined. Returning to New.");
     }
 
-    public TransitionResult Cancel(Order order)
+    private static TransitionResult Cancel(Order order)
     {
         order.SetState(new CancelledOrderState());
         return new(true, "Order cancelled. Payment refunded.");
@@ -584,63 +659,42 @@ public sealed class ShippedOrderState : IOrderState
 {
     public string Name => "Shipped";
 
-    public TransitionResult Pay(Order order)
-        => new(false, "Order is already paid.");
+    public IReadOnlyList<Transition> AvailableTransitions =>
+    [
+        new(OrderAction.Deliver, "Confirm delivery of this order")
+    ];
 
-    public TransitionResult Ship(Order order)
-        => new(false, "Order is already shipped.");
+    public TransitionResult Execute(OrderAction action, Order order) => action switch
+    {
+        OrderAction.Deliver => Deliver(order),
+        _ => new(false, $"{action} is not valid for a shipped order.")
+    };
 
-    public TransitionResult Deliver(Order order)
+    private static TransitionResult Deliver(Order order)
     {
         order.SetState(new DeliveredOrderState());
         return new(true, "Order delivered.");
     }
-
-    public TransitionResult PaymentDeclined(Order order)
-        => new(false, "Cannot decline payment after shipping.");
-
-    public TransitionResult Cancel(Order order)
-        => new(false, "Cannot cancel a shipped order.");
 }
 
 public sealed class DeliveredOrderState : IOrderState
 {
     public string Name => "Delivered";
 
-    public TransitionResult Pay(Order order)
-        => new(false, "Order is already delivered.");
+    public IReadOnlyList<Transition> AvailableTransitions => [];
 
-    public TransitionResult Ship(Order order)
-        => new(false, "Order is already delivered.");
-
-    public TransitionResult Deliver(Order order)
-        => new(false, "Order is already delivered.");
-
-    public TransitionResult PaymentDeclined(Order order)
-        => new(false, "Cannot decline payment after delivery.");
-
-    public TransitionResult Cancel(Order order)
-        => new(false, "Cannot cancel a delivered order.");
+    public TransitionResult Execute(OrderAction action, Order order)
+        => new(false, $"{action} is not valid. This order is delivered.");
 }
 
 public sealed class CancelledOrderState : IOrderState
 {
     public string Name => "Cancelled";
 
-    public TransitionResult Pay(Order order)
-        => new(false, "Order is cancelled.");
+    public IReadOnlyList<Transition> AvailableTransitions => [];
 
-    public TransitionResult Ship(Order order)
-        => new(false, "Order is cancelled.");
-
-    public TransitionResult Deliver(Order order)
-        => new(false, "Order is cancelled.");
-
-    public TransitionResult PaymentDeclined(Order order)
-        => new(false, "Order is cancelled.");
-
-    public TransitionResult Cancel(Order order)
-        => new(false, "Order is already cancelled.");
+    public TransitionResult Execute(OrderAction action, Order order)
+        => new(false, $"{action} is not valid. This order is cancelled.");
 }
 
 public static class Program
@@ -648,28 +702,49 @@ public static class Program
     public static void Main()
     {
         var order = new Order();
-        Console.WriteLine($"Status: {order.StatusName}");
 
-        Console.WriteLine(order.Pay().Message);
-        Console.WriteLine($"Status: {order.StatusName}");
+        // The caller asks the state what it can do — no guessing
+        ShowStatus(order);
+        Execute(order, OrderAction.Pay);
 
         // Backward transition: payment declined, returns to New
-        Console.WriteLine(order.PaymentDeclined().Message);
-        Console.WriteLine($"Status: {order.StatusName}");
+        ShowStatus(order);
+        Execute(order, OrderAction.PaymentDeclined);
 
         // Pay again successfully
-        Console.WriteLine(order.Pay().Message);
-        Console.WriteLine($"Status: {order.StatusName}");
+        ShowStatus(order);
+        Execute(order, OrderAction.Pay);
 
-        Console.WriteLine(order.Ship().Message);
-        Console.WriteLine($"Status: {order.StatusName}");
+        ShowStatus(order);
+        Execute(order, OrderAction.Ship);
 
-        Console.WriteLine(order.Deliver().Message);
-        Console.WriteLine($"Status: {order.StatusName}");
+        ShowStatus(order);
+        Execute(order, OrderAction.Deliver);
 
-        // Attempting an invalid transition:
-        var result = order.Ship();
-        Console.WriteLine($"{(result.Success ? "OK" : "Rejected")}: {result.Message}");
+        // Terminal state — no actions available
+        ShowStatus(order);
+    }
+
+    private static void ShowStatus(Order order)
+    {
+        Console.WriteLine($"\nStatus: {order.StatusName}");
+        var actions = order.AvailableActions;
+        if (actions.Count == 0)
+        {
+            Console.WriteLine("  No actions available (terminal state).");
+        }
+        else
+        {
+            Console.WriteLine("  Available actions:");
+            foreach (var t in actions)
+                Console.WriteLine($"    - {t.Action}: {t.Description}");
+        }
+    }
+
+    private static void Execute(Order order, OrderAction action)
+    {
+        var result = order.Execute(action);
+        Console.WriteLine($"  Execute({action}): {result.Message}");
     }
 }
 ```
@@ -677,23 +752,45 @@ public static class Program
 ### Output
 
 ```text
+
 Status: New
+  Available actions:
+    - Pay: Submit payment for this order
+    - Cancel: Cancel this order
   [New] -> [Paid]
-Payment recorded.
+  Execute(Pay): Payment recorded.
+
 Status: Paid
+  Available actions:
+    - Ship: Ship this order
+    - PaymentDeclined: Payment was declined by processor
+    - Cancel: Cancel this order and refund payment
   [Paid] -> [New]
-Payment declined. Returning to New.
+  Execute(PaymentDeclined): Payment declined. Returning to New.
+
 Status: New
+  Available actions:
+    - Pay: Submit payment for this order
+    - Cancel: Cancel this order
   [New] -> [Paid]
-Payment recorded.
+  Execute(Pay): Payment recorded.
+
 Status: Paid
+  Available actions:
+    - Ship: Ship this order
+    - PaymentDeclined: Payment was declined by processor
+    - Cancel: Cancel this order and refund payment
   [Paid] -> [Shipped]
-Order shipped.
+  Execute(Ship): Order shipped.
+
 Status: Shipped
+  Available actions:
+    - Deliver: Confirm delivery of this order
   [Shipped] -> [Delivered]
-Order delivered.
+  Execute(Deliver): Order delivered.
+
 Status: Delivered
-Rejected: Order is already delivered.
+  No actions available (terminal state).
 ```
 
 ### Sequence Diagram: Full Order Lifecycle
@@ -707,45 +804,58 @@ sequenceDiagram
     participant ShippedState as ShippedOrderState
     participant DeliveredState as DeliveredOrderState
 
-    Client->>Order: Pay()
-    Order->>NewState: Pay(order)
+    Client->>Order: AvailableActions
+    Order-->>Client: [Pay, Cancel]
+
+    Client->>Order: Execute(OrderAction.Pay)
+    Order->>NewState: Execute("Pay", order)
     NewState->>Order: SetState(PaidOrderState)
     NewState-->>Order: TransitionResult(true, "Payment recorded.")
     Note over Order: state = PaidOrderState
     Order-->>Client: TransitionResult(true, ...)
 
-    Client->>Order: PaymentDeclined()
-    Order->>PaidState: PaymentDeclined(order)
+    Client->>Order: AvailableActions
+    Order-->>Client: [Ship, PaymentDeclined, Cancel]
+
+    Client->>Order: Execute(OrderAction.PaymentDeclined)
+    Order->>PaidState: Execute("PaymentDeclined", order)
     PaidState->>Order: SetState(NewOrderState)
     PaidState-->>Order: TransitionResult(true, "Payment declined.")
     Note over Order: backward transition: state = NewOrderState
     Order-->>Client: TransitionResult(true, ...)
 
-    Client->>Order: Pay()
-    Order->>NewState: Pay(order)
+    Client->>Order: AvailableActions
+    Order-->>Client: [Pay, Cancel]
+
+    Client->>Order: Execute(OrderAction.Pay)
+    Order->>NewState: Execute("Pay", order)
     NewState->>Order: SetState(PaidOrderState)
     NewState-->>Order: TransitionResult(true, "Payment recorded.")
     Note over Order: state = PaidOrderState
     Order-->>Client: TransitionResult(true, ...)
 
-    Client->>Order: Ship()
-    Order->>PaidState: Ship(order)
+    Client->>Order: AvailableActions
+    Order-->>Client: [Ship, PaymentDeclined, Cancel]
+
+    Client->>Order: Execute(OrderAction.Ship)
+    Order->>PaidState: Execute("Ship", order)
     PaidState->>Order: SetState(ShippedOrderState)
     PaidState-->>Order: TransitionResult(true, "Order shipped.")
     Note over Order: state = ShippedOrderState
     Order-->>Client: TransitionResult(true, ...)
 
-    Client->>Order: Deliver()
-    Order->>ShippedState: Deliver(order)
+    Client->>Order: AvailableActions
+    Order-->>Client: [Deliver]
+
+    Client->>Order: Execute(OrderAction.Deliver)
+    Order->>ShippedState: Execute("Deliver", order)
     ShippedState->>Order: SetState(DeliveredOrderState)
     ShippedState-->>Order: TransitionResult(true, "Order delivered.")
     Note over Order: state = DeliveredOrderState
     Order-->>Client: TransitionResult(true, ...)
 
-    Client->>Order: Ship()
-    Order->>DeliveredState: Ship(order)
-    DeliveredState-->>Order: TransitionResult(false, "Order is already delivered.")
-    Order-->>Client: TransitionResult(false, ...)
+    Client->>Order: AvailableActions
+    Order-->>Client: [] (terminal state)
 ```
 
 ---
@@ -935,7 +1045,7 @@ You do not have to convert everything at once. Each extracted state immediately 
 
 One of the most insidious anti-patterns is implementing state-dependent logic *outside* the state machine — in the controller, the service layer, or the calling code — because it feels easier than modifying the state machine itself.
 
-For example, imagine the order system needs a rule: "if the order is shipped and the customer is a VIP, allow a late cancellation." Instead of adding this behavior to `ShippedOrderState.Cancel()`, a developer writes a check in the controller:
+For example, imagine the order system needs a rule: "if the order is shipped and the customer is a VIP, allow a late cancellation." Instead of adding `OrderAction.Cancel` as a valid transition in `ShippedOrderState.Execute()`, a developer writes a check in the controller:
 
 ```csharp
 // Don't do this — this bypasses the state machine
@@ -945,7 +1055,7 @@ if (order.StatusName == "Shipped" && customer.IsVip)
 }
 else
 {
-    order.Cancel();
+    order.Execute(OrderAction.Cancel);
 }
 ```
 
@@ -1094,7 +1204,7 @@ Use this checklist as a code review tool after implementing or modifying a State
 2. **Simple enum with switch.** Three states, one method (advance), predictable cycle, no expected growth. The pattern adds classes without proportional benefit.
 3. **State pattern.** Many states, different valid actions per state, expected growth. The pattern isolates each state's behavior and supports OCP for new states.
 4. **Probably not.** Two states with minimal variation is well served by a simple boolean or enum. The pattern would add classes without meaningful payoff.
-5. **Working around the state machine.** The developer is bypassing `PaidOrderState.PaymentDeclined()` and forcing a state change from outside. This splits authority, skips any logging or validation the state class would perform, and creates a precedent for future workarounds. The fix: add or use the `PaymentDeclined()` method on `PaidOrderState`, which transitions to `NewOrderState` through the state machine.
+5. **Working around the state machine.** The developer is bypassing `order.Execute(OrderAction.PaymentDeclined)` and forcing a state change from outside. This splits authority, skips any logging or validation the state class would perform, and creates a precedent for future workarounds. The fix: call `order.Execute(OrderAction.PaymentDeclined)`, which delegates to `PaidOrderState.Execute()` and transitions to `NewOrderState` through the state machine.
 6. **The switch silently falls through or throws.** The loaded order gets no state object (or a default/wrong one), and state-dependent behavior breaks. A registry-based approach (like `OrderStateRegistry`) fails fast with a clear error message ("Unknown state: Returned") and centralizes state lookup in one place — adding a new state means adding one dictionary entry, not hunting for every switch statement.
 
 ### Sample Exam Question Answers
@@ -1691,18 +1801,17 @@ public sealed class OrderJsonConverter : JsonConverter<Order>
     }
 }
 
-// -- Order class with persistence support --
+// -- Order class with persistence support (transition-driven, same as Section 4) --
 
+public enum OrderAction { Pay, Ship, Deliver, PaymentDeclined, Cancel }
+public record Transition(OrderAction Action, string Description);
 public record TransitionResult(bool Success, string Message);
 
 public interface IOrderState
 {
     string Name { get; }
-    TransitionResult Pay(Order order);
-    TransitionResult Ship(Order order);
-    TransitionResult Deliver(Order order);
-    TransitionResult PaymentDeclined(Order order);
-    TransitionResult Cancel(Order order);
+    IReadOnlyList<Transition> AvailableTransitions { get; }
+    TransitionResult Execute(OrderAction action, Order order);
 }
 
 public sealed class Order
@@ -1725,18 +1834,14 @@ public sealed class Order
     }
 
     public string StatusName => _state.Name;
+    public IReadOnlyList<Transition> AvailableActions => _state.AvailableTransitions;
+    public TransitionResult Execute(OrderAction action) => _state.Execute(action, this);
 
     internal void SetState(IOrderState state)
     {
         Console.WriteLine($"  [{_state.Name}] -> [{state.Name}]");
         _state = state;
     }
-
-    public TransitionResult Pay() => _state.Pay(this);
-    public TransitionResult Ship() => _state.Ship(this);
-    public TransitionResult Deliver() => _state.Deliver(this);
-    public TransitionResult PaymentDeclined() => _state.PaymentDeclined(this);
-    public TransitionResult Cancel() => _state.Cancel(this);
 }
 
 // -- State classes (same as Section 4, abbreviated for focus) --
@@ -1744,57 +1849,63 @@ public sealed class Order
 public sealed class NewOrderState : IOrderState
 {
     public string Name => "New";
-    public TransitionResult Pay(Order order)
-    { order.SetState(new PaidOrderState()); return new(true, "Payment recorded."); }
-    public TransitionResult Ship(Order order) => new(false, "Cannot ship an unpaid order.");
-    public TransitionResult Deliver(Order order) => new(false, "Cannot deliver an unpaid order.");
-    public TransitionResult PaymentDeclined(Order order) => new(false, "No payment to decline.");
-    public TransitionResult Cancel(Order order)
-    { order.SetState(new CancelledOrderState()); return new(true, "Order cancelled."); }
+    public IReadOnlyList<Transition> AvailableTransitions =>
+        [new(OrderAction.Pay, "Submit payment"), new(OrderAction.Cancel, "Cancel order")];
+    public TransitionResult Execute(OrderAction action, Order order) => action switch
+    {
+        OrderAction.Pay => Do(order, new PaidOrderState(), "Payment recorded."),
+        OrderAction.Cancel => Do(order, new CancelledOrderState(), "Order cancelled."),
+        _ => new(false, $"{action} is not valid for a new order.")
+    };
+    private static TransitionResult Do(Order o, IOrderState next, string msg)
+    { o.SetState(next); return new(true, msg); }
 }
 
 public sealed class PaidOrderState : IOrderState
 {
     public string Name => "Paid";
-    public TransitionResult Pay(Order order) => new(false, "Order is already paid.");
-    public TransitionResult Ship(Order order)
-    { order.SetState(new ShippedOrderState()); return new(true, "Order shipped."); }
-    public TransitionResult Deliver(Order order) => new(false, "Cannot deliver before shipping.");
-    public TransitionResult PaymentDeclined(Order order)
-    { order.SetState(new NewOrderState()); return new(true, "Payment declined. Returning to New."); }
-    public TransitionResult Cancel(Order order)
-    { order.SetState(new CancelledOrderState()); return new(true, "Order cancelled. Payment refunded."); }
+    public IReadOnlyList<Transition> AvailableTransitions =>
+        [new(OrderAction.Ship, "Ship order"), new(OrderAction.PaymentDeclined, "Payment declined"),
+         new(OrderAction.Cancel, "Cancel and refund")];
+    public TransitionResult Execute(OrderAction action, Order order) => action switch
+    {
+        OrderAction.Ship => Do(order, new ShippedOrderState(), "Order shipped."),
+        OrderAction.PaymentDeclined => Do(order, new NewOrderState(), "Payment declined. Returning to New."),
+        OrderAction.Cancel => Do(order, new CancelledOrderState(), "Order cancelled. Payment refunded."),
+        _ => new(false, $"{action} is not valid for a paid order.")
+    };
+    private static TransitionResult Do(Order o, IOrderState next, string msg)
+    { o.SetState(next); return new(true, msg); }
 }
 
 public sealed class ShippedOrderState : IOrderState
 {
     public string Name => "Shipped";
-    public TransitionResult Pay(Order order) => new(false, "Order is already paid.");
-    public TransitionResult Ship(Order order) => new(false, "Order is already shipped.");
-    public TransitionResult Deliver(Order order)
-    { order.SetState(new DeliveredOrderState()); return new(true, "Order delivered."); }
-    public TransitionResult PaymentDeclined(Order order) => new(false, "Cannot decline payment after shipping.");
-    public TransitionResult Cancel(Order order) => new(false, "Cannot cancel a shipped order.");
+    public IReadOnlyList<Transition> AvailableTransitions =>
+        [new(OrderAction.Deliver, "Confirm delivery")];
+    public TransitionResult Execute(OrderAction action, Order order) => action switch
+    {
+        OrderAction.Deliver => Do(order, new DeliveredOrderState(), "Order delivered."),
+        _ => new(false, $"{action} is not valid for a shipped order.")
+    };
+    private static TransitionResult Do(Order o, IOrderState next, string msg)
+    { o.SetState(next); return new(true, msg); }
 }
 
 public sealed class DeliveredOrderState : IOrderState
 {
     public string Name => "Delivered";
-    public TransitionResult Pay(Order order) => new(false, "Order is already delivered.");
-    public TransitionResult Ship(Order order) => new(false, "Order is already delivered.");
-    public TransitionResult Deliver(Order order) => new(false, "Order is already delivered.");
-    public TransitionResult PaymentDeclined(Order order) => new(false, "Cannot decline payment after delivery.");
-    public TransitionResult Cancel(Order order) => new(false, "Cannot cancel a delivered order.");
+    public IReadOnlyList<Transition> AvailableTransitions => [];
+    public TransitionResult Execute(OrderAction action, Order order)
+        => new(false, $"{action} is not valid. Order is delivered.");
 }
 
 public sealed class CancelledOrderState : IOrderState
 {
     public string Name => "Cancelled";
-    public TransitionResult Pay(Order order) => new(false, "Order is cancelled.");
-    public TransitionResult Ship(Order order) => new(false, "Order is cancelled.");
-    public TransitionResult Deliver(Order order) => new(false, "Order is cancelled.");
-    public TransitionResult PaymentDeclined(Order order) => new(false, "Order is cancelled.");
-    public TransitionResult Cancel(Order order) => new(false, "Order is already cancelled.");
+    public IReadOnlyList<Transition> AvailableTransitions => [];
+    public TransitionResult Execute(OrderAction action, Order order)
+        => new(false, $"{action} is not valid. Order is cancelled.");
 }
 
 // -- Demo: serialize, "restart", rehydrate, continue --
@@ -1812,8 +1923,8 @@ public static class Program
         // 1. Create an order and advance it to Shipped
         var order = new Order("ORD-42");
         Console.WriteLine($"Status: {order.StatusName}");
-        Console.WriteLine(order.Pay().Message);
-        Console.WriteLine(order.Ship().Message);
+        Console.WriteLine(order.Execute(OrderAction.Pay).Message);
+        Console.WriteLine(order.Execute(OrderAction.Ship).Message);
         Console.WriteLine($"Status: {order.StatusName}");
 
         // 2. Serialize to JSON (simulates saving to a database or file)
@@ -1828,13 +1939,15 @@ public static class Program
         Console.WriteLine($"Rehydrated status: {rehydrated.StatusName}");
         Console.WriteLine($"Rehydrated order ID: {rehydrated.OrderId}");
 
-        // 5. Continue the lifecycle from where it left off
-        Console.WriteLine(rehydrated.Deliver().Message);
-        Console.WriteLine($"Final status: {rehydrated.StatusName}");
+        // 5. The rehydrated order knows what it can do
+        Console.WriteLine("Available actions:");
+        foreach (var t in rehydrated.AvailableActions)
+            Console.WriteLine($"  - {t.Action}: {t.Description}");
 
-        // 6. Prove that invalid transitions still work after rehydration
-        var result = rehydrated.Ship();
-        Console.WriteLine($"{(result.Success ? "OK" : "Rejected")}: {result.Message}");
+        // 6. Continue the lifecycle from where it left off
+        Console.WriteLine(rehydrated.Execute(OrderAction.Deliver).Message);
+        Console.WriteLine($"Final status: {rehydrated.StatusName}");
+        Console.WriteLine($"Available actions: {rehydrated.AvailableActions.Count} (terminal state)");
     }
 }
 ```
@@ -1859,10 +1972,12 @@ Serialized:
 
 Rehydrated status: Shipped
 Rehydrated order ID: ORD-42
+Available actions:
+  - Deliver: Confirm delivery
   [Shipped] -> [Delivered]
 Order delivered.
 Final status: Delivered
-Rejected: Order is already delivered.
+Available actions: 0 (terminal state)
 ```
 
 ### How It Works

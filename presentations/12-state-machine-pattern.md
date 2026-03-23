@@ -2,7 +2,7 @@
 
 How to model objects whose behavior changes based on internal state, using the State pattern and finite state machines
 
-[Powerpoint Presentation](12-state-machine-pattern.pptx) | [PDF](12-state-machine-pattern.pdf)
+[Powerpoint Presentation](12-state-machine-pattern.pptx) | [PDF](12-state-machine-pattern.pdf) | [Video](12-state-machine-pattern.mp4)
 
 ----
 

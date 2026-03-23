@@ -1027,6 +1027,8 @@ In some systems, state transitions trigger notifications to observers. The conte
 
 ### Boundary Checklist
 
+Use this checklist as a code review tool after implementing or modifying a State pattern. Each question targets a specific boundary where the pattern tends to break down in practice. If you answer "no" to any item, you have likely introduced one of the anti-patterns from Section 7 or regressed toward the if/then approach the pattern was designed to replace.
+
 - Does the context delegate all state-dependent behavior to state objects?
 - Does each state class handle all events for its state (returning a result, not throwing)?
 - Are invalid transitions handled as expected outcomes (`TransitionResult` with `Success = false`), not as exceptions?

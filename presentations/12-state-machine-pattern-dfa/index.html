@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!--
+  DFA to search for [men] or [women] in a block of text
+  Jeff Adkisson & J. Brenton Phillips
+  KSU CS6040, Theory of Computation, Dr. Jung, Spring 2016
+
+  Built with:
+  * html
+  * css
+  * javascript
+  * bootstrap: https://getbootstrap.com/ [see css/bootstrap.css for license]
+  * vis.js: http://visjs.org/ [see visjs/vis.js for license]
+
+  Requires:
+  * HTML5 web browser
+-->
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <title>Jung, Theory of Computation</title>
+
+  <!-- Bootstrap -->
+  <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+
+  <!-- vis.js -->
+  <link href="visjs/vis.css" rel="stylesheet" type="text/css" />
+
+  <!-- DFA UI styles -->
+  <link href="dfa.css?v=2" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+  <div class="container-fluid">
+
+    <div class="jumbotron">
+      <h2>DFA to search for [men] or [women] in a block of text</h2>
+      <p class="lead">
+        <div class="form-group">
+          <textarea class="form-control" rows="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" id="search-text">The metal men and worried women mentioned how much they mentored the mentally gifted children. Everyone from policemen and congresswomen were happy to implement the program to improve the children's acumen. The man said the password is womemememewomen.</textarea>
+        </div>
+      </p>
+      <div class="form-inline">
+        <div class="form-group">
+          <button class="btn btn-lg btn-danger" role="button" id="stop-dfa">Stop
+            <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
+          </button>
+          <button class="btn btn-lg btn-primary" role="button" id="start-dfa">Execute <span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
+          <div class="input-group" style="width:230px;">
+            <div class="input-group-addon">Speed</div>
+            <input type="text" class="form-control" id="executionSpeed" placeholder="millseconds" value="200">
+            <div class="input-group-addon">ms per step</div>
+          </div>
+        </div>
+        <button class="btn btn-lg btn-primary pull-right" role="button" id="step-dfa">Step
+          <span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span>
+        </button>
+
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-9">
+        <div id="dfaGraph"></div>
+      </div>
+      <div class="col-md-3">
+        <div id="dfaConsole">
+          <div id="dfaText">
+            <span id="dfaTextLetter">&nbsp;</span>
+            <span id="dfaTextAfter">&nbsp;</span>
+          </div>
+          <div id="dfaOutput">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- /container -->
+
+  <footer class="footer">
+    <div class="container-fluid">
+        <div class="col-md-12">
+          <div class="pull-right">
+            <h4>
+          KSU CS6040, Theory of Computation, Dr. Jung, Spring 2016
+        </h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /container -->
+  </footer>
+
+
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <!-- Include all compiled plugins (below), or include individual files as needed -->
+  <script src="js/bootstrap.min.js"></script>
+  <script src="dfa.js?v=2"></script>
+  <script src="visjs/vis.min.js"></script>
+  <script src="visualize-dfa.js?v=2"></script>
+  <script src="dfaInst.js?v=2"></script>
+</body>
+
+</html>

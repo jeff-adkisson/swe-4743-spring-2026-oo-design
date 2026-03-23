@@ -1,0 +1,127 @@
+/*
+  DFA to search for [men] or [women] in a block of text
+  Jeff Adkisson & J. Brenton Phillips
+  KSU CS6040, Theory of Computation, Dr. Jung, Spring 2016
+
+  Built with:
+  * html
+  * css
+  * javascript
+  * bootstrap: https://getbootstrap.com/ [see css/bootstrap.css for license]
+  * vis.js: http://visjs.org/ [see visjs/vis.js for license]
+
+  Requires:
+  * HTML5 web browser
+*/
+
+#dfaGraph {
+  width: 100%;
+  height: 400px;
+  border: 1px solid lightgray;
+  border-radius: 5px;
+}
+
+#dfaConsole {
+  height: 400px;
+  border: 1px solid lightgray;
+  padding: 25px;
+  border-radius: 5px;
+}
+
+#dfaText {
+  width: 100%;
+  font-size: 20px;
+  border: 1px solid lightgray;
+  padding: 15px;
+  border-radius: 5px;
+  height: 60px;
+  overflow: hidden;
+}
+
+#dfaTextLetter {
+  display:inline-block;
+  width: 40px;
+  background: red;
+  color: yellow;
+  padding: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-top: -9px;
+  border-radius: 5px;
+  text-align:center;
+}
+
+#dfaTextAfter {
+  color: blue;
+}
+
+#dfaOutput {
+  margin-top: 20px;
+  width: 100%;
+  font-size: 20px;
+  border: 1px solid lightgray;
+  padding: 15px;
+  border-radius: 5px;
+  height: 270px;
+  overflow: auto;
+  white-space: nowrap;
+}
+
+#start-dfa, #stop-dfa {
+  width:125px;
+  margin-right:10px;
+}
+#stop-dfa {
+  display:none;
+}
+
+#search-text {
+  height: 75px;
+  font-size:20px;
+}
+
+.letter {
+  font-weight: bold;
+  color: white;
+  background: black;
+  display: inline-block;
+  width: 30px;
+  text-align: center;
+}
+
+.accepted {
+  font-weight: bold;
+  color: yellow;
+  background: red;
+  display: inline-block;
+  padding: 2px 10px 2px 10px;
+}
+
+.jumbotron {
+  padding:15px 25px 15px 25px !important;
+}
+
+
+
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 60px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 60px;
+  background-color: #f5f5f5;
+}
+.footer .row {
+  padding:15px 25px 15px 25px !important;
+
+}

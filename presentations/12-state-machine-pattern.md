@@ -204,21 +204,21 @@ classDiagram
  		direction LR
     class Context {
         -state : IState
-        +request()
-        +setState(IState)
+        +Request()
+        +SetState(IState)
     }
 
     class IState {
         <<interface>>
-        +handle(context : Context)
+        +Handle(context : Context)
     }
 
     class ConcreteStateA {
-        +handle(context : Context)
+        +Handle(context : Context)
     }
 
     class ConcreteStateB {
-        +handle(context : Context)
+        +Handle(context : Context)
     }
 
     Context --> IState : delegates to
@@ -230,8 +230,9 @@ classDiagram
 
 1. The context holds a reference to the current state object.
 2. When a client calls a method on the context, the context delegates to the current state.
-3. The state object performs the action and may transition the context to a new state by calling `context.SetState(new NextState())`. The next state can be a forward transition, a backward transition to a previous state, or even the same state (a self-transition).
-4. The next call to the same method on the context will be handled by the new state object.
+3. The concrete state object — not the context — decides what happens next. It performs the action and determines the next state. If a transition is needed, the state object calls `context.SetState(new NextState())` to install the new state. The context's `SetState` method is just a setter — it stores whatever state object it is given. The *decision* of which state to transition to is made entirely inside the concrete state class. This is the critical distinction: the context does not choose the next state; the current state does.
+4. The next state can be a forward transition, a backward transition to a previously visited state, or a self-transition (same state, with side effects).
+5. The next call to the same method on the context will be handled by the new state object.
 
 ### Canonical Sequence Diagram
 
@@ -242,20 +243,20 @@ sequenceDiagram
     participant StateA as ConcreteStateA
     participant StateB as ConcreteStateB
 
-    Client->>Context: request()
-    Context->>StateA: handle(this)
-    StateA->>Context: setState(new ConcreteStateB())
+    Client->>Context: Request()
+    Context->>StateA: Handle(this)
+    StateA->>Context: SetState(new ConcreteStateB())
     Note over Context: state is now ConcreteStateB
 
-    Client->>Context: request()
-    Context->>StateB: handle(this)
-    StateB->>Context: setState(new ConcreteStateA())
+    Client->>Context: Request()
+    Context->>StateB: Handle(this)
+    StateB->>Context: SetState(new ConcreteStateA())
     Note over Context: backward transition: state is ConcreteStateA again
 ```
 
 ### Key Design Decisions
 
-- **Who owns transitions?** Usually the concrete state classes, because they know which transitions are valid from their own state. Alternatively, the context can own transitions if transition logic needs to be centralized.
+- **Who owns transitions?** The concrete state classes do. Each state class decides whether a transition is valid and which state comes next. The context's `SetState` method is passive — it accepts whatever state object the concrete state gives it. This is a common source of confusion: `SetState` does not choose the next state; the current state class does, and it *tells* the context what the next state is. In rare cases, transition logic can be centralized in the context, but the default ownership belongs to the concrete states because they know which transitions are valid from their own state.
 - **How is state created?** States can be created fresh on each transition or reused if they carry no per-instance data.
 - **What does the state interface look like?** It should contain exactly the operations whose behavior varies by state. Operations that do not vary should stay on the context.
 

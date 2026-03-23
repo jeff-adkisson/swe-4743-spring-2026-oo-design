@@ -1014,47 +1014,67 @@ In some systems, state transitions trigger notifications to observers. The conte
 
 ### Core Definitions
 
-- `Finite State Machine (FSM)`: a formal model with a finite set of states, events, and transitions.
-- `State Pattern`: a GoF behavioral pattern where an object delegates state-dependent behavior to interchangeable state objects.
-- `Context`: the object whose behavior varies; holds and delegates to the current state.
-- `State interface`: defines the operations that change meaning depending on state.
-- `Concrete state`: implements the state interface for one specific state.
-- `Transition`: a change from one state to another, triggered by an event.
-- `Terminal state`: a state from which no further transitions are possible.
-
-### Fast Recall Diagram
-
-```mermaid
-flowchart LR
-    A[State Pattern]
-    A --> B[Context]
-    A --> C[State Interface]
-    C --> D[Concrete States]
-    D --> E[Transitions]
-    A --> F[FSM Formalism]
-    F --> G[States + Events + Transition Table]
-    A --> H[Design Decisions]
-    H --> I[Who owns transitions?]
-    H --> J[State pattern vs conditionals?]
-```
+- `Finite State Machine (FSM)`: a formal model with a finite set of states, a finite set of events, a transition function mapping (state, event) to next state, an initial state, and optionally a set of accepting/terminal states.
+- `Deterministic Finite Automaton (DFA)`: a specialized FSM where every (state, input) pair maps to exactly one next state — no ambiguity. The basis for regex engines, lexical analyzers, and protocol validators.
+- `State Pattern`: a GoF behavioral pattern where an object delegates state-dependent behavior to interchangeable state objects. The object appears to change its class at runtime.
+- `Context`: the object whose behavior varies; holds a reference to the current state and delegates state-dependent work to it.
+- `State interface`: defines the operations that change meaning depending on state. Should contain only operations that vary by state.
+- `Concrete state`: implements the state interface for one specific state, including transition logic.
+- `Transition`: a change from one state to another, triggered by an event. Can be forward, backward (to a previously visited state), or a self-transition (same state, with side effects).
+- `Terminal state`: a state from which no further transitions are possible (e.g., Delivered, Cancelled).
+- `TransitionResult`: a return type that communicates success/failure and a message, replacing exceptions for invalid transitions. Supports LSP by ensuring every state implementation genuinely fulfills the interface contract.
+- `Rehydration`: reconstructing a live state object from a persisted representation (e.g., a database column or JSON field) using a registry that maps state names to state instances.
 
 ### Boundary Checklist
 
 - Does the context delegate all state-dependent behavior to state objects?
-- Does each state class handle all events for its state?
-- Are invalid transitions handled explicitly (exception or defined rejection)?
+- Does each state class handle all events for its state (returning a result, not throwing)?
+- Are invalid transitions handled as expected outcomes (`TransitionResult` with `Success = false`), not as exceptions?
+- Is `SetState` restricted (`internal` or equivalent) so callers cannot bypass the state machine?
 - Is the transition diagram complete: does every (state, event) pair have an explicit outcome?
 - Are state classes independently testable?
 - Is the state interface limited to operations that actually vary by state?
+- Is state-dependent logic centralized in state classes, not scattered in controllers or service layers (no "working around" the state machine)?
+
+### SOLID Violations in the If/Then Approach
+
+| Principle | How the if/then approach violates it |
+|---|---|
+| **SRP** | One class has a reason to change for every state |
+| **OCP** | Adding a state requires editing every existing method |
+| **LSP** | N/A (no inheritance in the if/then version) |
+| **DIP** | High-level policy coupled to raw string literals |
+| **Change amplification** | New state = *states x actions* new branches |
+| **Information leakage** | Knowledge of each state scattered across all methods |
+| **Magic strings** | No compiler support; typos silently break logic |
+
+### Ousterhout Connections
+
+| Ousterhout Concept | Where it appears in this lecture |
+|---|---|
+| **Complexity = dependencies + obscurity** (Ch. 2) | Section 1: the naive if/then code has both |
+| **Change amplification** (Ch. 2) | Section 4: adding a state requires editing every method |
+| **Information leakage** (Ch. 5) | Section 4: state knowledge scattered across methods |
+| **Deep modules** (Ch. 4) | Section 3: each state class has a simple interface but encapsulates rich behavior |
+| **Define errors out of existence** (Ch. 10) | Section 3: `TransitionResult` eliminates the need for callers to ask "is this allowed?" |
+| **Tactical vs strategic programming** (Ch. 3) | Section 6: recognizing when to refactor from if/then to State pattern |
+| **Tactical programming creates complexity** (Ch. 3) | Section 7: working around the state machine compounds over time |
 
 ### Sample Exam Questions
 
 1. What problem does the State pattern solve that simple conditional logic does not?
-2. Draw a UML class diagram for a State pattern with three states.
+2. Draw a UML class diagram for a State pattern with three states, including the context and state interface.
 3. In the State pattern, who typically owns transition logic, and why?
 4. How is the State pattern structurally related to the Strategy pattern? What distinguishes them?
 5. Given a state transition table, identify which transitions are missing or inconsistent.
 6. When is the State pattern overkill?
+7. Why should invalid transitions return a `TransitionResult` rather than throw an exception? Name at least two reasons.
+8. What SOLID principles does the if/then approach violate? Name three and explain each briefly.
+9. Explain what "working around the state machine" means and why it is dangerous.
+10. What is a backward transition? Give an example from the order processing system.
+11. What is a self-transition? Give an example and explain why the state does not change but the transition still matters.
+12. How does a state machine survive a server restart? Describe the rehydration approach using a registry.
+13. What is a DFA, and how does it differ from the State pattern in terms of when you would use each?
 
 ### Scenario Drills
 
@@ -1062,6 +1082,8 @@ flowchart LR
 2. A traffic light cycles through `Red`, `Green`, and `Yellow` on a timer. Should you use the State pattern or a simple enum with a switch? Why?
 3. A support ticket moves through `Open`, `InProgress`, `AwaitingCustomer`, `Resolved`, and `Closed`. Each state determines which actions are valid. You expect to add new states (e.g., `Escalated`) in the future. Which approach is better?
 4. A document has exactly two states: `Draft` and `Final`. Behavior barely differs. Is the State pattern justified?
+5. A payment gateway returns "declined" for a paid order. A developer adds a check in the controller: `if (order.StatusName == "Paid") { order.SetState(new NewOrderState()); }`. What is wrong with this approach? What should they do instead?
+6. Your team's order system stores the state as a string column in the database. When loading an order, the code uses a switch statement to create the correct state object. A new state is added but the switch is not updated. What happens? How would a registry-based approach prevent this?
 
 ### Scenario Drill Answers
 
@@ -1069,6 +1091,36 @@ flowchart LR
 2. **Simple enum with switch.** Three states, one method (advance), predictable cycle, no expected growth. The pattern adds classes without proportional benefit.
 3. **State pattern.** Many states, different valid actions per state, expected growth. The pattern isolates each state's behavior and supports OCP for new states.
 4. **Probably not.** Two states with minimal variation is well served by a simple boolean or enum. The pattern would add classes without meaningful payoff.
+5. **Working around the state machine.** The developer is bypassing `PaidOrderState.PaymentDeclined()` and forcing a state change from outside. This splits authority, skips any logging or validation the state class would perform, and creates a precedent for future workarounds. The fix: add or use the `PaymentDeclined()` method on `PaidOrderState`, which transitions to `NewOrderState` through the state machine.
+6. **The switch silently falls through or throws.** The loaded order gets no state object (or a default/wrong one), and state-dependent behavior breaks. A registry-based approach (like `OrderStateRegistry`) fails fast with a clear error message ("Unknown state: Returned") and centralizes state lookup in one place — adding a new state means adding one dictionary entry, not hunting for every switch statement.
+
+### Sample Exam Question Answers
+
+1. **The State pattern eliminates scattered conditional logic.** Instead of every method checking the current state with if/else chains, each state is its own class with cohesive behavior. Adding a new state means adding one class — not editing every method in the system. See [Section 1](#1-the-problem-behavior-that-changes-with-state) for the motivating problem and [Section 4](#4-implementation-walkthrough-order-processing) for the side-by-side comparison of if/then vs State pattern.
+
+2. **Draw three concrete state classes implementing a common state interface, plus a context class that holds a reference to the interface.** The context delegates to the current state and exposes a `SetState` method for transitions. See the [canonical UML class diagram in Section 3](#canonical-uml-class-diagram) and the [order-specific class diagram in Section 4](#uml-class-diagram-for-the-order-state-machine).
+
+3. **The concrete state classes typically own transition logic** because they know which transitions are valid from their own state. The alternative — centralizing transitions in the context — is useful when transition logic needs to be consistent or auditable from one place, but it reduces the cohesion of each state class. See [Key Design Decisions in Section 3](#key-design-decisions).
+
+4. **State and Strategy are structurally identical** — both use composition and delegation to an interface. The difference is intent: Strategy selects an algorithm at creation time and typically does not change, while State changes over the object's lifetime as transitions occur. State objects are aware of which state comes next; Strategy objects usually are not. See the [State vs Strategy comparison in Section 8](#state-vs-strategy).
+
+5. **Check the transition table for completeness.** Every (state, event) pair should have an explicit outcome — either a valid transition to a next state or an explicit rejection. Missing entries are bugs. The [transition table in Section 2](#state-transition-table) demonstrates a complete table; the [comparison table in Section 6](#comparison-table) contrasts how conditional logic and the State pattern handle this differently.
+
+6. **The State pattern is overkill when there are only two or three states with minimal behavior variation**, when state-dependent logic is confined to one or two methods, when no new states are expected, or when the overhead of additional classes outweighs the benefit. See [When Conditional Logic Is Fine in Section 6](#when-conditional-logic-is-fine) and the [decision flow diagram](#decision-flow).
+
+7. **TransitionResult is better than exceptions for at least four reasons.** (a) Invalid transitions are expected, not exceptional — "can I ship a delivered order?" is a normal question with a normal answer. (b) LSP: every state can genuinely fulfill the `TransitionResult` return contract, whereas `void` methods that throw on most calls do not truly fulfill the interface. (c) Composability: results can be inspected, logged, and returned without try/catch control flow. (d) Testability: asserting `result.Success` is clearer than asserting a specific exception type. See the [TransitionResult explanation in Section 4](#uml-class-diagram-for-the-order-state-machine) (the rationale immediately before the class diagram).
+
+8. **Three SOLID violations in the if/then approach:** (a) *SRP*: the class has a separate reason to change for every state. (b) *OCP*: adding a new state requires editing every existing method. (c) *DIP*: the class depends on raw string literals rather than an abstraction. Also worth noting: magic strings, information leakage, and change amplification. See the [full problems list in Section 4](#the-ifthen-approach-what-we-are-replacing) and the [SOLID violations table in the Study Guide](#solid-violations-in-the-ifthen-approach).
+
+9. **Working around the state machine** means implementing state-dependent logic outside the state classes — in a controller, service, or calling code — because it feels easier than modifying the state machine. This splits authority (some behavior in state classes, some in callers), creates invisible transitions that skip logging and validation, and erodes the pattern over time until it becomes decorative. See [Working Around the State Machine in Section 7](#working-around-the-state-machine).
+
+10. **A backward transition moves the machine to a state it has been in before.** In the order system, `PaymentDeclined` transitions from `Paid` back to `New`, allowing the customer to try again: `New -> Paid -> New -> Paid -> Shipped -> ...`. See [Backward Transitions and Self-Transitions in Section 2](#backward-transitions-and-self-transitions) and the `PaymentDeclined` implementation in [Section 4](#c-demo).
+
+11. **A self-transition keeps the machine in its current state while performing an action.** For example, a vending machine in `AcceptingCoins` stays in `AcceptingCoins` when a coin is inserted, but the running total increases. The state does not change, but the side effect matters. See the [vending machine diagram in Section 2](#backward-transitions-and-self-transitions) and the [expanded vending machine example in Section 5](#vending-machine).
+
+12. **Store the state name as a string (in a database column or JSON field) and use a registry to reconstruct the state object on load.** The registry maps state names to state instances in a single dictionary — no switch statement required. A rehydration constructor on the context accepts the restored state object. Adding a new state means adding one dictionary entry. See [Appendix 3](#appendix-3-persistence-and-rehydration---surviving-a-restart) for the full implementation with JSON serialization.
+
+13. **A DFA is a specialized FSM where every (state, input) pair maps to exactly one next state.** Use a DFA (typically table-driven) when the value is in the *transitions* — many states with uniform logic, such as parsing, pattern matching, or protocol validation. Use the State pattern (one class per state) when the value is in per-state *behavior* — fewer states with rich, distinct actions. See the [DFA introduction in Section 2](#2-finite-state-machines), the [comparison table in Appendix 2](#table-driven-vs-one-class-per-state), and the [full DFA implementation in Appendix 2](#appendix-2-dfa-for-pattern-matching---finding-men-or-women).
 
 ---
 ## Appendix 1: MVC Email Finder - State Pattern in a Web Application

@@ -6,7 +6,7 @@ How to model objects whose behavior changes based on internal state, using the S
 
 ----
 
-State machines are one of the oldest ideas in computer science — and one of the most invisible. The regex engine that validates your input is a state machine. The network protocol that delivered this page is a state machine. The `async/await` syntax in most modern languages compiles down to a state machine. The checkout flow on every e-commerce site is a state machine. You interact with dozens of them every day without recognizing the pattern.
+State machines are one of the oldest ideas in computer science — and one of the most invisible. The regex engine that validates your input is a state machine. The network protocol that delivered this page is a state machine. The `async/await` syntax in most modern languages [compiles down to a state machine](#appendix-4-asyncawait---the-compilers-state-machine). The [checkout flow on every e-commerce site](#4-implementation-walkthrough-order-processing) is a state machine. You interact with dozens of them every day without recognizing the pattern.
 
 ```mermaid
 stateDiagram-v2
@@ -996,7 +996,7 @@ flowchart LR
 
 ### When to Refactor: Recognizing the Tipping Point
 
-Most state-dependent code does not start as a State pattern — it starts as a simple `if` or `switch` and grows. The question is not "should I have used the State pattern from the beginning?" but "has this code crossed the line where conditional logic is now hurting me?"
+Most state-dependent code does not start as a State pattern — it starts as a simple `if` or `switch` [like the naive approach in Section 1](#1-the-problem-behavior-that-changes-with-state) and grows. The question is not "should I have used the State pattern from the beginning?" but "has this code crossed the line where conditional logic is now hurting me?"
 
 > **Ousterhout:** This is the tension between **tactical** and **strategic programming** (*A Philosophy of Software Design*, Ch. 3). The tactical programmer adds one more `else if` because it is the fastest way to ship the feature. The strategic programmer recognizes that the accumulating conditionals are increasing complexity and invests in the State pattern to reduce it. The signals below help you recognize when tactical additions have created enough complexity to justify the strategic investment.
 
@@ -1126,7 +1126,7 @@ In some systems, state transitions trigger notifications to observers. The conte
 ### Core Definitions
 
 - `Finite State Machine (FSM)`: a formal model with a finite set of states, a finite set of events, a transition function mapping (state, event) to next state, an initial state, and optionally a set of accepting/terminal states.
-- `Deterministic Finite Automaton (DFA)`: a specialized FSM where every (state, input) pair maps to exactly one next state — no ambiguity. The basis for regex engines, lexical analyzers, and protocol validators.
+- `Deterministic Finite Automaton (DFA)`: a specialized FSM where every (state, input) pair maps to exactly one next state — no ambiguity. The basis for regex engines, lexical analyzers, and protocol validators. See [Appendix 2](#appendix-2-dfa-for-pattern-matching---finding-men-or-women) for a worked example.
 - `State Pattern`: a GoF behavioral pattern where an object delegates state-dependent behavior to interchangeable state objects. The object appears to change its class at runtime.
 - `Context`: the object whose behavior varies; holds a reference to the current state and delegates state-dependent work to it.
 - `State interface`: defines the operations that change meaning depending on state. Should contain only operations that vary by state.
@@ -1134,7 +1134,7 @@ In some systems, state transitions trigger notifications to observers. The conte
 - `Transition`: a change from one state to another, triggered by an event. Can be forward, backward (to a previously visited state), or a self-transition (same state, with side effects).
 - `Terminal state`: a state from which no further transitions are possible (e.g., Delivered, Cancelled).
 - `TransitionResult`: a return type that communicates success/failure and a message, replacing exceptions for invalid transitions. Supports LSP by ensuring every state implementation genuinely fulfills the interface contract.
-- `Rehydration`: reconstructing a live state object from a persisted representation (e.g., a database column or JSON field) using a registry that maps state names to state instances.
+- `Rehydration`: reconstructing a live state object from a persisted representation (e.g., a database column or JSON field) using a registry that maps state names to state instances. See [Appendix 3](#appendix-3-persistence-and-rehydration---surviving-a-restart) for a full implementation.
 
 ### Boundary Checklist
 

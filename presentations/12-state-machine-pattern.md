@@ -25,6 +25,16 @@ Despite being everywhere, state machines are rarely taught as a *design* skill. 
 
 ![image-20260322232448929](12-state-machine-pattern.assets/image-20260322232448929.png)
 
+#### Interactive Traffic Light State Machine Demo
+
+There is a simple demonstration of the traffic light state diagram in the `~/presentations` folder called [`12-state-machine-pattern-traffic-light-demo.cs`](12-state-machine-pattern-traffic-light-demo.cs). 
+
+You can run the demo from a terminal with `dotnet run 12-state-machine-pattern-traffic-light-demo.cs`.
+
+Press `w` to request the walk signal. Press `q` when you are beset with ennui.
+
+![image-20260323174608797](12-state-machine-pattern.assets/image-20260323174608797.png)
+
 ---
 ## Table of Contents
 

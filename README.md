@@ -113,4 +113,7 @@ Design and implement a moderately complex, server-rendered Tea Shop web applicat
 - [Lecture Material](presentations/11-mvc-di-srv-domain.md)
 
 #### 12. State Machine Pattern
+- [PowerPoint](presentations/12-state-machine-pattern.pptx)
+- [PDF](presentations/12-state-machine-pattern.pdf)
+- [HTML](presentations/12-state-machine-pattern_html/index.html)
 - [Lecture Material](presentations/12-state-machine-pattern.md)

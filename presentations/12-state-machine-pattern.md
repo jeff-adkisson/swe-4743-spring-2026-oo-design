@@ -23,6 +23,8 @@ A traffic light is a state machine. It has a finite set of states (`Red`, `Walk`
 
 Despite being everywhere, state machines are rarely taught as a *design* skill. Theory of Computation covers them as math; this lecture covers them as a practical tool you reach for when an object's behavior depends on its history and your if/else chains are starting to rot. The State pattern is one of the few design patterns where an object appears to *change its class* at runtime — calling the same method on the same object produces completely different behavior depending on what has happened to it before.
 
+![image-20260322232448929](12-state-machine-pattern.assets/image-20260322232448929.png)
+
 ---
 ## Table of Contents
 
@@ -117,6 +119,8 @@ flowchart TB
     GOOD --> S4[DeliveredOrderState]
 ```
 
+![image-20260322232506246](12-state-machine-pattern.assets/image-20260322232506246.png)
+
 ---
 ## 2. Finite State Machines
 
@@ -196,6 +200,8 @@ The FSM gives you a precise specification before you write code. If you cannot d
 The State pattern is one way to implement an FSM in object-oriented code so that each state's behavior lives in its own class.
 
 FSMs have a deeper formal foundation in theoretical computer science through the [Deterministic Finite Automaton (DFA)](https://en.wikipedia.org/wiki/Deterministic_finite_automaton) — a constrained FSM where every (state, input) pair maps to exactly one next state with no ambiguity. DFAs are the basis for regular expressions, lexical analyzers, and protocol validators. Understanding DFAs is valuable because it sharpens the same thinking that makes the State pattern work: defining states precisely, making every transition explicit, and accounting for every possible input. If you can model a problem as a DFA, the State pattern implementation almost writes itself. [Appendix 2](#appendix-2-dfa-for-pattern-matching---finding-men-or-women) explores this connection with a working example.
+
+![image-20260322232523688](12-state-machine-pattern.assets/image-20260322232523688.png)
 
 ---
 ## 3. The State Pattern
@@ -322,6 +328,8 @@ sequenceDiagram
 
 > **Ousterhout:** Each concrete state class is a **deep module** — it has a simple, narrow interface (`Execute` + `AvailableTransitions`) but encapsulates significant internal behavior (*A Philosophy of Software Design*, Ch. 4). The caller does not need to know *how* a shipped order handles a delivery — it only needs to pick from the offered transitions and inspect the result. This is also an example of **defining errors out of existence** (Ch. 10) — by advertising only valid transitions, the state eliminates the possibility of the caller making an invalid request under normal operation.
 
+![image-20260322232534148](12-state-machine-pattern.assets/image-20260322232534148.png)
+
 ---
 ## 4. Implementation Walkthrough: Order Processing
 
@@ -446,6 +454,8 @@ Notice the problems:
 The State pattern implementation below solves all of these problems by giving each state its own class.
 
 There is one more problem the if/then code has that is easy to miss: **the caller must know which operations are valid.** The if/then class exposes `Pay()`, `Ship()`, `Deliver()`, `PaymentDeclined()`, and `Cancel()` unconditionally. The caller has to know (or guess) which ones are valid for the current state, then handle the exception when they guess wrong. A well-designed state machine should tell the caller what it *can* do — the valid operations should be a product of the current state, not a fixed menu the caller navigates blind.
+
+![image-20260322232621158](12-state-machine-pattern.assets/image-20260322232621158.png)
 
 The State pattern implementation below uses a **transition-driven design**: each state advertises its available transitions, and the caller selects from that list. The caller never needs to know what state the order is in — it asks "what can I do?" and the state answers.
 
@@ -858,6 +868,10 @@ sequenceDiagram
     Order-->>Client: [] (terminal state)
 ```
 
+![image-20260322232713240](12-state-machine-pattern.assets/image-20260322232713240.png)
+
+![image-20260322232727404](12-state-machine-pattern.assets/image-20260322232727404.png)![image-20260322232748372](12-state-machine-pattern.assets/image-20260322232748372.png)
+
 ---
 ## 5. Industry Examples
 
@@ -962,6 +976,10 @@ State machines tend to appear in systems where:
 
 For a complete, runnable example of the State pattern applied to text scanning rather than lifecycle management, see [Appendix 1](#appendix-1-mvc-email-finder---state-pattern-in-a-web-application). It uses the same pattern structure as the Order example — interface, concrete state classes, context — but applies it to character-by-character email extraction in an ASP.NET Core MVC application. Studying both examples side by side reinforces that the pattern's value is in the structure, not the domain.
 
+![image-20260322232820779](12-state-machine-pattern.assets/image-20260322232820779.png)
+
+![image-20260322232833011](12-state-machine-pattern.assets/image-20260322232833011.png)
+
 ---
 ## 6. State Pattern vs Conditional Logic
 
@@ -1028,6 +1046,8 @@ You do not have to convert everything at once. Each extracted state immediately 
 | OCP compliance | Violates (modify existing methods) | Supports (add new state classes) |
 | Testing | Test every branch in every method | Test each state class independently |
 
+![image-20260322232845642](12-state-machine-pattern.assets/image-20260322232845642.png)
+
 ---
 ## 7. Anti-Patterns and Failure Modes
 
@@ -1070,12 +1090,16 @@ The fix is straightforward: if new behavior is state-dependent, it belongs in a 
 
 > **Ousterhout:** This is **tactical programming** at its most damaging (*A Philosophy of Software Design*, Ch. 3). The workaround is fast to write, but it creates "a steady stream of complexity" because "each one of these shortcuts introduces a small amount of complexity that doesn't seem to matter." Over time, the workarounds compound until the state machine is no longer trustworthy and developers default to checking state in the calling code — exactly the scattered conditional logic the pattern was designed to eliminate.
 
+![image-20260322232922278](12-state-machine-pattern.assets/image-20260322232922278.png)
+
 ### Concrete Warnings
 
 - State classes should not know about each other's internal details.
 - The context should not bypass state delegation for "special cases."
 - Terminal states (like `Delivered` or `Cancelled`) should explicitly reject all transitions rather than silently doing nothing.
 - If your state classes share most of their code, the pattern may be premature. Consider whether a simpler approach is sufficient.
+
+![image-20260322232856674](12-state-machine-pattern.assets/image-20260322232856674.png)
 
 ---
 ## 8. Relationship to Other Patterns
@@ -1099,6 +1123,8 @@ A factory can be used to create state objects, especially when state creation in
 
 In some systems, state transitions trigger notifications to observers. The context can fire events when `SetState` is called, allowing external components to react to lifecycle changes without polling.
 
+![image-20260322232934726](12-state-machine-pattern.assets/image-20260322232934726.png)
+
 ---
 ## 9. Real-World Summary
 
@@ -1119,6 +1145,8 @@ In some systems, state transitions trigger notifications to observers. The conte
 | "Every enum-based status field needs the State pattern." | Many status fields work fine as enums with a small switch. The pattern pays off when behavior varies significantly across many states and methods. |
 | "State objects should be singletons." | Stateless state objects *can* be shared, but making them singletons adds complexity. Fresh instances are simpler and safer as a default. |
 | "The context should control all transitions." | Usually state objects own transitions because they know best which transitions are valid from their state. Centralizing transitions in the context can work but often recreates the conditional logic the pattern was meant to eliminate. |
+
+![image-20260322232952181](12-state-machine-pattern.assets/image-20260322232952181.png)
 
 ---
 ## Study Guide

@@ -1,0 +1,14 @@
+@if (snowing) {
+  <div class="snow-container" aria-hidden="true">
+    @for (flake of flakes; track flake.id) {
+      <div
+        class="snowflake"
+        [style.left.%]="flake.x"
+        [style.animation-duration.s]="flake.speed"
+        [style.animation-delay.s]="flake.delay"
+        [style.font-size.px]="flake.size"
+        [style.opacity]="flake.opacity"
+      >&#10052;</div>
+    }
+  </div>
+}

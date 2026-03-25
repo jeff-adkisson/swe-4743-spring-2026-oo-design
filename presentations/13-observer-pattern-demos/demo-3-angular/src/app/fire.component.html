@@ -1,0 +1,14 @@
+@if (burning) {
+  <div class="fire-container" aria-hidden="true">
+    @for (flame of flames; track flame.id) {
+      <div
+        class="flame"
+        [style.left.%]="flame.x"
+        [style.animation-duration]="flame.speed + 's, ' + flame.waggle + 's'"
+        [style.animation-delay.s]="flame.delay"
+        [style.font-size.px]="flame.size"
+        [style.opacity]="flame.opacity"
+      >&#128293;</div>
+    }
+  </div>
+}

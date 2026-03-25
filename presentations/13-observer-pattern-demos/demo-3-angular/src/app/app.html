@@ -1,0 +1,84 @@
+@if (showForecast) { <app-snow /> <app-fire /> }
+<main class="container">
+  <h1>Observer Pattern &mdash; Angular Weather Station</h1>
+  <p>
+    Each component below is an <strong>Observer</strong> that subscribes to
+    the <code>WeatherService</code> (<strong>Subject</strong>) via RxJS.
+    Toggle them on/off to see subscribe/unsubscribe in action.
+  </p>
+  <hr />
+
+  <div class="grid" style="grid-template-columns: 5fr 3fr; align-items: start;">
+    <!-- Controls: the Subject's SetMeasurements equivalent -->
+    <section>
+      <h2>Push New Measurements</h2>
+      <form (ngSubmit)="pushMeasurements()">
+        <div class="grid">
+          <label>
+            Temp (°F)
+            <input type="number" [(ngModel)]="temperature" name="temperature" step="0.1" />
+          </label>
+          <label>
+            Humidity (%)
+            <input type="number" [(ngModel)]="humidity" name="humidity" step="0.1" />
+          </label>
+          <label>
+            Pressure (hPa)
+            <input type="number" [(ngModel)]="pressure" name="pressure" step="0.1" />
+          </label>
+        </div>
+        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+          <button type="submit">Notify Observers</button>
+          <button type="button" class="secondary" (click)="randomizeAndNotify()">Randomize and Notify</button>
+        </div>
+      </form>
+
+      <!-- Event log -->
+      <h2 style="display: flex; align-items: center;">
+        Event Log
+        <small style="margin-left: auto; font-size: 0.8rem;">
+          <a href="#" (click)="clearLog(); $event.preventDefault()">Clear</a>
+        </small>
+      </h2>
+      <small>Shows observer subscribe/unsubscribe events and subject notifications</small>
+      <pre><code>{{ log$ | async }}</code></pre>
+    </section>
+
+    <!-- Observers: toggle + card together. Toggling destroys/creates
+         the component, triggering ngOnDestroy (unsubscribe) / ngOnInit (subscribe) -->
+    <section>
+      <h2 style="display: flex; align-items: center; gap: 0.5rem;">
+        Observers
+        <span class="subscriber-chip" [class.zero]="(subscriberCount$ | async) === 0">{{ subscriberCount$ | async }}</span>
+        <small style="margin-left: auto; font-size: 0.8rem;">
+          <a href="#" (click)="setAll(true); $event.preventDefault()">All</a> |
+          <a href="#" (click)="setAll(false); $event.preventDefault()">None</a>
+        </small>
+      </h2>
+
+      <label>
+        <input type="checkbox" [(ngModel)]="showCurrent" name="showCurrent" role="switch" />
+        Current Conditions
+      </label>
+      @if (showCurrent) { <app-current-conditions /> }
+
+      <label>
+        <input type="checkbox" [(ngModel)]="showStats" name="showStats" role="switch" />
+        Statistics
+      </label>
+      @if (showStats) { <app-statistics /> }
+
+      <label>
+        <input type="checkbox" [(ngModel)]="showForecast" name="showForecast" role="switch" />
+        Forecast
+      </label>
+      @if (showForecast) { <app-forecast /> }
+
+      <label>
+        <input type="checkbox" [(ngModel)]="showHeatIndex" name="showHeatIndex" role="switch" />
+        Heat Index
+      </label>
+      @if (showHeatIndex) { <app-heat-index /> }
+    </section>
+  </div>
+</main>

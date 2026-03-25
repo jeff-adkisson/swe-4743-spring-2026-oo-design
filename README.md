@@ -18,6 +18,7 @@ Spring 2026
 ## Exams
 
 - [Exam 1 Study Guide](exam-prep/exam1-study-guide.md)
+- [Exam 2 Study Guide](exam-prep/exam2-study-guide.md)
 
 ## Assignments
 
@@ -117,3 +118,7 @@ Design and implement a moderately complex, server-rendered Tea Shop web applicat
 - [PDF](presentations/12-state-machine-pattern.pdf)
 - [HTML](presentations/12-state-machine-pattern_html/index.html)
 - [Lecture Material](presentations/12-state-machine-pattern.md)
+
+#### 13. Observer Pattern
+
+- [Lecture Material](presentations/13-observer-pattern.md)

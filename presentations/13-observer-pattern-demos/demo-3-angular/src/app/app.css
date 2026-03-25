@@ -1,0 +1,22 @@
+pre {
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.subscriber-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.subscriber-chip.zero {
+  background: #dc3545;
+}

@@ -2,9 +2,7 @@
 
 ### Reacting to Change Without Creating Dependency Chains
 
-[Powerpoint Presentation](13-observer-pattern.pptx) | [PDF](13-observer-pattern.pdf) | [Video](13-observer-pattern.mp4)
 
-----
 
 Every interesting system changes over time. A stock price ticks upward. A sensor reads a new temperature. A user types into a search box and a list of suggestions appears. The question is not *whether* objects need to react to change, but *how they find out about it*.
 
@@ -105,13 +103,6 @@ This compiles and runs. It also has serious design problems:
 
 ```mermaid
 flowchart LR
-    subgraph Before ["Before: Hardwired"]
-        direction TB
-        WS1[WeatherStation] --> D1[CurrentDisplay]
-        WS1 --> D2[StatsDisplay]
-        WS1 --> D3[ForecastDisplay]
-    end
-
     subgraph After ["After: Observer"]
         direction TB
         WS2[WeatherStation] -->|notifies| I[<<IObserver>>]
@@ -120,6 +111,14 @@ flowchart LR
         I -.->|implements| D6[ForecastDisplay]
         I -.->|implements| D7[Any Future Display]
     end
+    subgraph Before ["Before: Hardwired"]
+        direction TB
+        WS1[WeatherStation] --> D1[CurrentDisplay]
+        WS1 --> D2[StatsDisplay]
+        WS1 --> D3[ForecastDisplay]
+    end
+
+
 ```
 
 On the left, the station knows every consumer by name. On the right, it knows only an interface. New consumers appear without touching the station's code.

@@ -2,7 +2,7 @@
 
 ### Reacting to Change Without Creating Dependency Chains
 
-[Powerpoint Presentation](13-observer-pattern.pptx) | [PDF](13-observer-pattern.pdf) 
+[Powerpoint Presentation](13-observer-pattern.pptx) | [PDF](13-observer-pattern.pdf) | [Video](13-observer-pattern.mp4) 
 
 ---
 
@@ -191,6 +191,8 @@ classDiagram
 4. Each observer responds to the notification in its own way — update a display, write a log, send an alert.
 5. An observer may call `Unsubscribe()` at any time to stop receiving notifications.
 6. The subject never casts, inspects, or depends on the concrete type of any observer.
+
+![image-20260325175115844](13-observer-pattern.assets/image-20260325175115844.png)
 
 **SOLID connections:** Observer touches every SOLID principle:
 
@@ -566,6 +568,8 @@ classDiagram
 
 > **Ousterhout:** "The best modules are those that provide powerful functionality yet have simple interfaces. A module's interface should be much simpler than its implementation." (*A Philosophy of Software Design*, Ch. 4). Each observer encapsulates a complex reaction behind a single `Update` method — the subject's interface stays trivially simple regardless of how many observers exist.
 
+![image-20260325175541397](13-observer-pattern.assets/image-20260325175541397.png)
+
 ---
 
 ## 5. Observer in Client-Side Web Frameworks
@@ -680,6 +684,8 @@ graph TD
 ```
 
 Solid arrows show notification flow (`.next()` pushes data to all subscribers). Dashed arrows show the subscription relationship (each component calls `.subscribe()` on the shared `Observable`). Toggling a component off calls `.unsubscribe()` in `ngOnDestroy` and removes it from the notification list — the service never changes.
+
+![image-20260325180033747](13-observer-pattern.assets/image-20260325180033747.png)
 
 ### React: State and Custom Hooks
 

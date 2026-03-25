@@ -2,9 +2,14 @@
 
 set -euo pipefail
 
-# Use Homebrew Ruby instead of macOS system Ruby (2.6), which is too old
-# for modern Bundler/Jekyll. This keeps the fix local to this script.
-if [ -d "/opt/homebrew/opt/ruby/bin" ]; then
+# Use Homebrew Ruby 3.3 instead of macOS system Ruby (2.6) or Ruby 4.0.
+# System Ruby is too old for modern Bundler. Ruby 4.0 removed tainted?
+# which breaks Liquid 4.0.3 (pinned by github-pages). Ruby 3.3 is the
+# sweet spot until github-pages updates its Jekyll/Liquid dependencies.
+if [ -d "/opt/homebrew/opt/ruby@3.3/bin" ]; then
+  export PATH="/opt/homebrew/opt/ruby@3.3/bin:$PATH"
+  export PATH="$(/opt/homebrew/opt/ruby@3.3/bin/gem environment gemdir)/bin:$PATH"
+elif [ -d "/opt/homebrew/opt/ruby/bin" ]; then
   export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
   export PATH="$(gem environment gemdir)/bin:$PATH"
 fi

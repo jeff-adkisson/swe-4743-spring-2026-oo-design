@@ -2,6 +2,13 @@
 
 set -euo pipefail
 
+# Use Homebrew Ruby instead of macOS system Ruby (2.6), which is too old
+# for modern Bundler/Jekyll. This keeps the fix local to this script.
+if [ -d "/opt/homebrew/opt/ruby/bin" ]; then
+  export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+  export PATH="$(gem environment gemdir)/bin:$PATH"
+fi
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 

@@ -109,7 +109,7 @@ This compiles and runs. It also has serious design problems:
 flowchart LR
     subgraph After ["After: Observer"]
         direction TB
-        WS2[WeatherStation] -->|notifies| I[<<IObserver>>]
+        WS2[WeatherStation] -->|notifies| I[IObserver]
         I -.->|implements| D4[CurrentDisplay]
         I -.->|implements| D5[StatsDisplay]
         I -.->|implements| D6[ForecastDisplay]

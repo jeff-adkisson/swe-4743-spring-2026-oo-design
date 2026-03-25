@@ -1,0 +1,1 @@
+- [Lecture Material](presentations/13-observer-pattern.md)

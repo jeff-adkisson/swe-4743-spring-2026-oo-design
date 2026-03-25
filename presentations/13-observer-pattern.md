@@ -2,7 +2,9 @@
 
 ### Reacting to Change Without Creating Dependency Chains
 
+[Powerpoint Presentation](13-observer-pattern.pptx) | [PDF](13-observer-pattern.pdf) 
 
+---
 
 Every interesting system changes over time. A stock price ticks upward. A sensor reads a new temperature. A user types into a search box and a list of suggestions appears. The question is not *whether* objects need to react to change, but *how they find out about it*.
 
@@ -35,6 +37,8 @@ sequenceDiagram
 Three consumers, three completely different reactions, and the `WeatherStation` didn't import a single one of them. That is the core promise of Observer: **one-to-many notification with zero knowledge of the many**.
 
 This lecture builds from the simple two-object case to multi-observer dispatch, and then crosses the process boundary by introducing a message queue between the subject and its observers — the architecture behind every modern event-driven system.
+
+![image-20260325170403719](13-observer-pattern.assets/image-20260325170403719.png)
 
 ---
 
@@ -122,6 +126,8 @@ flowchart LR
 ```
 
 On the left, the station knows every consumer by name. On the right, it knows only an interface. New consumers appear without touching the station's code.
+
+![image-20260325170418883](13-observer-pattern.assets/image-20260325170418883.png)
 
 ---
 
@@ -239,6 +245,14 @@ sequenceDiagram
 
 > **Ousterhout:** "Complexity is caused by two things: dependencies and obscurity. The Observer pattern trades one form of dependency (concrete references) for another (registration-based), but the new form is far easier to manage." (*A Philosophy of Software Design*, Ch. 2).
 
+![image-20260325170459850](13-observer-pattern.assets/image-20260325170459850.png)
+
+![image-20260325170516328](13-observer-pattern.assets/image-20260325170516328.png)
+
+![image-20260325170528742](13-observer-pattern.assets/image-20260325170528742.png)
+
+![image-20260325170542797](13-observer-pattern.assets/image-20260325170542797.png)
+
 ---
 
 ## 3. Implementation Walkthrough: Weather Station in C#
@@ -308,6 +322,8 @@ public class WeatherStation : ISubject
 }
 ```
 
+![image-20260325170659193](13-observer-pattern.assets/image-20260325170659193.png)
+
 ### A Simple Observer: CurrentConditionsDisplay
 
 ```csharp
@@ -328,6 +344,8 @@ public class CurrentConditionsDisplay : IObserver
     }
 }
 ```
+
+![image-20260325170609109](13-observer-pattern.assets/image-20260325170609109.png)
 
 ### Putting It Together
 
@@ -369,6 +387,8 @@ A runnable single-file demo of this section is available at [`13-observer-patter
 ```bash
 dotnet run 13-observer-pattern-demos/13-observer-pattern-weather-station-demo-2.cs
 ```
+
+![image-20260325170717786](13-observer-pattern.assets/image-20260325170717786.png)
 
 ### Adding More Observers
 
@@ -451,6 +471,8 @@ public class HeatIndexDisplay : IObserver
     }
 }
 ```
+
+![image-20260325170752762](13-observer-pattern.assets/image-20260325170752762.png)
 
 ### Multi-Observer Program
 
@@ -550,6 +572,10 @@ classDiagram
 
 The Observer pattern is not just a back-end concern. It is the *foundational mechanism* behind reactive UI in modern web frameworks. Every time a component re-renders because data changed, Observer is at work.
 
+![image-20260325170808306](13-observer-pattern.assets/image-20260325170808306.png)
+
+### Example Angular and React Weather Station Demo
+
 ![image-20260324233004893](13-observer-pattern.assets/image-20260324233004893.png)
 
 ### Angular: RxJS Observables
@@ -559,6 +585,10 @@ Angular uses **RxJS** (Reactive Extensions for JavaScript) as its primary mechan
 A full, interactive Angular demo of the Weather Station is available at [`13-observer-pattern-demos/demo-3-angular/`](13-observer-pattern-demos/demo-3-angular/). The demo includes four observer components (current conditions, statistics, forecast, and heat index), live subscribe/unsubscribe toggles, an event log, and randomized data input. See the [README](13-observer-pattern-demos/demo-3-angular/README.md) for setup and run instructions.
 
 The key code snippets from that demo follow.
+
+![image-20260325170935086](13-observer-pattern.assets/image-20260325170935086.png)
+
+![image-20260325170947278](13-observer-pattern.assets/image-20260325170947278.png)
 
 **The Subject: WeatherService**
 
@@ -658,6 +688,10 @@ React does not use a traditional Observer object, but the pattern is still prese
 A full, interactive React demo of the Weather Station is available at [`13-observer-pattern-demos/demo-4-react/`](13-observer-pattern-demos/demo-4-react/). The demo includes four observer components (current conditions, statistics, forecast, and heat index), live mount/unmount toggles, an event log, and randomized data input. See the [README](13-observer-pattern-demos/demo-4-react/README.md) for setup and run instructions.
 
 The key code snippets from that demo follow.
+
+![image-20260325170959912](13-observer-pattern.assets/image-20260325170959912.png)
+
+![image-20260325171036199](13-observer-pattern.assets/image-20260325171036199.png)
 
 **The Subject: WeatherContext**
 

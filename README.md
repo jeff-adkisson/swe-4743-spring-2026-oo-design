@@ -120,5 +120,7 @@ Design and implement a moderately complex, server-rendered Tea Shop web applicat
 - [Lecture Material](presentations/12-state-machine-pattern.md)
 
 #### 13. Observer Pattern
-
+- [PowerPoint](presentations/13-observer-pattern.pptx)
+- [PDF](presentations/13-observer-pattern.pdf)
+- [HTML](presentations/13-observer-pattern_html/index.html)
 - [Lecture Material](presentations/13-observer-pattern.md)

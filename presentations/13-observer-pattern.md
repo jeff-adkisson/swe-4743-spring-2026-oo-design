@@ -815,6 +815,10 @@ Whether you write `station.Subscribe(display)` in C#, `observable.subscribe(call
 
 ## 6. Observer Pattern vs Direct Coupling
 
+![image-20260401171451186](13-observer-pattern.assets/image-20260401171451186.png)
+
+![image-20260401171500030](13-observer-pattern.assets/image-20260401171500030.png)
+
 ### When to Use the Observer Pattern
 
 Observer is not "better" by default. It is a tradeoff: you accept more infrastructure in exchange for less coupling and more growth room.
@@ -857,6 +861,8 @@ flowchart TD
 | Error isolation | Shared | Shared (unless guarded) | Full (consumer crash is independent) |
 | Testability | Hard (must mock all consumers) | Easy (mock observer interface) | Easy (mock queue or use in-memory bus) |
 
+![image-20260401171515102](13-observer-pattern.assets/image-20260401171515102.png)
+
 ---
 
 ## 7. Decoupling with a Message Queue
@@ -871,6 +877,8 @@ The Observer pattern as shown so far works within a single process. The subject 
 - A slow observer **blocks** the subject (and all subsequent observers).
 - If an observer throws an exception, it can **crash** the notification loop.
 - You cannot add observers written in a **different language** or running on a **different machine**.
+
+![image-20260401171525789](13-observer-pattern.assets/image-20260401171525789.png)
 
 ### Introducing the Message Queue
 
@@ -914,6 +922,8 @@ The subject (producer) and observers (consumers) are now **more loosely coupled*
 They are not coupled by object references anymore, but they still share a **message contract**: event type, payload shape, and channel/topic name.
 
 A **message queue** focuses on delivery to consumers, while an **event log** focuses on durable ordered history that consumers can replay later; students often group RabbitMQ and Kafka together, but they are optimized for different priorities.
+
+![image-20260401171540537](13-observer-pattern.assets/image-20260401171540537.png)
 
 ### Bridge Example: An In-Process Event Bus
 
@@ -1064,7 +1074,7 @@ The architectural principle is the same in every case: **the producer writes to 
 
 ## 8. Message Queue Observer Demo: Wacky Chat
 
-The `demo-5-message-queue-chat` project turns Section 7 into something students can touch from their phones. It uses:
+The [`demo-5-message-queue-chat`](13-observer-pattern-demos\demo-5-message-queue-chat\README.md) project turns Section 7 into something students can touch from their phones. It uses:
 
 - **Angular** for the browser UI
 - **ASP.NET Core (C#)** for the HTTP API and SSE bridge
@@ -1127,6 +1137,8 @@ flowchart TB
     SSE -->|text/event-stream| ES
 ```
 
+![image-20260401171605959](13-observer-pattern.assets/image-20260401171605959.png)
+
 ### Queue Topology: Why Fanout Matters
 
 The important design choice is **one exchange, many queues**. The sender does **not** publish separately to Max, Chloe, and j3ph. It publishes once to the fanout exchange, and RabbitMQ duplicates the message into every bound visitor queue.
@@ -1162,6 +1174,10 @@ flowchart TD
 Because Max's own queue is also bound to the exchange, Max receives the same broadcast that Chloe and j3ph receive. That is why the sender sees their own message appear in the room without any special-case UI logic.
 
 This demo is intentionally **live broadcast only**: it does not keep replayable chat history, so a late joiner sees new messages from the moment they connect, not earlier ones.
+
+![image-20260401171626969](13-observer-pattern.assets/image-20260401171626969.png)
+
+![image-20260401171710516](13-observer-pattern.assets/image-20260401171710516.png)
 
 ### Message Broadcast Sequence
 
@@ -1199,6 +1215,8 @@ sequenceDiagram
     SSEC-->>J3PH: SSE event: message
 ```
 
+![image-20260401171720618](13-observer-pattern.assets/image-20260401171720618.png)
+
 ### How SSE Works
 
 **Server-Sent Events (SSE)** is a simple browser feature for one-way server-to-client streaming over ordinary HTTP. The browser opens a long-lived `GET` request, the server keeps the response open, and the server writes small event frames such as:
@@ -1230,6 +1248,8 @@ sequenceDiagram
 ```
 
 > **Deployment note:** WebSockets are also an outstanding solution for real-time systems, but they usually require more complex production deployment configuration, including concerns such as connection handling and [**sticky sessions**](https://dev.to/ably/challenges-of-scaling-websockets-3493) in load-balanced environments.
+>
+> ![image-20260401171730424](13-observer-pattern.assets/image-20260401171730424.png)
 
 
 ### What This Demo Makes Concrete
@@ -1254,6 +1274,8 @@ In other words, Wacky Chat is a good demonstration bridging the concept of "obje
 | **Order dependence** | Code relies on observers being notified in a specific order | The pattern makes no ordering guarantee. Relying on order creates fragile, hidden coupling. |
 | **God subject** | One subject accumulates dozens of event types, each with its own observer interface | Violates SRP. Split into multiple focused subjects. |
 | **Ignoring thread safety** | Modifying the observer list while iterating it in a concurrent environment | `InvalidOperationException` (C#), `ConcurrentModificationException` (Java), or silent data corruption. |
+
+![image-20260401171811509](13-observer-pattern.assets/image-20260401171811509.png)
 
 ### The Lapsed Listener in Detail
 
@@ -1315,11 +1337,13 @@ public void SetMeasurements(float temp, float humidity, float pressure)
 
 When multiple properties change together, batch the changes and call `Notify()` once at the end. If observers truly need separate reactions, emit separate semantic events such as `TemperatureChanged` and `PressureChanged` instead of firing a generic notification multiple times.
 
-> **Ousterhout:** "Each piece of design infrastructure added to a system, such as an interface, argument, function, class, or definition, adds complexity. In order for an element to provide a net gain against complexity, it must eliminate some complexity that would be present in its absence." (*A Philosophy of Software Design*, Ch. 6). Every notification is a piece of "infrastructure." Don't fire more of them than the observers need.
+![image-20260401171822807](13-observer-pattern.assets/image-20260401171822807.png)
 
 ---
 
 ## 10. Relationship to Other Patterns
+
+![image-20260401171845628](13-observer-pattern.assets/image-20260401171845628.png)
 
 ### Observer and State
 
@@ -1381,6 +1405,8 @@ Observer is about **dependency direction**, not about adding fancy infrastructur
 - **Batch notifications**. Notify once after a coherent set of changes, not once per property.
 - **Don't rely on ordering**. If you need ordered processing, use a pipeline or chain, not Observer.
 
+![image-20260401171903181](13-observer-pattern.assets/image-20260401171903181.png)
+
 ### Common Observer Pattern Misconceptions
 
 | Claim | Reality |
@@ -1390,6 +1416,8 @@ Observer is about **dependency direction**, not about adding fancy infrastructur
 | "RxJS replaced Observer" | RxJS *implements* Observer (plus iterator, plus functional operators). It is Observer, not a replacement for it. |
 | "React doesn't use Observer" | React state libraries and render updates rely on observer-style notifications. The framework hides most of the subscribe/notify mechanics. |
 | "Message queues are a different pattern" | A brokered pub/sub system generalizes the same publish/subscribe relationship across process boundaries. The core idea is still "something changed, interested parties react." |
+
+![image-20260401171917320](13-observer-pattern.assets/image-20260401171917320.png)
 
 ---
 

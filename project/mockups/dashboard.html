@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Home Simulator - UI Mockup</title>
+<style>
+  :root {
+    --bg: #f5f6fa;
+    --card: #ffffff;
+    --primary: #4a6cf7;
+    --primary-light: #e8ecff;
+    --success: #22c55e;
+    --success-bg: #dcfce7;
+    --warning: #f59e0b;
+    --warning-bg: #fef3c7;
+    --danger: #ef4444;
+    --muted: #94a3b8;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --border: #e2e8f0;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* Header */
+  .header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header h1 { font-size: 20px; font-weight: 700; }
+  .header .logo { font-size: 24px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .btn-icon {
+    width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--card); font-size: 18px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; color: var(--text-light); position: relative;
+  }
+  .btn-icon:hover { border-color: var(--primary); color: var(--primary); }
+
+  /* Settings panel */
+  .settings-panel {
+    position: absolute; top: 44px; right: 0; width: 380px;
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-lg); padding: 20px; z-index: 200;
+  }
+  .settings-panel h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .settings-section { margin-bottom: 16px; }
+  .settings-section:last-child { margin-bottom: 0; }
+  .settings-section-title { font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .settings-row:last-child { margin-bottom: 0; }
+  .settings-row .location-name { font-size: 13px; font-weight: 500; }
+  .settings-row .slider-container { flex: 1; margin-left: 16px; max-width: 200px; }
+  .settings-divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .speed-group { display: flex; gap: 0; }
+  .speed-group .btn-seg {
+    padding: 6px 14px; font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border); background: var(--card); cursor: pointer; color: var(--text-light);
+  }
+  .speed-group .btn-seg:first-child { border-radius: 6px 0 0 6px; }
+  .speed-group .btn-seg:last-child { border-radius: 0 6px 6px 0; }
+  .speed-group .btn-seg:not(:first-child) { border-left: none; }
+  .speed-group .btn-seg.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .btn-danger { padding: 8px 16px; border-radius: 8px; border: 1px solid #fecaca; background: #fef2f2; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--danger); display: flex; align-items: center; gap: 6px; }
+  .btn-danger:hover { background: #fee2e2; }
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+  .btn-primary:hover { background: #3b5de7; color: white; }
+
+  /* Filters */
+  .filters {
+    padding: 16px 24px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-group { display: flex; align-items: center; gap: 6px; }
+  .filter-label { font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px; }
+  .chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-light);
+  }
+  .chip:hover { border-color: var(--primary); color: var(--primary); }
+  .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .chip.active-green { background: var(--success-bg); color: #15803d; border-color: #86efac; }
+  select.filter-select {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    font-size: 13px;
+    color: var(--text-light);
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 28px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  .filter-divider { width: 1px; height: 24px; background: var(--border); margin: 0 6px; }
+
+  /* Main content */
+  .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+  /* Location group */
+  .location-group { margin-bottom: 32px; }
+  .location-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .location-header h2 { font-size: 18px; font-weight: 600; }
+  .location-header .count {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  /* Device grid */
+  .device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  /* Device card */
+  .device-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.15s;
+  }
+  .device-card:hover { box-shadow: var(--shadow-lg); }
+  .device-card.is-on { border-left: 4px solid var(--success); }
+  .device-card.is-off { border-left: 4px solid var(--muted); }
+
+  .device-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .device-icon { font-size: 28px; margin-bottom: 4px; }
+  .device-name { font-size: 15px; font-weight: 600; }
+  .device-type { font-size: 12px; color: var(--text-light); }
+  .device-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+  .status-on { background: var(--success-bg); color: #15803d; }
+  .status-off { background: #f1f5f9; color: var(--muted); }
+  .status-heating { background: #fef2f2; color: #dc2626; }
+  .status-cooling { background: #eff6ff; color: #2563eb; }
+  .status-idle { background: var(--warning-bg); color: #b45309; }
+  .status-locked { background: var(--success-bg); color: #15803d; }
+  .status-unlocked { background: var(--warning-bg); color: #b45309; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .status-on .status-dot { background: var(--success); }
+  .status-off .status-dot { background: var(--muted); }
+  .status-heating .status-dot { background: #dc2626; }
+  .status-cooling .status-dot { background: #2563eb; }
+  .status-idle .status-dot { background: var(--warning); }
+  .status-locked .status-dot { background: var(--success); }
+  .status-unlocked .status-dot { background: var(--warning); }
+
+  /* Controls */
+  .device-controls { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .control-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .control-row:last-child { margin-bottom: 0; }
+  .control-label { font-size: 13px; color: var(--text-light); }
+  .control-value { font-size: 13px; font-weight: 600; }
+
+  /* Toggle switch */
+  .toggle {
+    width: 44px; height: 24px;
+    background: #cbd5e1;
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .toggle.on { background: var(--success); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 20px; height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { transform: translateX(20px); }
+
+  /* Slider */
+  .slider-container { display: flex; align-items: center; gap: 10px; flex: 1; margin-left: 12px; }
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e2e8f0;
+    outline: none;
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .slider-value { font-size: 13px; font-weight: 600; min-width: 36px; text-align: right; }
+
+  /* Color swatch */
+  .color-swatch {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    cursor: pointer;
+  }
+
+  /* Speed / Mode buttons */
+  .btn-group { display: flex; gap: 0; }
+  .btn-group .btn-seg {
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--card);
+    cursor: pointer;
+    color: var(--text-light);
+    transition: all 0.15s;
+  }
+  .btn-group .btn-seg:first-child { border-radius: 6px 0 0 6px; }
+  .btn-group .btn-seg:last-child { border-radius: 0 6px 6px 0; }
+  .btn-group .btn-seg:not(:first-child) { border-left: none; }
+  .btn-group .btn-seg.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .btn-group .btn-seg.active + .btn-seg { border-left-color: var(--primary); }
+
+  /* Temperature display */
+  .temp-display {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .temp-current { font-size: 28px; font-weight: 700; }
+  .temp-unit { font-size: 14px; color: var(--text-light); }
+  .temp-target { font-size: 13px; color: var(--text-light); margin-top: 2px; }
+  .temp-ambient { font-size: 12px; color: var(--muted); }
+
+  /* Lock button */
+  .btn-lock {
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+  .btn-lock.locked { background: var(--success-bg); color: #15803d; }
+  .btn-lock.unlocked { background: var(--warning-bg); color: #b45309; }
+
+  /* Disabled controls */
+  .controls-disabled { opacity: 0.4; pointer-events: none; }
+
+  /* Remove button */
+  .btn-remove {
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: none;
+    background: none;
+  }
+  .btn-remove:hover { color: var(--danger); background: #fef2f2; }
+
+  /* Activity feed */
+  .activity-feed {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    margin-top: 32px;
+  }
+  .activity-feed h3 { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
+  .activity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-time { color: var(--muted); font-size: 12px; min-width: 65px; }
+  .activity-device { font-weight: 600; }
+  .activity-action { color: var(--text-light); }
+
+  /* Ambient temp control */
+  .ambient-control {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 10px;
+    border: 1px dashed var(--border);
+  }
+  .ambient-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .header { padding: 12px 16px; }
+    .header h1 { font-size: 16px; }
+    .filters { padding: 12px 16px; }
+    .main { padding: 16px; }
+    .device-grid { grid-template-columns: 1fr; }
+    .filter-divider { display: none; }
+    .header-right .btn span.desktop-only { display: none; }
+  }
+
+  /* Annotation badges for mockup */
+  .mockup-note {
+    position: absolute;
+    background: #7c3aed;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    z-index: 10;
+    letter-spacing: 0.3px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <span class="logo">🏠</span>
+    <h1>Smart Home Simulator</h1>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-primary">+ <span class="desktop-only">Add Device</span></button>
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);">
+      <span style="font-size:12px;color:var(--text-light);">🕐</span>
+      <span style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;">2:34:17 PM</span>
+      <span style="font-size:11px;font-weight:600;color:var(--primary);background:var(--primary-light);padding:2px 6px;border-radius:4px;">1x</span>
+    </div>
+    <div style="position:relative;">
+      <button class="btn-icon" title="Simulation Settings">⋯</button>
+      <div class="settings-panel">
+        <h3>⚙️ Simulation Settings</h3>
+        <div class="settings-section">
+          <div class="settings-section-title">Ambient Temperature by Location</div>
+          <div class="settings-row">
+            <span class="location-name">Living Room</span>
+            <div class="slider-container">
+              <input type="range" class="slider" min="40" max="110" value="78">
+              <span class="slider-value">78°F</span>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span class="location-name">Kitchen</span>
+            <div class="slider-container">
+              <input type="range" class="slider" min="40" max="110" value="72">
+              <span class="slider-value">72°F</span>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span class="location-name">Master Bedroom</span>
+            <div class="slider-container">
+              <input type="range" class="slider" min="40" max="110" value="70">
+              <span class="slider-value">70°F</span>
+            </div>
+          </div>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="settings-section">
+          <div class="settings-section-title">Simulation Speed</div>
+          <div class="settings-row">
+            <span class="location-name">Thermostat tick rate</span>
+            <div class="speed-group">
+              <button class="btn-seg active">1x</button>
+              <button class="btn-seg">2x</button>
+              <button class="btn-seg">5x</button>
+              <button class="btn-seg">10x</button>
+            </div>
+          </div>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="settings-section">
+          <button class="btn-danger">↺ Reset All Devices to Defaults</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filters">
+  <div class="filter-group">
+    <span class="filter-label">Status</span>
+    <span class="chip active">All</span>
+    <span class="chip active-green">On</span>
+    <span class="chip">Off</span>
+  </div>
+  <div class="filter-divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">Location</span>
+    <select class="filter-select">
+      <option>All Locations</option>
+      <option>Living Room</option>
+      <option>Kitchen</option>
+      <option>Master Bedroom</option>
+      <option>Front Entry</option>
+    </select>
+  </div>
+  <div class="filter-divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">Type</span>
+    <select class="filter-select">
+      <option>All Types</option>
+      <option>💡 Light</option>
+      <option>🌀 Fan</option>
+      <option>🌡️ Thermostat</option>
+      <option>🔒 Door Lock</option>
+    </select>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+
+  <!-- Living Room -->
+  <div class="location-group">
+    <div class="location-header">
+      <h2>📍 Living Room</h2>
+      <span class="count">4 devices</span>
+    </div>
+    <div class="device-grid">
+
+      <!-- Light ON -->
+      <div class="device-card is-on">
+        <div class="device-card-header">
+          <div>
+            <div class="device-icon">💡</div>
+            <div class="device-name">Overhead Light</div>
+            <div class="device-type">Light</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="device-status status-on"><span class="status-dot"></span> On</span>
+            <button class="btn-remove" title="Remove device">✕</button>
+          </div>
+        </div>
+        <div class="device-controls">
+          <div class="control-row">
+            <span class="control-label">Power</span>
+            <div class="toggle on"></div>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Brightness</span>
+            <div class="slider-container">
+              <input type="range" class="slider" min="10" max="100" value="75">
+              <span class="slider-value">75%</span>
+            </div>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Color</span>
+            <div class="color-swatch" style="background:#ff8800;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fan ON -->
+      <div class="device-card is-on">
+        <div class="device-card-header">
+          <div>
+            <div class="device-icon">🌀</div>
+            <div class="device-name">Ceiling Fan</div>
+            <div class="device-type">Fan</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="device-status status-on"><span class="status-dot"></span> On</span>
+            <button class="btn-remove" title="Remove device">✕</button>
+          </div>
+        </div>
+        <div class="device-controls">
+          <div class="control-row">
+            <span class="control-label">Power</span>
+            <div class="toggle on"></div>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Speed</span>
+            <div class="btn-group">
+              <button class="btn-seg">Low</button>
+              <button class="btn-seg active">Med</button>
+              <button class="btn-seg">High</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thermostat COOLING -->
+      <div class="device-card is-on">
+        <div class="device-card-header">
+          <div>
+            <div class="device-icon">🌡️</div>
+            <div class="device-name">Thermostat</div>
+            <div class="device-type">Thermostat</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="device-status status-cooling"><span class="status-dot"></span> Cooling</span>
+            <button class="btn-remove" title="Remove device">✕</button>
+          </div>
+        </div>
+        <div class="device-controls">
+          <div class="control-row">
+            <span class="control-label">Power</span>
+            <div class="toggle on"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;">
+            <div>
+              <div class="temp-target">Target</div>
+              <div class="temp-display">
+                <span class="temp-current">72</span>
+                <span class="temp-unit">°F</span>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div class="temp-ambient">Ambient</div>
+              <div style="font-size:20px;font-weight:600;color:#2563eb;">78°F</div>
+            </div>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Target</span>
+            <div class="slider-container">
+              <input type="range" class="slider" min="60" max="80" value="72">
+              <span class="slider-value">72°F</span>
+            </div>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Mode</span>
+            <div class="btn-group">
+              <button class="btn-seg">Heat</button>
+              <button class="btn-seg">Cool</button>
+              <button class="btn-seg active">Auto</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Light OFF -->
+      <div class="device-card is-off">
+        <div class="device-card-header">
+          <div>
+            <div class="device-icon" style="opacity:0.4;">💡</div>
+            <div class="device-name">Floor Lamp</div>
+            <div class="device-type">Light</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="device-status status-off"><span class="status-dot"></span> Off</span>
+            <button class="btn-remove" title="Remove device">✕</button>
+          </div>
+        </div>
+        <div class="device-controls">
+          <div class="control-row">
+            <span class="control-label">Power</span>
+            <div class="toggle"></div>
+          </div>
+          <div class="controls-disabled">
+            <div class="control-row">
+              <span class="control-label">Brightness</span>
+              <div class="slider-container">
+                <input type="range" class="slider" min="10" max="100" value="50" disabled>
+                <span class="slider-value">--</span>
+              </div>
+            </div>
+            <div class="control-row">
+              <span class="control-label">Color</span>
+              <div class="color-swatch" style="background:#ccc;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Kitchen -->
+  <div class="location-group">
+    <div class="location-header">
+      <h2>📍 Kitchen</h2>
+      <span class="count">2 devices</span>
+    </div>
+    <div class="device-grid">
+
+      <!-- Light ON -->
+      <div class="device-card is-on">
+        <div class="device-card-header">
+          <div>
+            <div class="device-icon">💡</div>
+            <div class="device-name">Under-Cabinet Lights</div>
+            <div class="device-type">Light</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="device-status status-on"><span class="status-dot"></span> On</span>
+            <button class="btn-remove" title="Remove device">✕</button>
+          </div>
+        </div>
+        <div class="device-controls">
+          <div class="control-row">
+            <span class="control-label">Power</span>
+            <div class="toggle on"></div>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Brightness</span>
+            <div class="slider-container">
+              <input type="range" class="slider" min="10" max="100" value="100">
+              <span class="slider-value">100%</span>
+            </div>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Color</span>
+            <div class="color-swatch" style="background:#ffffff; border-color:#ddd;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fan OFF -->
+      <div class="device-card is-off">
+        <div class="device-card-header">
+          <div>
+            <div class="device-icon" style="opacity:0.4;">🌀</div>
+            <div class="device-name">Exhaust Fan</div>
+            <div class="device-type">Fan</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="device-status status-off"><span class="status-dot"></span> Off</span>
+            <button class="btn-remove" title="Remove device">✕</button>
+          </div>
+        </div>
+        <div class="device-controls">
+          <div class="control-row">
+            <span class="control-label">Power</span>
+            <div class="toggle"></div>
+          </div>
+          <div class="controls-disabled">
+            <div class="control-row">
+              <span class="control-label">Speed</span>
+              <div class="btn-group">
+                <button class="btn-seg">Low</button>
+                <button class="btn-seg">Med</button>
+                <button class="btn-seg">High</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Front Entry -->
+  <div class="location-group">
+    <div class="location-header">
+      <h2>📍 Front Entry</h2>
+      <span class="count">2 devices</span>
+    </div>
+    <div class="device-grid">
+
+      <!-- Door Lock - Locked -->
+      <div class="device-card is-on">
+        <div class="device-card-header">
+          <div>
+            <div class="device-icon">🔒</div>
+            <div class="device-name">Front Door</div>
+            <div class="device-type">Door Lock</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="device-status status-locked"><span class="status-dot"></span> Locked</span>
+            <button class="btn-remove" title="Remove device">✕</button>
+          </div>
+        </div>
+        <div class="device-controls">
+          <div class="control-row">
+            <span class="control-label">Lock</span>
+            <button class="btn-lock locked">🔒 Locked</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Door Lock - Unlocked -->
+      <div class="device-card is-on">
+        <div class="device-card-header">
+          <div>
+            <div class="device-icon">🔓</div>
+            <div class="device-name">Garage Door</div>
+            <div class="device-type">Door Lock</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="device-status status-unlocked"><span class="status-dot"></span> Unlocked</span>
+            <button class="btn-remove" title="Remove device">✕</button>
+          </div>
+        </div>
+        <div class="device-controls">
+          <div class="control-row">
+            <span class="control-label">Lock</span>
+            <button class="btn-lock unlocked">🔓 Unlocked</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="activity-feed">
+    <h3>📋 Recent Activity</h3>
+    <div class="activity-item">
+      <span class="activity-time">2:34 PM</span>
+      <span class="activity-device">Living Room Thermostat</span>
+      <span class="activity-action">→ Started cooling (ambient 78°F, target 72°F)</span>
+    </div>
+    <div class="activity-item">
+      <span class="activity-time">2:33 PM</span>
+      <span class="activity-device">Living Room Thermostat</span>
+      <span class="activity-action">→ Ambient temperature set to 78°F</span>
+    </div>
+    <div class="activity-item">
+      <span class="activity-time">2:30 PM</span>
+      <span class="activity-device">Living Room Overhead Light</span>
+      <span class="activity-action">→ Brightness set to 75%</span>
+    </div>
+    <div class="activity-item">
+      <span class="activity-time">2:28 PM</span>
+      <span class="activity-device">Front Door</span>
+      <span class="activity-action">→ Locked</span>
+    </div>
+    <div class="activity-item">
+      <span class="activity-time">2:25 PM</span>
+      <span class="activity-device">Kitchen Under-Cabinet Lights</span>
+      <span class="activity-action">→ Turned on</span>
+    </div>
+    <div class="activity-item">
+      <span class="activity-time">2:22 PM</span>
+      <span class="activity-device">Living Room Ceiling Fan</span>
+      <span class="activity-action">→ Speed changed to Medium</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

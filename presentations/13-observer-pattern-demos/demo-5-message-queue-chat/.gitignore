@@ -1,0 +1,13 @@
+# .NET build outputs
+**/bin/
+**/obj/
+
+# Angular / Node build outputs
+**/node_modules/
+**/dist/
+**/.angular/
+
+# Common IDE artifacts
+**/.vs/
+**/.idea/
+**/.DS_Store

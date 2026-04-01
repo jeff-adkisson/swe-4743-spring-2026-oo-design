@@ -49,11 +49,12 @@ This lecture builds from the simple two-object case to multi-observer dispatch, 
 - [3. Implementation Walkthrough: Weather Station in C#](#3-implementation-walkthrough-weather-station-in-c)
 - [4. Multiple Dispatch: One Subject, Many Observers](#4-multiple-dispatch-one-subject-many-observers)
 - [5. Observer in Client-Side Web Frameworks](#5-observer-in-client-side-web-frameworks)
-- [6. Decoupling with a Message Queue](#6-decoupling-with-a-message-queue)
-- [7. Observer Pattern vs Direct Coupling](#7-observer-pattern-vs-direct-coupling)
-- [8. Anti-Patterns and Failure Modes](#8-anti-patterns-and-failure-modes)
-- [9. Relationship to Other Patterns](#9-relationship-to-other-patterns)
-- [10. Real-World Summary](#10-real-world-summary)
+- [6. Observer Pattern vs Direct Coupling](#6-observer-pattern-vs-direct-coupling)
+- [7. Decoupling with a Message Queue](#7-decoupling-with-a-message-queue)
+- [8. Message Queue Observer Demo: Wacky Chat](#8-message-queue-observer-demo-wacky-chat)
+- [9. Anti-Patterns and Failure Modes](#9-anti-patterns-and-failure-modes)
+- [10. Relationship to Other Patterns](#10-relationship-to-other-patterns)
+- [11. Real-World Summary](#11-real-world-summary)
 - [Study Guide](#study-guide)
 - [Appendix 1: Idiomatic C# `event`/`delegate` and Java Listeners](#appendix-1-idiomatic-c-eventdelegate-and-java-listeners)
 
@@ -812,9 +813,57 @@ Whether you write `station.Subscribe(display)` in C#, `observable.subscribe(call
 
 ---
 
-## 6. Decoupling with a Message Queue
+## 6. Observer Pattern vs Direct Coupling
+
+### When to Use the Observer Pattern
+
+Observer is not "better" by default. It is a tradeoff: you accept more infrastructure in exchange for less coupling and more growth room.
+
+- The number of consumers **will grow** or is **unknown at design time**.
+- Consumers have **different reactions** to the same event.
+- You need **runtime subscribe/unsubscribe** (features, user preferences, A/B tests).
+- The subject is a **library or framework** that shouldn't depend on application code.
+- You need to **cross a process boundary** (with a message queue layer).
+
+### When Direct Coupling Is Fine
+
+- There is exactly **one consumer** and it will never change.
+- The notification is **trivially simple** (e.g., incrementing a counter).
+- Adding an interface and observer list would be **more code than the entire feature**.
+- You are writing a **short script or prototype** where maintenance cost is zero.
+
+### Decision Flow
+
+```mermaid
+flowchart TD
+    A["How many consumers<br>react to this change?"] -->|"Exactly one, forever"| B["Direct method call"]
+    A -->|"Multiple or unknown"| C{"Same process?"}
+    C -->|Yes| D["Observer Pattern"]
+    C -->|No| E{"Need ordering or<br>replay guarantees?"}
+    E -->|No| F["Simple message queue<br>(RabbitMQ, Redis Pub/Sub)"]
+    E -->|Yes| G["Event log / stream<br>(Kafka, Event Store)"]
+```
+
+### Comparison Table
+
+| Concern | Direct Coupling | Observer Pattern | Message Queue |
+|---------|----------------|-----------------|---------------|
+| Adding a new consumer | Modify the source | Register a new observer | Subscribe a new consumer |
+| Removing a consumer | Modify the source | Unsubscribe | Unsubscribe |
+| Runtime flexibility | None | Full | Full |
+| Coupling direction | Source → consumer | Source → interface | Source → queue (no consumer knowledge) |
+| Performance overhead | None | Minimal (list iteration) | Network + serialization |
+| Cross-process | No | No | Yes |
+| Error isolation | Shared | Shared (unless guarded) | Full (consumer crash is independent) |
+| Testability | Hard (must mock all consumers) | Easy (mock observer interface) | Easy (mock queue or use in-memory bus) |
+
+---
+
+## 7. Decoupling with a Message Queue
 
 ### The Limitation of In-Process Observer
+
+Sections 1-5 kept the subject and observers inside one running application. The next step is to keep the same publish/subscribe idea even after producer and consumers stop sharing memory.
 
 The Observer pattern as shown so far works within a single process. The subject holds direct references to its observers and calls their methods synchronously. This means:
 
@@ -851,7 +900,7 @@ flowchart LR
     Q -->|deliver| C4
 ```
 
-The subject (producer) and observers (consumers) are now **fully decoupled**:
+The subject (producer) and observers (consumers) are now **more loosely coupled**:
 
 | In-Process Observer | Message Queue Observer |
 |--------------------|----------------------|
@@ -862,9 +911,13 @@ The subject (producer) and observers (consumers) are now **fully decoupled**:
 | Same language required | Any language that speaks the queue protocol |
 | Observer list in memory | Subscription managed by the broker |
 
-### Conceptual C# Example with a Simple Queue
+They are not coupled by object references anymore, but they still share a **message contract**: event type, payload shape, and channel/topic name.
 
-To illustrate the architecture without requiring a full broker installation, here is a simplified in-process queue that demonstrates the decoupling:
+A **message queue** focuses on delivery to consumers, while an **event log** focuses on durable ordered history that consumers can replay later; students often group RabbitMQ and Kafka together, but they are optimized for different priorities.
+
+### Bridge Example: An In-Process Event Bus
+
+To illustrate the architectural shift without requiring RabbitMQ or Kafka setup, here is a simplified in-memory event bus. It demonstrates indirection and publish/subscribe structure, but it is still synchronous and in-process:
 
 ```csharp
 // IEventBus.cs — the abstraction replacing direct observer references
@@ -874,7 +927,7 @@ public interface IEventBus
     void Subscribe<T>(Action<T> handler);
 }
 
-// SimpleEventBus.cs — in-process message queue
+// SimpleEventBus.cs — in-memory event bus
 public class SimpleEventBus : IEventBus
 {
     private readonly Dictionary<Type, List<Delegate>> _handlers = new();
@@ -948,6 +1001,13 @@ station.SetMeasurements(80, 65, 1013.1f);
 station.SetMeasurements(105, 30, 1008.0f);
 ```
 
+What this example proves:
+
+- `WeatherStation` depends on `IEventBus` and `WeatherReading`, not on any consumer class.
+- Consumers depend on the bus and the event contract, not on the producer.
+- The example does **not** yet provide durability, retries, network delivery, or true broker-managed subscriptions.
+- For brevity, it also omits `Unsubscribe`; a production event bus still needs lifecycle management.
+
 ### Output
 
 ```text
@@ -986,7 +1046,7 @@ Each level removes a layer of coupling:
 
 ### Real-World Message Queues
 
-In production systems, the `SimpleEventBus` is replaced by a dedicated message broker:
+In production systems, the in-memory bus is replaced by a dedicated message broker:
 
 | Technology | Model | Common Use Case |
 |-----------|-------|----------------|
@@ -996,57 +1056,193 @@ In production systems, the `SimpleEventBus` is replaced by a dedicated message b
 | **AWS SNS + SQS** | Pub/sub (SNS) + queue (SQS) | Serverless event-driven architectures |
 | **Redis Pub/Sub** | Lightweight in-memory pub/sub | Real-time notifications, cache invalidation |
 
-The architectural principle is the same in every case: **the producer writes to a named channel, and consumers read from it independently**.
+The architectural principle is the same in every case: **the producer writes to a named channel, consumers read from it independently, and both sides depend on a shared message contract instead of direct references**.
 
 > **Ousterhout:** "The most important technique for achieving simplicity is to eliminate special cases. A message queue eliminates the special case where subject and observer must be in the same process, use the same language, and run at the same speed." (*A Philosophy of Software Design*, Ch. 10).
 
 ---
 
-## 7. Observer Pattern vs Direct Coupling
+## 8. Message Queue Observer Demo: Wacky Chat
 
-### When to Use the Observer Pattern
+The `demo-5-message-queue-chat` project turns Section 7 into something students can touch from their phones. It uses:
 
-- The number of consumers **will grow** or is **unknown at design time**.
-- Consumers have **different reactions** to the same event.
-- You need **runtime subscribe/unsubscribe** (features, user preferences, A/B tests).
-- The subject is a **library or framework** that shouldn't depend on application code.
-- You need to **cross a process boundary** (with a message queue layer).
+- **Angular** for the browser UI
+- **ASP.NET Core (C#)** for the HTTP API and SSE bridge
+- **RabbitMQ** for the broker
+- **Server-Sent Events (SSE)** for pushing queued messages into each browser
 
-### When Direct Coupling Is Fine
+> See the `demo-5-message-queue-chat` README file to start the Docker container.
+> Once started, you can connect at http://localhost:8080/. 
+> You can view the per-user message queues at http://localhost:15672/#/queues.
 
-- There is exactly **one consumer** and it will never change.
-- The notification is **trivially simple** (e.g., incrementing a counter).
-- Adding an interface and observer list would be **more code than the entire feature**.
-- You are writing a **short script or prototype** where maintenance cost is zero.
+![image-20260401015441863](13-observer-pattern.assets/image-20260401015441863.png)
 
-### Decision Flow
+### Architectural Overview
+
+Each browser joins with a unique handle. The ASP.NET Core back end creates one RabbitMQ queue for that visitor, binds it to the shared fanout exchange, and then keeps an SSE stream open for that visitor. When any user sends a chat message, the server publishes **one** event to the exchange. RabbitMQ copies that event into every connected visitor queue. The server then consumes each queue and forwards the deliveries to the correct browser over SSE.
+
+Browsers do not speak AMQP directly, so the ASP.NET Core app bridges RabbitMQ deliveries into SSE.
+
+This is the exact Observer idea from Section 7, but with the broker replacing the in-memory observer list:
+
+- The **publisher** is the ASP.NET Core application.
+- The **broker** is RabbitMQ.
+- The **subscribers** are the per-visitor queue consumers.
+- The **browser UI** observes the SSE stream, not RabbitMQ directly.
+
+```mermaid
+flowchart TB
+    subgraph Broker["RabbitMQ"]
+        EX["fanout exchange<br/>wacky-chat.exchange"]
+        QA["visitor queue: max"]
+        QB["visitor queue: chloe"]
+        QC["visitor queue: j3ph"]
+    end
+
+    subgraph App["ASP.NET Core App"]
+        API["Join / Send / Leave API"]
+        COORD["ChatCoordinator"]
+        REG["Session Registry"]
+        SSE["Queue consumer +<br/>SSE writer"]
+    end
+
+
+    
+        subgraph Browser["Each Student Browser"]
+        UI["Angular UI"]
+        ES["EventSource<br/>SSE listener"]
+    end
+
+    UI -->|POST join / send / leave| API
+    ES -->|GET stream| SSE
+    API --> COORD
+    COORD <--> REG
+    COORD -->|publish ChatEnvelope| EX
+    EX --> QA
+    EX --> QB
+    EX --> QC
+    QA --> SSE
+    QB --> SSE
+    QC --> SSE
+    SSE -->|text/event-stream| ES
+```
+
+### Queue Topology: Why Fanout Matters
+
+The important design choice is **one exchange, many queues**. The sender does **not** publish separately to Max, Chloe, and j3ph. It publishes once to the fanout exchange, and RabbitMQ duplicates the message into every bound visitor queue.
+
+That gives us two useful teaching points:
+
+- The producer does not know who is connected.
+- Each visitor has an independent queue, so delivery to one browser is conceptually separate from delivery to another.
 
 ```mermaid
 flowchart TD
-    A["How many consumers<br>react to this change?"] -->|"Exactly one, forever"| B["Direct method call"]
-    A -->|"Multiple or unknown"| C{"Same process?"}
-    C -->|Yes| D["Observer Pattern"]
-    C -->|No| E{"Need ordering or<br>replay guarantees?"}
-    E -->|No| F["Simple message queue<br>(RabbitMQ, Redis Pub/Sub)"]
-    E -->|Yes| G["Event log / stream<br>(Kafka, Event Store)"]
+    M["Chat message<br/>from max"]
+    X["fanout exchange<br/>wacky-chat.exchange"]
+
+    QA["queue: wacky-chat.visitor.max.*"]
+    QB["queue: wacky-chat.visitor.chloe.*"]
+    QC["queue: wacky-chat.visitor.j3ph.*"]
+
+    SA["SSE stream to max"]
+    SB["SSE stream to chloe"]
+    SC["SSE stream to j3ph"]
+
+    M --> X
+    X --> QA
+    X --> QB
+    X --> QC
+
+    QA --> SA
+    QB --> SB
+    QC --> SC
 ```
 
-### Comparison Table
+Because Max's own queue is also bound to the exchange, Max receives the same broadcast that Chloe and j3ph receive. That is why the sender sees their own message appear in the room without any special-case UI logic.
 
-| Concern | Direct Coupling | Observer Pattern | Message Queue |
-|---------|----------------|-----------------|---------------|
-| Adding a new consumer | Modify the source | Register a new observer | Subscribe a new consumer |
-| Removing a consumer | Modify the source | Unsubscribe | Unsubscribe |
-| Runtime flexibility | None | Full | Full |
-| Coupling direction | Source → consumer | Source → interface | Source → queue (no consumer knowledge) |
-| Performance overhead | None | Minimal (list iteration) | Network + serialization |
-| Cross-process | No | No | Yes |
-| Error isolation | Shared | Shared (unless guarded) | Full (consumer crash is independent) |
-| Testability | Hard (must mock all consumers) | Easy (mock observer interface) | Easy (mock queue or use in-memory bus) |
+This demo is intentionally **live broadcast only**: it does not keep replayable chat history, so a late joiner sees new messages from the moment they connect, not earlier ones.
+
+### Message Broadcast Sequence
+
+This is the runtime path when one user sends a message to everyone:
+
+```mermaid
+sequenceDiagram
+    participant Max as Max Browser
+    participant API as ASP.NET Core API
+    participant X as RabbitMQ fanout exchange
+    participant QA as Max queue
+    participant QB as Chloe queue
+    participant QC as j3ph queue
+    participant SSEA as Max SSE stream
+    participant SSEB as Chloe SSE stream
+    participant SSEC as j3ph SSE stream
+    participant Chloe as Chloe Browser
+    participant J3PH as j3ph Browser
+
+    Max->>API: POST /api/chat/messages ("hello")
+    API->>X: Publish ChatEnvelope
+
+    par RabbitMQ copies to every bound queue
+        X->>QA: enqueue copy
+        X->>QB: enqueue copy
+        X->>QC: enqueue copy
+    end
+
+    QA->>SSEA: dequeue message
+    QB->>SSEB: dequeue message
+    QC->>SSEC: dequeue message
+
+    SSEA-->>Max: SSE event: message
+    SSEB-->>Chloe: SSE event: message
+    SSEC-->>J3PH: SSE event: message
+```
+
+### How SSE Works
+
+**Server-Sent Events (SSE)** is a simple browser feature for one-way server-to-client streaming over ordinary HTTP. The browser opens a long-lived `GET` request, the server keeps the response open, and the server writes small event frames such as:
+
+```text
+event: message
+data: {"author":"max","text":"hello"}
+```
+
+The browser's `EventSource` object listens for those events and updates the UI as they arrive. Unlike WebSockets, SSE is one-way: the browser receives streamed events from the server, but it still sends joins and chat messages using normal HTTP requests.
+
+```mermaid
+sequenceDiagram
+    participant Browser as Browser EventSource
+    participant App as ASP.NET Core SSE endpoint
+    participant Queue as Visitor queue
+
+    Browser->>App: GET /api/chat/stream/{sessionId}
+    App-->>Browser: HTTP 200 + text/event-stream
+    Note over App,Browser: Connection stays open
+
+    Queue->>App: next queued delivery
+    App-->>Browser: event: message
+    App-->>Browser: data: {...}
+
+    Queue->>App: next queued delivery
+    App-->>Browser: event: message
+    App-->>Browser: data: {...}
+```
+
+> **Deployment note:** WebSockets are also an outstanding solution for real-time systems, but they usually require more complex production deployment configuration, including concerns such as connection handling and [**sticky sessions**](https://dev.to/ably/challenges-of-scaling-websockets-3493) in load-balanced environments.
+
+
+### What This Demo Makes Concrete
+
+- **Observer in-process**: subject holds an observer list and calls `Update()`.
+- **Observer with a broker**: producer publishes once, broker manages the fan-out, and consumers react independently.
+- **SSE as the last mile**: the browser still experiences Observer-style updates, but it observes a server stream rather than a local object in memory.
+
+In other words, Wacky Chat is a good demonstration bridging the concept of "objects notifying objects" to "systems notifying systems."
 
 ---
 
-## 8. Anti-Patterns and Failure Modes
+## 9. Anti-Patterns and Failure Modes
 
 ### Common Mistakes
 
@@ -1054,7 +1250,7 @@ flowchart TD
 |-------|------------|----------------|
 | **Lapsed listener** | Observer is never unsubscribed after it is no longer needed | Memory leak. The subject holds a reference, preventing garbage collection. This is the #1 Observer bug. |
 | **Notification storm** | Subject notifies on every property setter, even when multiple properties change together | Observers fire N times when they only needed to fire once. Wastes CPU and can cause UI flicker. |
-| **Circular notification** | Observer A's reaction changes state in Observer B, which notifies back to the subject, which notifies A again | Infinite loop or stack overflow. |
+| **Circular notification** | An observer's reaction writes back into the same subject (or another observed object), triggering another notification cycle | Infinite loop or stack overflow. |
 | **Order dependence** | Code relies on observers being notified in a specific order | The pattern makes no ordering guarantee. Relying on order creates fragile, hidden coupling. |
 | **God subject** | One subject accumulates dozens of event types, each with its own observer interface | Violates SRP. Split into multiple focused subjects. |
 | **Ignoring thread safety** | Modifying the observer list while iterating it in a concurrent environment | `InvalidOperationException` (C#), `ConcurrentModificationException` (Java), or silent data corruption. |
@@ -1104,8 +1300,10 @@ using (var alert = new HeatIndexDisplay(station))
 
 ### Avoiding Notification Storms
 
+The bad version fires `Notify()` after each setter. The correct version stages all related state changes and then notifies once:
+
 ```csharp
-// WRONG: notifies once per property
+// RIGHT: stage all changes, then notify once
 public void SetMeasurements(float temp, float humidity, float pressure)
 {
     Temperature = temp;   // don't notify here
@@ -1115,23 +1313,13 @@ public void SetMeasurements(float temp, float humidity, float pressure)
 }
 ```
 
-When multiple properties change together, batch the changes and call `Notify()` once at the end.
+When multiple properties change together, batch the changes and call `Notify()` once at the end. If observers truly need separate reactions, emit separate semantic events such as `TemperatureChanged` and `PressureChanged` instead of firing a generic notification multiple times.
 
 > **Ousterhout:** "Each piece of design infrastructure added to a system, such as an interface, argument, function, class, or definition, adds complexity. In order for an element to provide a net gain against complexity, it must eliminate some complexity that would be present in its absence." (*A Philosophy of Software Design*, Ch. 6). Every notification is a piece of "infrastructure." Don't fire more of them than the observers need.
 
 ---
 
-## 9. Relationship to Other Patterns
-
-### Observer and Strategy
-
-Both use interfaces to decouple behavior, but in different directions:
-
-| Aspect | Strategy | Observer |
-|--------|---------|----------|
-| Cardinality | One-to-one (one strategy active at a time) | One-to-many (many observers at once) |
-| Purpose | Choose *how* to do something | Notify *who cares* about something |
-| Trigger | Client explicitly calls the strategy | Subject automatically broadcasts |
+## 10. Relationship to Other Patterns
 
 ### Observer and State
 
@@ -1176,13 +1364,15 @@ public class LoggingObserverDecorator : IObserver
 
 ### Observer and Singleton
 
-A Singleton event bus ([Lecture 8](08-factory-singleton.md)) is a common pattern in applications where a single message bus coordinates all publish/subscribe communication.
+A Singleton event bus ([Lecture 8](08-factory-singleton.md)) is sometimes used when one application-wide bus coordinates publish/subscribe communication. Treat this as a separate decision from Observer itself: the pattern does **not** require global state, and testability is often better when the bus is injected instead.
 
 ---
 
-## 10. Real-World Summary
+## 11. Real-World Summary
 
 ### Practical Guidance
+
+Observer is about **dependency direction**, not about adding fancy infrastructure for its own sake.
 
 - **Start simple**: if you have one or two consumers that won't change, don't use Observer. Direct calls are clearer.
 - **Graduate to Observer** when the consumer count is unknown, growing, or needs runtime flexibility.
@@ -1198,8 +1388,8 @@ A Singleton event bus ([Lecture 8](08-factory-singleton.md)) is a common pattern
 | "Observer is only for UI" | Observer is used in logging, monitoring, event sourcing, microservice communication, and anywhere state change must propagate. |
 | "Observer means event-driven architecture" | Observer is one mechanism in event-driven design. Event-driven architecture also includes event sourcing, CQRS, and choreography, which go well beyond the basic pattern. |
 | "RxJS replaced Observer" | RxJS *implements* Observer (plus iterator, plus functional operators). It is Observer, not a replacement for it. |
-| "React doesn't use Observer" | React's state + re-render cycle *is* Observer. The framework automates subscribe/notify/unsubscribe via the component lifecycle. |
-| "Message queues are a different pattern" | A message queue is Observer with a broker in the middle. The structural relationship (publish → subscribe → react) is identical. |
+| "React doesn't use Observer" | React state libraries and render updates rely on observer-style notifications. The framework hides most of the subscribe/notify mechanics. |
+| "Message queues are a different pattern" | A brokered pub/sub system generalizes the same publish/subscribe relationship across process boundaries. The core idea is still "something changed, interested parties react." |
 
 ---
 
@@ -1243,7 +1433,7 @@ A Singleton event bus ([Lecture 8](08-factory-singleton.md)) is a common pattern
 |-------------------|----------------|
 | Deep modules | Section 2 — observers hide complex reactions behind a single `Update` method |
 | Dependencies and complexity | Section 2 — Observer trades direct references for registration-based dependencies |
-| Eliminating special cases | Section 6 — message queues eliminate the "same process" special case |
+| Eliminating special cases | Section 7 — message queues eliminate the "same process" special case |
 | Information hiding | Section 4 — each observer encapsulates its own logic; the subject knows nothing about it |
 | Interface vs implementation | Section 3 — `ISubject`/`IObserver` interfaces keep the contract simple while implementations vary freely |
 
@@ -1269,7 +1459,7 @@ A Singleton event bus ([Lecture 8](08-factory-singleton.md)) is a common pattern
 
 1. **Stock trading**: Create an `IStockObserver` interface with `OnPriceChanged(string symbol, decimal price)`. The `StockFeed` subject maintains a `Dictionary<string, List<IStockObserver>>` keyed by symbol. `PortfolioView`, `ChartComponent`, and `AlertSystem` each implement `IStockObserver` and subscribe to the symbols they care about. This is multiple dispatch — one feed, many observers per symbol.
 
-2. **Slow observers**: The subject calls observers synchronously, so a 1-second observer blocks the entire notification chain. Solutions: (a) move slow observers to background threads or use `Task.Run`, (b) introduce a message queue so slow consumers don't block the producer, or (c) have the subject notify asynchronously using `async`/`await`. The message queue approach (Section 6) is the most robust because it also provides error isolation.
+2. **Slow observers**: The subject calls observers synchronously, so a 1-second observer blocks the entire notification chain. Solutions: (a) move slow observers to background threads or use `Task.Run`, (b) introduce a message queue so slow consumers don't block the producer, or (c) have the subject notify asynchronously using `async`/`await`. The message queue approach (Section 7) is the most robust because it also provides error isolation.
 
 3. **Memory leak**: This is the classic **lapsed listener** anti-pattern. Each loop iteration creates a new observer and subscribes it, but the subscription is never removed. The subject's observer list grows without bound, holding references to every observer ever created. Fix: implement `IDisposable` on observers, unsubscribe in `Dispose()`, and use `using` blocks or explicit cleanup when observers are no longer needed.
 
@@ -1285,7 +1475,7 @@ A Singleton event bus ([Lecture 8](08-factory-singleton.md)) is a common pattern
 
 4. **Two displays — agree or disagree**: Agree if the two displays are stable, well-known, and unlikely to ever change (e.g., a tiny internal tool). In that case, Observer adds an interface and a list for no practical benefit. Disagree if (a) there is any chance a third display will be added, (b) the displays need to be swapped at runtime, or (c) the subject is part of a library that shouldn't depend on application-level display classes. The tipping point is not the number of observers today, but the *rate of change* and the *direction of dependencies*.
 
-5. **Message queue extension**: A message queue places a broker between the subject (producer) and observers (consumers). This adds: (a) cross-process/cross-machine delivery, (b) asynchronous processing (consumers work at their own pace), (c) error isolation (a crashing consumer doesn't affect the producer), (d) language independence (any language that speaks the queue protocol can participate), and (e) buffering/replay (messages can be stored and replayed). The structural relationship — publish, subscribe, react — is the same as in-process Observer, but the coupling is reduced to a shared message format and queue address.
+5. **Message queue extension**: A message queue places a broker between the subject (producer) and observers (consumers). This adds: (a) cross-process/cross-machine delivery, (b) asynchronous processing (consumers work at their own pace), (c) error isolation (a crashing consumer doesn't affect the producer), (d) language independence (any language that speaks the queue protocol can participate), and (e) buffering and, in some brokers, persistence/replay. The structural relationship — publish, subscribe, react — is the same as in-process Observer, but the coupling is reduced to a shared message format and queue address.
 
 6. **Class diagram**: The diagram should show an `IObserver` interface with an `Update(subject)` method. `TemperatureSensor` implements `ISubject` (with `Subscribe`, `Unsubscribe`, `Notify`, and a `Temperature` property) and holds a `List<IObserver>`. `Display`, `Logger`, and `AlarmSystem` each implement `IObserver`. The aggregation arrow goes from `TemperatureSensor` to `IObserver` with `0..*` multiplicity.
 

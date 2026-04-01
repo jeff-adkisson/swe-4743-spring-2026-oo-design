@@ -1,0 +1,186 @@
+@if (state$ | async; as state) {
+  <main
+    class="shell"
+    [class.chat-active]="!!state.sessionId">
+    <section class="hero">
+      <p class="eyebrow">RabbitMQ + C# + Angular + SSE</p>
+      <h1>Wacky Chat</h1>
+      <p class="lede">
+        Every visitor gets a RabbitMQ queue. The exchange broadcasts once, RabbitMQ fans
+        out to every queue, and Server-Sent Events push deliveries into the browser.
+      </p>
+    </section>
+
+    @if (!state.sessionId) {
+      <section class="join-card">
+        <div>
+          <h2>Pick a Handle</h2>
+          <p>
+            Lowercase letters, numbers, dashes, and underscores only. Handles must be
+            unique while connected.
+          </p>
+        </div>
+
+        <label class="stacked">
+          <span>Name</span>
+          <input
+            #joinNameInput
+            type="text"
+            placeholder="lowercase handle"
+            [ngModel]="joinName"
+            (ngModelChange)="normalizeJoinName($event)"
+            (keyup.enter)="joinChat()"
+            maxlength="32">
+        </label>
+
+        <button
+          type="button"
+          class="primary"
+          (click)="joinChat()">
+          Join the chat
+        </button>
+
+        <div class="rules">
+          <div>
+            <strong>Examples</strong>
+            <span>`max` `chloe_2` `j3ph`</span>
+          </div>
+          <div>
+            <strong>Rejected</strong>
+            <span>`Jeff` `chloe!` `space cadet`</span>
+          </div>
+        </div>
+
+        @if (state.error) {
+          <p class="error-banner">{{ state.error }}</p>
+        }
+      </section>
+    } @else {
+      <section class="chat-grid chat-grid-active">
+        <aside class="info-card">
+          <div class="info-header">
+            <div>
+              <p class="eyebrow">Current visitor</p>
+              <h2>{{ state.name }}</h2>
+            </div>
+
+            <span
+              class="status-pill"
+              [class.connected]="state.status === 'connected'"
+              [class.reconnecting]="state.status === 'reconnecting'">
+              {{ state.status }}
+            </span>
+          </div>
+
+          <dl class="meta">
+            <div>
+              <dt>Exchange</dt>
+              <dd><code>wacky-chat.exchange</code></dd>
+            </div>
+            <div>
+              <dt>Your queue</dt>
+              <dd><code>{{ state.queueName }}</code></dd>
+            </div>
+            <div>
+              <dt>Push channel</dt>
+              <dd><code>text/event-stream</code></dd>
+            </div>
+          </dl>
+
+          <button
+            type="button"
+            class="secondary"
+            (click)="leaveChat()">
+            Leave chat
+          </button>
+
+          @if (state.error) {
+            <p class="warning-banner">{{ state.error }}</p>
+          }
+        </aside>
+
+        <section class="chat-card">
+          <div class="mobile-chat-bar">
+            <div>
+              <p class="eyebrow">Current visitor</p>
+              <strong>{{ state.name }}</strong>
+            </div>
+
+            <span
+              class="status-pill"
+              [class.connected]="state.status === 'connected'"
+              [class.reconnecting]="state.status === 'reconnecting'">
+              {{ state.status }}
+            </span>
+
+            <button
+              type="button"
+              class="secondary mobile-leave"
+              (click)="leaveChat()">
+              Leave
+            </button>
+          </div>
+
+          <header class="chat-header">
+            <div>
+              <p class="eyebrow">Live room</p>
+              <h2>Broadcast stream</h2>
+            </div>
+            <p class="subtle">All published messages are routed to all connected queues.</p>
+          </header>
+
+          <div
+            class="message-log"
+            data-message-log>
+            @if (messages$ | async; as messages) {
+              @if (messages.length === 0) {
+                <div class="empty-state">
+                  Waiting for the first queued event...
+                </div>
+              }
+
+              @for (message of messages; track message.id) {
+                @if (message.kind === 'system') {
+                  <article class="system-message">
+                    <span>{{ message.text }}</span>
+                    <time>{{ message.sentAtUtc | date: 'shortTime' }}</time>
+                  </article>
+                } @else {
+                  <article
+                    class="chat-message"
+                    [class.mine]="message.author === state.name">
+                    <div class="chat-message-head">
+                      <strong>{{ message.author }}</strong>
+                      <time>{{ message.sentAtUtc | date: 'shortTime' }}</time>
+                    </div>
+                    <p>{{ message.text }}</p>
+                  </article>
+                }
+              }
+            }
+          </div>
+
+          <footer class="composer">
+            <label class="stacked grow">
+              <span>Message</span>
+              <input
+                #messageInput
+                type="text"
+                placeholder="Say something wacky..."
+                [(ngModel)]="draftMessage"
+                (keyup.enter)="sendMessage()"
+                maxlength="280">
+            </label>
+
+            <button
+              type="button"
+              class="primary send"
+              (click)="sendMessage()">
+              Send
+            </button>
+          </footer>
+        </section>
+      </section>
+    }
+  </main>
+}

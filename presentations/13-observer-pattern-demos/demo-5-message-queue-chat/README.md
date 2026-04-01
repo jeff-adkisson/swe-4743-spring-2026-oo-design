@@ -1,6 +1,6 @@
 # Demo 5: Message Queue Chat with RabbitMQ, C#, Angular, and SSE
 
-This demo is a companion for **Section 6: Decoupling with a Message Queue** in the Observer lecture.
+This demo is a companion for **Section 7: Decoupling with a Message Queue** in the Observer lecture.
 
 It implements **Wacky Chat**, a small live chat room with this flow:
 
@@ -97,15 +97,11 @@ The simplest classroom setup is to expose only the chat app:
 ngrok http --domain=wackychat.ngrok.app 8080
 ```
 
-Reserve `wacky-chat.ngrok.app` in your ngrok Domains dashboard first if it is not already attached to your account. Once it exists, students can use the same stable URL throughout the demo instead of a fresh random tunnel name.
-
 If your reserved hostname uses a different ngrok-managed suffix, substitute that exact domain in the command above.
 
-You can keep the RabbitMQ management UI local in your own browser at:
+You can open the RabbitMQ management UI at:
 
 - [http://localhost:15672](http://localhost:15672)
-
-If you also want a public RabbitMQ management URL for a second device, start another ngrok tunnel separately for port `15672`.
 
 ## Local Development Notes
 

@@ -1074,7 +1074,7 @@ The architectural principle is the same in every case: **the producer writes to 
 
 ## 8. Message Queue Observer Demo: Wacky Chat
 
-The [`demo-5-message-queue-chat`](13-observer-pattern-demos\demo-5-message-queue-chat\README.md) project turns Section 7 into something students can touch from their phones. It uses:
+The [`demo-5-message-queue-chat`](13-observer-pattern-demos\demo-5-message-queue-chat\README.md) project turns the concepts in Section 7 into a chat site you can try on your phone...  (think Discord, if Discord had almost zero features). Wacky Chat uses the following to broadcast chat messages to everyone connected using the following tech stack:
 
 - **Angular** for the browser UI
 - **ASP.NET Core (C#)** for the HTTP API and SSE bridge

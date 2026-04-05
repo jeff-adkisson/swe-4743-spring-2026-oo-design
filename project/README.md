@@ -73,6 +73,7 @@ See [Section 8 -- Delivery Checklist](#8-delivery-checklist) to verify completen
   - [9.2 Extra Credit](#92-extra-credit-5-each)
 - [10. Glossary](#10-glossary)
 - [Appendix A: AI Prompts for Code Review and Test Generation](#appendix-a-ai-prompts-for-code-review-and-test-generation)
+- [Appendix B: AI Prompts for Extra Credit Code Review](#appendix-b-ai-prompts-for-extra-credit-code-review)
 
 ---
 
@@ -95,7 +96,7 @@ Devices fall into two categories:
 |---|---|
 | States | Off, On |
 | Attributes | Brightness (10%--100%), Color (RGB value) |
-| Transitions | Off -> On, On -> Off |
+| Transitions | Off -> On, On -> Off, On -> On (set brightness, set color) |
 | Controls | Toggle power, set brightness, set color |
 | "On" condition | State is On |
 
@@ -288,8 +289,8 @@ The Prime libraries are recommended because they offer a wider range of componen
 
 The API will be implemented using one of the following frameworks (student's choice):
 
-- [**C# / .NET**](https://dotnet.microsoft.com/en-us/download) (latest LTS, Web API)
-- [**Java / Spring Boot**](https://spring.io/projects/spring-boot/) (latest stable, JDK 21+ LTS)
+- [**C# / .NET**](https://dotnet.microsoft.com/en-us/download) (dotnet 10, Web API)
+- [**Java / Spring Boot**](https://spring.io/projects/spring-boot/) (JDK 21+ LTS)
 
 **Java-specific requirements:**
 
@@ -2101,4 +2102,309 @@ application").
 
 At the end, provide a summary: total items passed, failed, and unable to verify.
 List the top 3 most critical items to fix before submission.
+```
+
+## Appendix B: AI Prompts for Extra Credit Code Review
+
+The following prompts review your extra credit implementations against the requirements in Section 7. Use the prompt that matches the extra credit feature you implemented.
+
+**Prompt index:**
+
+- [B.1 ORM Code Review](#b1-orm-code-review)
+- [B.2 SSE Code Review](#b2-sse-code-review)
+- [B.3 LLM / MCP Code Review](#b3-llm--mcp-code-review)
+- [B.4 JWT Authentication Code Review](#b4-jwt-authentication-code-review)
+- [B.5 Scenes Code Review](#b5-scenes-code-review)
+- [B.6 CI/CD Pipeline Code Review](#b6-cicd-pipeline-code-review)
+
+### B.1 ORM Code Review
+
+```
+You are a senior software engineer reviewing a student's ORM implementation
+for a Smart Home Simulator project. The project uses
+[Entity Framework Core / Hibernate with Spring Data JPA] (adjust as needed).
+
+Review the attached source files against these criteria:
+
+**Entity Configuration:**
+- Are entity classes cleanly mapped (proper annotations or fluent configuration)?
+- Are relationships (if any) correctly defined?
+- Are column types, lengths, and constraints appropriate?
+- Is the device state machine state stored in a way that supports
+  dehydration/rehydration?
+
+**Automatic Seeding:**
+- Does the database migration run automatically on application startup?
+- Is seeding idempotent (does not duplicate data if run again)?
+- Does the seed data include multiple lights, fans, and locks across 2+
+  locations and at least one thermostat?
+- Can a reviewer run `docker compose up` and get a fully seeded database
+  with no manual steps?
+
+**Repository Pattern:**
+- Are all ORM/database calls wrapped behind repository interfaces?
+- Does the service layer depend on the repository interface, never on the
+  ORM DbContext/EntityManager directly?
+- Is the DbContext/EntityManager injected only into the repository
+  implementation?
+- Are CRUD operations (create, read, update, delete) implemented correctly?
+- Are queries using the ORM's query capabilities (LINQ / JPQL / Criteria)
+  rather than raw SQL?
+
+**Migration Management:**
+- Are migrations committed to the repository?
+- Is the migration history clean (no unnecessary or duplicate migrations)?
+
+For each issue found, cite the specific file, explain the problem, and
+provide a concrete fix.
+```
+
+### B.2 SSE Code Review
+
+```
+You are a senior software engineer reviewing a Server-Sent Events (SSE)
+implementation for a Smart Home Simulator project. The project uses
+[.NET / Spring Boot] on the back end and [Angular / React] on the front end
+(adjust as needed).
+
+Review the attached source files against these criteria:
+
+**Server-Side SSE:**
+- Is there an SSE endpoint (e.g., GET /api/devices/events) that returns
+  Content-Type: text/event-stream?
+- Does the server maintain a collection of connected clients and broadcast
+  events to all of them?
+- Are disconnected clients cleaned up properly (no memory leaks)?
+- Are events emitted for all state changes: user actions, thermostat
+  simulation ticks, device registration/removal?
+
+**Event Payload:**
+- Do events include enough information for the client to update its local
+  state (device ID, new state, changed attributes)?
+- Is the event format consistent and well-structured (JSON)?
+
+**Client-Side SSE:**
+- Does the UI subscribe to the SSE stream on load using EventSource or
+  an equivalent library?
+- Does the UI update the dashboard reactively when events arrive (no
+  manual refresh)?
+- Is reconnection handled gracefully (EventSource auto-reconnects, but
+  is there any additional logic needed)?
+
+**Observer Pattern:**
+- Is the Observer pattern used to decouple state change producers from
+  SSE event broadcasting?
+- Is the Observer pattern documented in the design pattern catalog?
+
+**Multi-Client Verification:**
+- If Client A changes a device, does Client B see the update via SSE
+  without refreshing?
+
+For each issue found, cite the specific file, explain the problem, and
+provide a concrete fix.
+```
+
+### B.3 LLM / MCP Code Review
+
+```
+You are a senior software engineer reviewing an LLM/MCP integration for a
+Smart Home Simulator project. The project uses
+[.NET / Spring Boot] on the back end and [Angular / React] on the front end
+(adjust as needed).
+
+Review the attached source files against these criteria:
+
+**MCP Server:**
+- Is the MCP server implemented using the official SDK
+  (ModelContextProtocol for .NET / io.modelcontextprotocol.sdk for Java)?
+- Are device operations exposed as MCP tools (turn on/off, set brightness,
+  lock/unlock, set temperature, etc.)?
+- Are tool definitions clear and well-described so the LLM can understand
+  what each tool does and what parameters it accepts?
+- Are tool results returned in a format the LLM can interpret?
+
+**LLM Integration:**
+- Is a real LLM used (OpenAI, Anthropic, or self-hosted)? No simulated
+  or hard-coded responses?
+- Is the API key stored securely (environment variable, not hard-coded)?
+- Does the integration support multi-step reasoning (e.g., "turn on all
+  lights and lock the door" requires multiple tool calls)?
+- Is the conversation loop correctly implemented: send message -> receive
+  tool calls -> execute tools -> return results -> get final response?
+
+**Chat UI:**
+- Does the front end have a chat/prompt input for natural language commands?
+- Are results and confirmations displayed in a chat interface?
+- Is the UI responsive and usable?
+- Are errors from the LLM or MCP tools displayed to the user gracefully?
+
+**Error Handling:**
+- What happens if the LLM returns an invalid tool call?
+- What happens if a tool execution fails (e.g., device not found)?
+- Are LLM API errors (rate limits, timeouts) handled gracefully?
+
+For each issue found, cite the specific file, explain the problem, and
+provide a concrete fix.
+```
+
+### B.4 JWT Authentication Code Review
+
+```
+You are a senior software engineer reviewing a JWT authentication
+implementation for a Smart Home Simulator project. The project uses
+[.NET / Spring Boot] on the back end, [Angular / React] on the front end,
+and [Keycloak / Auth0 / Entra ID] as the identity provider
+(adjust as needed).
+
+Review the attached source files against these criteria:
+
+**Back-End Token Validation:**
+- Does the API validate JWT tokens on every protected request?
+- Is the token validated against the identity provider's public keys
+  (JWKS endpoint), not a hard-coded secret?
+- Do unauthenticated requests return 401 Unauthorized?
+- Is the token validation middleware/filter configured globally (not
+  repeated per controller)?
+- Are token claims (expiration, issuer, audience) validated?
+
+**Front-End Authentication Flow:**
+- Does the UI use the Authorization Code flow with PKCE (recommended
+  for SPAs)?
+- Are tokens stored securely (in memory preferred, not localStorage)?
+- Does the UI attach the Bearer token to every API request (via an
+  HTTP interceptor or equivalent)?
+- Is token refresh handled automatically when the access token expires?
+- Does logout redirect to the identity provider's logout endpoint and
+  clear local tokens?
+
+**Identity Provider Configuration:**
+- Is the identity provider containerized in docker-compose.yml
+  (if using Keycloak)?
+- Is at least one test user pre-configured?
+- Are test credentials documented in the README?
+- Are client IDs and secrets stored in environment variables (not
+  hard-coded)?
+
+**Security Concerns:**
+- Are tokens transmitted only over HTTPS (or localhost for development)?
+- Is CORS configured to only allow the front-end origin?
+- Are there any endpoints that should be protected but aren't?
+- Are there any endpoints that should be public (e.g., health check)
+  but require auth?
+
+For each issue found, cite the specific file, explain the problem, and
+provide a concrete fix.
+```
+
+### B.5 Scenes Code Review
+
+```
+You are a senior software engineer reviewing a Device Scenes implementation
+for a Smart Home Simulator project. The project uses
+[.NET / Spring Boot] on the back end and [Angular / React] on the front end
+(adjust as needed).
+
+Review the attached source files against these criteria:
+
+**Command Pattern:**
+- Is each device operation (turn on, set brightness, lock, etc.)
+  encapsulated as a command object?
+- Do command objects implement a common interface (e.g., ICommand with
+  an Execute method)?
+- Are commands self-contained (they carry all the information needed
+  to execute)?
+
+**Composite Pattern:**
+- Is a scene implemented as a composite command containing an ordered
+  list of device commands?
+- Can the composite be executed as a single unit?
+- Is the Composite pattern correctly applied (a scene and an individual
+  command share the same interface)?
+
+**Scene Functionality:**
+- Can scenes span multiple locations (e.g., "turn off all lights in
+  the entire house")?
+- Are group targets (e.g., "all lights") resolved at execution time
+  (so newly added devices are included)?
+- Does the scene continue executing if an individual action fails
+  (partial failure tolerance)?
+- Does the execution response report the outcome per action
+  (changed / already in state / failed)?
+
+**Scene CRUD:**
+- Can scenes be created, edited, deleted, and executed via the API?
+- Are scenes persisted and do they survive application restart?
+- Does the UI provide controls for scene CRUD and execution?
+
+**Audit Trail:**
+- Is each action within a scene execution recorded in the device
+  command history?
+- Can the history show that an action was triggered by a scene
+  (not a direct user action)?
+
+**Pattern Documentation:**
+- Are Command and Composite patterns documented in the design pattern
+  catalog with class/file references and rationale?
+
+For each issue found, cite the specific file, explain the problem, and
+provide a concrete fix.
+```
+
+### B.6 CI/CD Pipeline Code Review
+
+```
+You are a DevOps engineer reviewing a CI/CD pipeline for a Smart Home
+Simulator project. The pipeline uses
+[GitHub Actions / GitLab CI] (adjust as needed).
+
+Review the attached pipeline configuration files against these criteria:
+
+**Pipeline Triggers:**
+- Does the pipeline trigger on push and pull request to feature branches?
+- Does the deployment stage trigger only on merge to main?
+- Are triggers correctly scoped (not running deploy on every PR)?
+
+**Build Stage:**
+- Are the back end and front end built independently?
+- Do they run in parallel where possible?
+- Is the build reproducible (pinned dependency versions, lock files used)?
+
+**Lint / Static Analysis:**
+- Is linting configured for the back end
+  (dotnet format / checkstyle / spotbugs)?
+- Is linting configured for the front end (eslint / ng lint)?
+- Do lint failures block the pipeline?
+
+**Test Stage:**
+- Are unit tests run on every push?
+- Are integration tests run on every push?
+- Are front-end tests run on every push?
+- Do test failures block merge?
+- Is test output / coverage reported in the pipeline summary?
+
+**Docker Build & Push:**
+- Are Docker images built for both front end and back end?
+- Are images tagged appropriately (e.g., commit SHA or semantic version)?
+- Are images pushed to a container registry?
+- Are multi-stage Dockerfiles used to keep images small?
+
+**Deployment:**
+- Is the application deployed to a cloud provider on merge to main?
+- Is the deployed URL documented in the README?
+- Is the deployment automated (no manual steps)?
+- Are secrets (API keys, registry credentials) stored in the CI/CD
+  platform's secret management (not in the pipeline file)?
+
+**Pipeline Performance:**
+- Are dependencies cached between runs (npm cache, NuGet cache,
+  Maven cache)?
+- Is the total pipeline duration reasonable (under 10 minutes)?
+- Are stages ordered correctly (lint before build before test)?
+
+**Loom Video:**
+- Is there a 5-minute Loom video showing the pipeline configuration,
+  a code check-in triggering it, and all stages completing?
+
+For each issue found, cite the specific file/line in the pipeline
+configuration, explain the problem, and provide a concrete fix.
 ```

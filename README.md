@@ -20,6 +20,13 @@ Spring 2026
 - [Exam 1 Study Guide](exam-prep/exam1-study-guide.md)
 - [Exam 2 Study Guide](exam-prep/exam2-study-guide.md)
 
+## Semester Project
+
+- [Smart Home Simulator](project/README.md)<br>
+  Build a full-stack smart home simulator with a modern SPA (Angular or React) and a RESTful API (.NET or Spring Boot). Implement device state machines, SOLID architecture, design patterns, and Docker-based deployment for lights, fans, thermostats, and door locks. 
+
+  Extra credit opportunities include ORM persistence, real-time SSE, LLM-powered natural language control via MCP, JWT authentication, device scenes, and CI/CD pipelines.
+
 ## Assignments
 
 - [**Assignment 1: OO Foundations Review**](assignments/assignment-1.md)<br>
@@ -28,10 +35,6 @@ Spring 2026
 Design and implement a console-based Tea Shop application in C# or Java that intentionally demonstrates the Single Responsibility Principle, Open–Closed Principle, Strategy Pattern, and Decorator Pattern through inventory searching, filtering, sorting, and simulated checkout, with clear separation of domain logic and user interface concerns.
 - [**Assignment 3: SOLID, DI, and MVC Web Evolution**](assignments/assignment-3.md)<br>
 Design and implement a moderately complex, server-rendered Tea Shop web application in C#/ASP.NET Core MVC or Java/Spring Boot with Maven that evolves Assignment 2 from a console application into a web-based application. Your solution will intentionally demonstrate SOLID principles, sound dependency injection practice, Factory and Decorator patterns, and a DI-managed thread-safe Singleton inventory repository through searching, filtering, sorting, and simulated checkout.
-
-## Project
-
-- Coming soon
 
 
 ## Presentations

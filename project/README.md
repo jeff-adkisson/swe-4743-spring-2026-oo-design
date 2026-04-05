@@ -1651,6 +1651,24 @@ The following prompts are designed to be used with an LLM (ChatGPT, Claude, etc.
 
 For best results, also provide the LLM with the requirements from this document (or a link to the raw README) so it has full context.
 
+> Note: Include the URL to this document for the AI to use as context. Even better, [use the URL to the raw markdown file README.md](https://raw.githubusercontent.com/jeff-adkisson/swe-4743-spring-2026-oo-design/refs/heads/main/project/README.md). Markdown provides outstanding context to an AI agent.
+
+**Prompt index:**
+
+- **A.1 Code Review Prompts**
+  - [Back-End API Code Review](#back-end-api-code-review)
+  - [Front-End Code Review](#front-end-code-review)
+- **A.2 Test Generation Prompts**
+  - [Back-End Unit Test Generation](#back-end-unit-test-generation)
+  - [Front-End Test Generation](#front-end-test-generation)
+- **A.3 Code Quality Prompts**
+  - [API Contract Validation](#api-contract-validation)
+  - [Security Review](#security-review)
+  - [Dockerfile Review](#dockerfile-review)
+  - [Design Pattern Verification](#design-pattern-verification)
+- **A.4 Delivery Verification Prompt**
+  - [Delivery Checklist Verification](#delivery-checklist-verification)
+
 ### A.1 Code Review Prompts
 
 #### Back-End API Code Review
@@ -1852,4 +1870,235 @@ Generate tests for each of the following categories:
 
 Use the testing framework's mocking capabilities for HTTP calls.
 Generate the complete test file(s) ready to compile and run.
+```
+
+### A.3 Code Quality Prompts
+
+#### API Contract Validation
+
+```
+You are a senior software engineer. I am providing two things:
+
+1. My Swagger / OpenAPI specification (or the auto-generated JSON/YAML from my
+   running application)
+2. My controller source files
+
+Compare the two and identify any discrepancies:
+
+- Endpoints that exist in the code but are missing from the Swagger documentation
+- Endpoints documented in Swagger that don't exist in the code
+- Request/response schemas that don't match between the documentation and the
+  actual code (mismatched property names, types, or required fields)
+- Missing or incorrect HTTP status codes (e.g., a controller returns 404 but
+  Swagger only documents 200 and 400)
+- Missing or incomplete request body / query parameter documentation
+
+For each discrepancy, state which side is correct (or if it's ambiguous) and
+provide the specific fix needed to bring them into alignment.
+```
+
+#### Security Review
+
+```
+You are a security-focused software engineer reviewing a student's Smart Home
+Simulator API. This is not a penetration test -- it's a code-level review for
+common security mistakes.
+
+Review the attached source files for the following issues:
+
+**Error Response Leakage:**
+- Do any error responses expose stack traces, SQL errors, internal class names,
+  file paths, or database schema details?
+- Is there a global error handler that sanitizes exceptions before returning
+  them to the client?
+
+**Input Validation:**
+- Are all API inputs validated server-side?
+- Are there any endpoints that accept user input and pass it directly to a
+  database query, file path, or system command without validation?
+- Are numeric ranges enforced (brightness 10-100, temperature 60-80)?
+
+**CORS Configuration:**
+- Is CORS configured? Is it overly permissive (e.g., AllowAnyOrigin in
+  production)?
+
+**Secrets in Source Code:**
+- Are there any API keys, connection strings, passwords, or tokens hard-coded
+  in source files, Docker files, or configuration files that should be in
+  environment variables or a secrets manager?
+- Is the .gitignore properly configured to exclude .env files, user secrets,
+  and IDE credentials?
+
+**Docker Security:**
+- Are containers running as root when they don't need to?
+- Are there unnecessary packages or tools in the production image?
+
+For each issue found, rate the severity (High / Medium / Low), cite the specific
+file and line, and provide a concrete fix.
+```
+
+#### Dockerfile Review
+
+```
+You are a DevOps engineer reviewing Dockerfiles and a docker-compose.yml for
+a student's Smart Home Simulator project.
+
+Review the attached files for best practices and provide specific, actionable
+feedback:
+
+**Dockerfile Best Practices:**
+- Are multi-stage builds used to keep the production image small (build stage
+  vs. runtime stage)?
+- Is a .dockerignore file present? Does it exclude node_modules, bin/obj,
+  target/, .git, and IDE files?
+- Are layers ordered for optimal caching (dependencies installed before source
+  code copied)?
+- Are unnecessary build tools excluded from the final image?
+- Is the container running as a non-root user?
+- Are EXPOSE ports documented?
+
+**docker-compose.yml Best Practices:**
+- Does `docker compose up` start everything needed (front end, back end,
+  database if applicable)?
+- Are service dependencies declared with `depends_on`?
+- Are ports mapped correctly and not conflicting?
+- Are environment variables used for configuration (not hard-coded values)?
+- Is a health check defined for services that need startup time?
+- Are volumes used appropriately for persistent data (database files)?
+
+**First-Run Experience:**
+- Will the application be fully seeded and ready to use on first
+  `docker compose up`?
+- Are database migrations (if ORM is used) applied automatically?
+
+For each issue found, cite the specific file and line, explain the impact, and
+provide the corrected code.
+```
+
+#### Design Pattern Verification
+
+```
+You are a software architect reviewing a student's implementation of design
+patterns in a Smart Home Simulator project.
+
+I will provide source files that I believe implement the following pattern:
+[State / Factory / Strategy / Observer / Command / Composite]
+(specify which pattern you want reviewed)
+
+Evaluate the implementation against these criteria:
+
+**Pattern Correctness:**
+- Does the code correctly implement the named pattern as defined by the
+  Gang of Four (or the accepted modern variant)?
+- Are the key participants present (e.g., for State: Context, State interface,
+  Concrete States)?
+- Does the pattern solve the problem it's intended to solve, or is it applied
+  superficially (i.e., the classes are named after the pattern but the behavior
+  doesn't match)?
+
+**SOLID Alignment:**
+- Does the pattern implementation support the Open-Closed Principle (e.g., can
+  a new device type / state / strategy be added without modifying existing code)?
+- Are interfaces properly segregated?
+- Are dependencies injected rather than hard-coded?
+
+**Common Mistakes:**
+- Is there a "god class" that undermines the pattern (e.g., a switch statement
+  that selects behavior instead of letting the pattern dispatch)?
+- Is state being managed in the wrong place?
+- Are there missing transitions, unhandled states, or implicit assumptions?
+
+**Improvement Suggestions:**
+- How could this implementation be made more robust or extensible?
+- Are there edge cases the current implementation doesn't handle?
+
+Provide specific feedback referencing the actual classes and methods in the code.
+Do not rewrite the implementation -- point out issues and let the student fix them.
+```
+
+### A.4 Delivery Verification Prompt
+
+#### Delivery Checklist Verification
+
+```
+You are a teaching assistant verifying a student's Smart Home Simulator project
+against the mandatory delivery checklist. I will provide the project's source
+files and README.
+
+Go through every item below and report PASS, FAIL, or UNABLE TO VERIFY for each.
+For any FAIL, explain specifically what is missing or incorrect. For UNABLE TO
+VERIFY, explain what you would need to check it (e.g., "requires running the
+application").
+
+**Functional Requirements:**
+- [ ] Light device: power on/off, brightness (10-100%), color (RGB), settings
+      retained on power cycle
+- [ ] Fan device: power on/off, speed (Low/Medium/High), settings retained on
+      power cycle
+- [ ] Thermostat device: power on/off, modes (Heat/Cool/Auto), desired
+      temperature (60-80°F), ambient temperature tracking
+- [ ] Thermostat simulation: ambient temp changes 1°F per tick toward desired,
+      transitions to Idle when reached
+- [ ] Thermostat invariant: only one thermostat per location enforced by API
+- [ ] Door Lock device: lock/unlock, latch device (always "on", no power state)
+- [ ] Device metadata: id, name, location, type on every device
+- [ ] Environment simulation: ambient temperature per location configurable via
+      API and UI
+- [ ] Simulation settings: ambient temp per location, speed multiplier
+      (1x/2x/5x/10x), reset all devices
+- [ ] Simulation clock in header
+
+**Technical Requirements:**
+- [ ] Front end: Angular or React with a component library
+- [ ] Back end: .NET or Spring Boot
+- [ ] Java projects use Maven
+- [ ] Swagger/OpenAPI accessible at runtime
+- [ ] Bruno collection committed to repository with all endpoints
+- [ ] Persistence: JSON file or SQLite
+- [ ] Seed data: multiple lights, fans, locks across 2+ locations, at least
+      one thermostat
+- [ ] State survives restart (dehydration/rehydration)
+- [ ] State machines: formal, generic, reusable, invalid transitions rejected
+- [ ] RESTful API endpoints: list, get, register, remove, control, set ambient temp
+- [ ] CORS configured
+- [ ] Command history (audit log) persisted and exposed via API
+- [ ] Consistent error response format, no leaked implementation details
+- [ ] Repository structure: front end and back end as sibling directories,
+      README, .gitignore, docker-compose.yml, bruno/
+
+**User Interface:**
+- [ ] Dashboard groups by location, lists by name
+- [ ] "On" devices visually distinguished
+- [ ] Filtering: On, Off, Location, Device Type (combinable)
+- [ ] Inline controls per device type, disabled when not applicable
+- [ ] Responsive/mobile-friendly (375px+)
+- [ ] Register new device, remove existing device with confirmation
+- [ ] Activity feed or per-device history
+
+**Design Requirements:**
+- [ ] Separation of concerns: Controller -> Service -> Repository -> Storage
+- [ ] SOLID principles demonstrated
+- [ ] DI container used, no Service Locator
+- [ ] Interfaces/abstractions have documentation comments
+- [ ] Design patterns: State, Factory, Strategy implemented and documented
+- [ ] Pattern catalog in README with class/file references and rationale
+- [ ] Server-side validation with a validation library
+- [ ] Global error handler, consistent error format, no leaked internals
+
+**Development Requirements:**
+- [ ] Unit tests: state machines, boundaries, services, factory, invariants
+- [ ] Integration tests: API contract, persistence round-trip, thermostat sim
+- [ ] Front-end tests: component rendering, filters, input validation
+
+**Delivery Requirements:**
+- [ ] Setup instructions (prerequisites, build/run, URLs, test commands)
+- [ ] `docker compose up` starts everything
+- [ ] No host tooling required
+- [ ] Fully seeded on first run
+- [ ] Loom video: application demo (5-10 min)
+- [ ] Loom video: architecture tour (5-10 min)
+- [ ] Loom links in README
+
+At the end, provide a summary: total items passed, failed, and unable to verify.
+List the top 3 most critical items to fix before submission.
 ```

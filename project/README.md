@@ -96,7 +96,7 @@ Devices fall into two categories:
 |---|---|
 | States | Off, On |
 | Attributes | Brightness (10% to 100%), Color (RGB value) |
-| Transitions | Off -> On, On -> Off, On -> On (set brightness, set color) |
+| Transitions | Off -> On, On -> Off, On -> On (set brightness), On -> On (set color) |
 | Controls | Toggle power, set brightness, set color |
 | "On" condition | State is On |
 
@@ -115,6 +115,7 @@ stateDiagram-v2
 - Color is represented as an RGB value (e.g., `#FF8800` or `{ r, g, b }`).
 - Brightness and color may only be changed while the light is On.
 - **Settings are retained when powered off.** If a light is set to 75% brightness and orange, then turned off and back on, it returns to 75% brightness and orange.
+- The default state is Off. The default color and brightness is #FFFFFF and 100%.
 
 #### 1.1.2 Fan
 
@@ -122,7 +123,7 @@ stateDiagram-v2
 |---|---|
 | States | Off, On |
 | Attributes | Speed (Low, Medium, High) |
-| Transitions | Off -> On, On -> Off |
+| Transitions | Off -> On, On -> Off, On -> High, On -> Medium, On -> Low, Medium -> High, Medium -> Low, High -> Low, Low -> High |
 | Controls | Toggle power, set speed |
 | "On" condition | State is On |
 
@@ -145,6 +146,7 @@ stateDiagram-v2
 - Speed may only be changed while the fan is On.
 - Default speed when turning on is Medium (if no prior speed is persisted).
 - **Speed is retained when powered off.** If a fan is set to High, then turned off and back on, it returns to High.
+- The default state is Off.
 
 #### 1.1.3 Thermostat
 
@@ -192,6 +194,7 @@ stateDiagram-v2
 - **Temperature simulation:** While in the Heating or Cooling state, the ambient temperature changes by 1 degree every 5 seconds toward the desired temperature. When ambient equals desired, the thermostat transitions to Idle.
 - A thermostat in Idle state is **not** considered "on" for UI filtering purposes.
 - **Invariant:** There may be only **one thermostat per location**. The API must enforce this constraint when registering a new thermostat and return an appropriate error if violated.
+- The default state is Off.
 
 #### 1.1.4 Door Lock (Latch Device)
 
@@ -213,6 +216,8 @@ stateDiagram-v2
 
 - Door locks are **latch devices** -- they have no Off state and are always considered "on" for UI filtering purposes.
 - The lock's state (Locked/Unlocked) represents the device's substate, not a power condition.
+- If the application is restarted, the lock's prior state is loaded from the persistence mechanism. 
+- The default state is Locked.
 
 ### 1.2 Device Metadata
 
@@ -266,8 +271,8 @@ The UI must use a commercial or open-source component library for layout, form c
 
 **Recommended:**
 
-- [**PrimeNG**](https://primeng.org) (Angular) -- rich component set with built-in theming, data tables, form controls, and layout primitives
-- [**PrimeReact**](https://primereact.org) (React) -- same breadth of components as PrimeNG for the React ecosystem
+- [**PrimeNG**](https://primeng.org) (Angular) -- rich component set with built-in theming, data tables, form controls, and layout primitives. <br>Here is a free mobile-friendly admin template: https://sakai.primeng.org/  https://github.com/primefaces/sakai-ng
+- [**PrimeReact**](https://primereact.org) (React) -- same breadth of components as PrimeNG for the React ecosystem.<br>Here is a free mobile-friendly admin template: https://sakai.primereact.org/  https://github.com/primefaces/sakai-react
 
 The Prime libraries are recommended because they offer a wider range of components out of the box, which reduces the amount of custom UI work required.
 
@@ -406,7 +411,7 @@ All repositories must include:
 
 | File/Directory | Purpose |
 |---|---|
-| `README.md` | Project introduction, setup instructions, Loom video links, design pattern catalog |
+| `README.md` | Project introduction, setup instructions, Loom video links, etc. |
 | `.gitignore` | Language-appropriate ignores for build artifacts, dependencies, IDE files, and environment secrets |
 | `docker-compose.yml` | Orchestrates all services (front end, back end, database, etc.) |
 | `frontend/` | The SPA application (Angular or React) |
@@ -448,7 +453,7 @@ All repositories must include:
 
 - The `.sln` file lives at the repository root and references all `.csproj` files.
 - Source projects go in `src/` with separate projects for API, Domain, and Infrastructure.
-- Test projects go in `tests/` mirroring `src/` with a `.Tests` suffix.
+- Test projects go in `tests/` mirroring `backend/` with a `.Tests` suffix.
 - The `data/` directory holds the application's persistent storage. Use **either** a JSON file (option A) or a SQLite database (option B, ORM extra credit) -- not both. This directory should be mapped as a Docker volume so data survives container restarts. The seed data file (JSON) or initial migration (SQLite) populates this on first run.
 - `.gitignore` must exclude: `bin/`, `obj/`, `*.user`, `.vs/`, `node_modules/`, `dist/`, `.angular/cache/`, `data/smarthome.db`. The seed JSON file (`data/devices.json`) **should** be committed so the application ships with initial data.
 - Commit `package-lock.json` (or `pnpm-lock.yaml`).
@@ -592,6 +597,8 @@ The UI must be **mobile-friendly** and usable on both desktop and mobile screen 
 - The layout must adapt to small screens using responsive design (CSS media queries, flexbox/grid, or the component library's responsive utilities).
 - Device cards, controls, filters, and navigation must remain usable on a typical mobile viewport (375px width and up).
 - This is not a request for a separate mobile app -- the same SPA must work well at all screen sizes.
+
+  > 
 
 ### 3.5 Device Management
 

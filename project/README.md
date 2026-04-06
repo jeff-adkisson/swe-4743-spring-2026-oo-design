@@ -95,7 +95,7 @@ Devices fall into two categories:
 | Property | Detail |
 |---|---|
 | States | Off, On |
-| Attributes | Brightness (10%--100%), Color (RGB value) |
+| Attributes | Brightness (10% to 100%), Color (RGB value) |
 | Transitions | Off -> On, On -> Off, On -> On (set brightness, set color) |
 | Controls | Toggle power, set brightness, set color |
 | "On" condition | State is On |
@@ -419,16 +419,20 @@ All repositories must include:
 ├── .gitignore
 ├── docker-compose.yml
 ├── SmartHome.sln
-├── src/
-│   ├── SmartHome.Api/                # Web API project (controllers, middleware)
-│   │   ├── SmartHome.Api.csproj
-│   │   ├── Dockerfile
-│   │   ├── Controllers/
-│   │   └── Program.cs
-│   ├── SmartHome.Domain/             # Domain models, state machines, interfaces
-│   │   └── SmartHome.Domain.csproj
-│   └── SmartHome.Infrastructure/     # Persistence, external services
-│       └── SmartHome.Infrastructure.csproj
+├── backend/
+│   ├── src/
+│       ├── SmartHome.Api/              # Web API project (controllers, middleware)
+│       │   ├── SmartHome.Api.csproj
+│       │   ├── Dockerfile
+│       │   ├── Controllers/
+│       │   └── Program.cs
+│       ├── SmartHome.Domain/           # Domain models, state machines, interfaces
+│       │   └── SmartHome.Domain.csproj
+│       └── SmartHome.Infrastructure/   # Persistence, external services
+│           └── SmartHome.Infrastructure.csproj
+├── data/                                 # Application storage
+│   ├── devices.json                      # JSON persistence (option A)
+│   └── smarthome.db                      # SQLite database (option B, ORM extra credit)
 ├── tests/
 │   ├── SmartHome.Api.Tests/
 │   │   └── SmartHome.Api.Tests.csproj
@@ -445,7 +449,8 @@ All repositories must include:
 - The `.sln` file lives at the repository root and references all `.csproj` files.
 - Source projects go in `src/` with separate projects for API, Domain, and Infrastructure.
 - Test projects go in `tests/` mirroring `src/` with a `.Tests` suffix.
-- `.gitignore` must exclude: `bin/`, `obj/`, `*.user`, `.vs/`, `node_modules/`, `dist/`, `.angular/cache/`.
+- The `data/` directory holds the application's persistent storage. Use **either** a JSON file (option A) or a SQLite database (option B, ORM extra credit) -- not both. This directory should be mapped as a Docker volume so data survives container restarts. The seed data file (JSON) or initial migration (SQLite) populates this on first run.
+- `.gitignore` must exclude: `bin/`, `obj/`, `*.user`, `.vs/`, `node_modules/`, `dist/`, `.angular/cache/`, `data/smarthome.db`. The seed JSON file (`data/devices.json`) **should** be committed so the application ships with initial data.
 - Commit `package-lock.json` (or `pnpm-lock.yaml`).
 
 #### 2.5.2 Java / Spring Boot Repository
@@ -472,6 +477,9 @@ All repositories must include:
 │       └── test/
 │           └── java/
 │               └── com/example/smarthome/
+├── data/                                 # Application storage
+│   ├── devices.json                      # JSON persistence (option A)
+│   └── smarthome.db                      # SQLite database (option B, ORM extra credit)
 ├── frontend/
 │   ├── Dockerfile
 │   ├── package.json
@@ -483,7 +491,8 @@ All repositories must include:
 - The parent `pom.xml` at the repository root uses `<packaging>pom</packaging>` and declares `backend/` (and optionally `frontend/`) as modules.
 - Source code follows the Maven standard directory layout: `src/main/java/` and `src/test/java/`.
 - Tests live alongside source in `backend/src/test/java/` mirroring the main package structure.
-- `.gitignore` must exclude: `target/`, `*.class`, `.idea/`, `*.iml`, `.settings/`, `.project`, `.classpath`, `node_modules/`, `dist/`.
+- The `data/` directory holds the application's persistent storage. Use **either** a JSON file (option A) or a SQLite database (option B, ORM extra credit) -- not both. This directory should be mapped as a Docker volume so data survives container restarts. The seed data file (JSON) or initial migration (SQLite) populates this on first run.
+- `.gitignore` must exclude: `target/`, `*.class`, `.idea/`, `*.iml`, `.settings/`, `.project`, `.classpath`, `node_modules/`, `dist/`, `data/smarthome.db`. The seed JSON file (`data/devices.json`) **should** be committed so the application ships with initial data.
 - Commit the Maven wrapper (`mvnw`, `.mvn/`) and `package-lock.json`.
 
 #### 2.5.3 Front-End Directory (Angular or React)
@@ -645,7 +654,7 @@ All classes, namespaces, packages, and modules must demonstrate adherence to SOL
 
 ### 4.5 Design Pattern Identification
 
-Students must consciously identify and apply recognized design patterns where the project naturally demands them. A **Design Patterns** section must be included in the project documentation that maps each pattern used to its location in the codebase, with a brief rationale for why it was chosen.
+Students must consciously identify and apply recognized design patterns where the project naturally demands them.
 
 #### Required Patterns (all teams)
 
@@ -667,7 +676,7 @@ These patterns become required when the corresponding extra credit feature is im
 | **Command** | Device operations encapsulated as objects -- enables audit logging, undo potential, and scene composition | Scenes extra credit (Section 7.5) |
 | **Composite** | A scene composes multiple command objects into a single executable unit that can span devices and locations | Scenes extra credit (Section 7.5) |
 
-#### Additional Patterns (encouraged)
+#### Additional Patterns
 
 Students are not limited to the patterns above. The following are examples of patterns that may arise naturally depending on implementation choices. Identify and document any additional patterns wherever they are applied.
 
@@ -702,11 +711,24 @@ Using a validation library keeps validation rules declarative, testable, and con
 
 ### 4.7 Error Handling Contract
 
-The API must return errors in a **consistent, structured format** across all endpoints. The recommended format is [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807) Problem Details (`application/problem+json`) -- see [this accessible overview](https://swagger.io/blog/problem-details-rfc9457-doing-api-errors-well/) for a practical introduction. Any consistent schema is acceptable provided it includes at minimum:
+The API must return errors in a **consistent, structured format** across all endpoints. The required format is [RFC 9457](https://datatracker.ietf.org/doc/html/rfc9457) Problem Details (`application/problem+json`), which supersedes the now-obsolete RFC 7807. See [this accessible overview](https://swagger.io/blog/problem-details-rfc9457-doing-api-errors-well/) for a practical introduction.
 
-- A machine-readable error type or code
-- A human-readable message
-- The HTTP status code
+RFC 9457 Problem Details defines a standard JSON structure for error responses with these fields:
+
+| Field | Required | Description |
+|---|---|---|
+| `type` | Yes | A URI that identifies the error type (e.g., `https://example.com/problems/duplicate-device`) |
+| `title` | Yes | A short, human-readable summary (e.g., "Duplicate device") |
+| `status` | Yes | The HTTP status code (e.g., `409`) |
+| `detail` | Recommended | A human-readable explanation specific to this occurrence of the problem |
+| `instance` | Optional | A URI identifying this specific occurrence (useful for log correlation) |
+
+Both .NET and Spring Boot have built-in support for RFC 9457:
+
+| Framework | Implementation | Reference |
+|---|---|---|
+| **.NET** | Built-in `ProblemDetails` class and `Results.Problem()`. Configure with `builder.Services.AddProblemDetails()`. | [Problem Details for ASP.NET Core APIs](https://www.milanjovanovic.tech/blog/problem-details-for-aspnetcore-apis) |
+| **Spring Boot** | Built-in `ProblemDetail` class and `@ExceptionHandler` with `ResponseEntityExceptionHandler`. | [Spring MVC REST Error Handling](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-ann-rest-exceptions.html) |
 
 Error handling must be implemented as a cross-cutting concern (e.g., exception middleware or global error handler), not as ad-hoc try/catch blocks in individual controllers.
 
@@ -767,13 +789,20 @@ All integration and unit tests -- both back end and front end -- **may be genera
 
 ## 6. Delivery Requirements
 
+Your repository's README must include:
+
+- Short introduction<br>
+  *What does the application do?*
+- Setup and Run instructions<br>*The goal is to clone-and-go with as little setup as possible from Docker and the command line. Engineers reviewing your solution should not need an IDE to run it.*
+- Video Walkthroughs and Demonstrations<br>*Demonstrate your running application (critical in case I cannot get it to run) and perform an architecture walk-through (do not just read code - explain it!).*
+
 ### 6.1 Setup and Run Instructions
 
-The goal is **clone-and-go**: a reviewer should be able to clone the repository and have the application running with minimal effort. This is critical -- if the reviewer cannot get the application running quickly, it cannot be graded.
+The goal is **clone-and-go**: a reviewer should be able to clone the repository and have the application running with minimal effort. 
 
 The repository must include clear, step-by-step instructions (in the README or a dedicated `SETUP.md`) covering:
 
-- **Prerequisites** -- Only Docker and Docker Compose should be required. If any other tooling is needed (e.g., an API key for the LLM extra credit), it must be explicitly documented.
+- **Prerequisites** -- Only Docker and Docker Compose should be required. If any other tooling is needed (e.g., an API key for the LLM extra credit), it must be explicitly documented including how to apply it to the runtime environment.
 - **How to build and run from the CLI** -- The exact commands needed to start the application. Ideally a single `docker compose up` command.
 - **How to access the application** -- The URL(s) for the UI, API, and Swagger documentation once running.
 - **How to run tests** -- The exact commands to execute the back-end and front-end test suites.
@@ -789,9 +818,9 @@ The entire application must be runnable locally using **Docker**.
 - The Docker configuration must not require the reviewer to install framework-specific tooling (e.g., .NET SDK, JDK, Node.js) on their host machine -- all build and runtime dependencies are handled inside containers.
 - On first run, the application must be **fully seeded and ready to use** -- no manual migration commands, no manual data imports.
 
-### 6.3 Local Development (Optional Documentation)
+### 6.3 Local Development 
 
-Students are encouraged (but not required) to also document how to run the front end and back end outside of Docker for local development (e.g., `dotnet run`, `mvn spring-boot:run`, `npm start`). This helps teammates who prefer to develop without rebuilding containers on every change.
+Document how to run the front end and back end outside of Docker for local development (e.g., `dotnet run`, `mvn spring-boot:run`, `npm start`). This helps teammates who prefer to develop without rebuilding containers on every change.
 
 ### 6.4 Video Deliverables
 
@@ -1393,13 +1422,13 @@ This pipeline demonstrates the expected stages:
 
 ## 8. Delivery Checklist
 
-Use this checklist to verify your project is complete before submission. Every item corresponds to a mandatory requirement from Sections 1--6.
+Use this checklist to verify your project is complete before submission. Every item corresponds to a mandatory requirement from Sections 1 to 6.
 
 ### Functional Requirements (Section 1)
 
-- [ ] Light device: power on/off, brightness (10--100%), color (RGB), settings retained on power cycle
+- [ ] Light device: power on/off, brightness (10 to 100%), color (RGB), settings retained on power cycle
 - [ ] Fan device: power on/off, speed (Low/Medium/High), settings retained on power cycle
-- [ ] Thermostat device: power on/off, modes (Heat/Cool/Auto), desired temperature (60--80°F), ambient temperature tracking
+- [ ] Thermostat device: power on/off, modes (Heat/Cool/Auto), desired temperature (60 to 80°F), ambient temperature tracking
 - [ ] Thermostat simulation: ambient temperature changes 1°F every 5 seconds toward desired, transitions to Idle when reached
 - [ ] Thermostat invariant: only one thermostat per location, enforced by the API
 - [ ] Door Lock device: lock/unlock (latch device, always "on", no power state)
@@ -1433,7 +1462,7 @@ Use this checklist to verify your project is complete before submission. Every i
 - [ ] RESTful endpoints for: list, get, register, remove, control devices, set ambient temperature
 - [ ] CORS configured to allow front-end requests
 - [ ] Device command history (audit log) persisted and exposed via API
-- [ ] Consistent error response format (RFC 7807 recommended)
+- [ ] Consistent error response format (RFC 9457 Problem Details)
 - [ ] No leaked implementation details in error responses
 
 **Repository Structure:**
@@ -1487,8 +1516,8 @@ Use this checklist to verify your project is complete before submission. Every i
 - [ ] `docker compose up` starts the entire application
 - [ ] No framework-specific tooling required on host machine
 - [ ] Application fully seeded and ready to use on first run
-- [ ] Loom video: application demo (5--10 minutes)
-- [ ] Loom video: architecture tour (5--10 minutes)
+- [ ] Loom video: application demo (5 to 10 minutes)
+- [ ] Loom video: architecture tour (5 to 10 minutes)
 - [ ] Loom video links included in README
 - [ ] Team size and extra credit selections documented
 
@@ -1515,8 +1544,8 @@ All teams are graded on the following categories. These correspond to Sections 1
 | **Separation of Concerns** | Clear layering: Controller -> Service -> Repository -> Storage. No business logic in controllers. No persistence logic in services. No HTTP concerns in domain models. |
 | **Dependency Injection** | All service and repository dependencies registered in the framework's DI container. No Service Locator anti-pattern. No `new` for service classes inside other services. |
 | **State Machines** | Each device type has a formally defined state machine. Invalid transitions are rejected. The state machine infrastructure is generic and reusable -- adding a device type means defining states and transitions, not modifying the engine. |
-| **Validation** | Server-side validation on all API inputs. Controller layer validates HTTP concerns (400 for malformed). Service layer validates business rules (brightness 10--100, temp 60--80). Validation library used (FluentValidation or Jakarta Bean Validation). |
-| **Error Handling** | Consistent error response format (RFC 7807 recommended). No leaked implementation details (stack traces, SQL errors, class names). Errors logged server-side. Global error handler, not ad-hoc try/catch. |
+| **Validation** | Server-side validation on all API inputs. Controller layer validates HTTP concerns (400 for malformed). Service layer validates business rules (brightness 10 to 100, temp 60--80). Validation library used (FluentValidation or Jakarta Bean Validation). |
+| **Error Handling** | Consistent error response format (RFC 9457 Problem Details). No leaked implementation details (stack traces, SQL errors, class names). Errors logged server-side. Global error handler, not ad-hoc try/catch. |
 | **API Design** | RESTful conventions followed. Appropriate HTTP status codes. Swagger/OpenAPI documentation accessible at runtime. Bruno collection covers all endpoints with success and error cases. |
 | **Code Quality** | Meaningful comments on all interfaces and abstractions. Clear naming conventions. Deep modules (simple interfaces, complex internals). |
 
@@ -1638,7 +1667,7 @@ Extra credit features adopted to satisfy the team size policy (Section 6.5.2) ar
 | **DI Container** | The framework-provided dependency injection container used to register and resolve service dependencies |
 | **JWT (JSON Web Token)** | A compact, URL-safe token format used for transmitting authentication and authorization claims between parties |
 | **MCP (Model Context Protocol)** | A protocol that allows LLMs to discover and invoke tools exposed by an MCP server, enabling natural language interaction with external systems |
-| **[RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807) Problem Details** | A standard format for representing machine-readable error responses in HTTP APIs (`application/problem+json`) |
+| **[RFC 9457](https://datatracker.ietf.org/doc/html/rfc9457) Problem Details** | The current standard for representing machine-readable error responses in HTTP APIs (`application/problem+json`). Supersedes the obsolete RFC 7807. |
 | **Rehydration** | Restoring a state machine to a previously persisted state from a persistence medium |
 | **Scene** | A named preset that executes a batch of device operations (commands) in a single action, potentially spanning multiple locations |
 | **Server-Sent Events (SSE)** | A standard HTTP mechanism where the server pushes events to clients over a long-lived connection. Unlike WebSockets, SSE is unidirectional (server to client) and uses standard HTTP |
@@ -1714,7 +1743,7 @@ actionable feedback organized by category:
 
 **Error Handling:**
 - Is there a global error handler (middleware / exception handler)?
-- Do error responses follow a consistent format (RFC 7807 recommended)?
+- Do error responses follow RFC 9457 Problem Details format?
 - Are implementation details (stack traces, SQL errors, class names) hidden from
   the client?
 - Are errors logged server-side?

@@ -127,3 +127,7 @@ Design and implement a moderately complex, server-rendered Tea Shop web applicat
 - [PDF](presentations/13-observer-pattern.pdf)
 - [HTML](presentations/13-observer-pattern_html/index.html)
 - [Lecture Material](presentations/13-observer-pattern.md)
+
+#### 14. Repository and Builder Patterns
+
+- [Lecture Material](presentations/14-repository-and-builder-patterns.md)

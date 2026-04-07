@@ -20,7 +20,7 @@ Each scene is a definition, not an ad-hoc blob of UI input. It must be:
 - stored durably
 - loaded back faithfully
 
-Those are two different design problems.
+Those map to two different design problems: **construction** and **persistence**.
 
 Lecture 14 answers:
 
@@ -281,6 +281,10 @@ But many real codebases simply call the fluent builder directly.
 
 That is not a betrayal of the pattern. It is a pragmatic simplification.
 
+### A Note on Builder Reuse
+
+The canonical GoF builder interface includes `Reset()` to allow the same builder instance to produce multiple products. In practice, fluent builders are typically single-use: you create one, call `Build()`, and discard it. If you need another product, create a new builder instance. The running example in this lecture follows that single-use convention.
+
 ---
 ## 3. Implementation Walkthrough: Building a Device Scene
 
@@ -435,7 +439,6 @@ If those two ideas collapse into one mutable bag of setters, the pattern has not
 sequenceDiagram
     participant Client
     participant Builder as DeviceSceneBuilder
-    participant Scene as DeviceScene
 
     Client->>Builder: Named("Evening Arrival")
     Client->>Builder: AddDeviceAction(...)
@@ -545,6 +548,7 @@ classDiagram
         <<interface>>
         +Save(scene : DeviceScene) void
         +GetById(id : UUID) DeviceScene?
+        +Delete(id : UUID) void
         +ListAll() IReadOnlyList~DeviceScene~
     }
 
@@ -552,6 +556,7 @@ classDiagram
         -connectionString : string
         +Save(scene : DeviceScene) void
         +GetById(id : UUID) DeviceScene?
+        +Delete(id : UUID) void
         +ListAll() IReadOnlyList~DeviceScene~
     }
 
@@ -569,6 +574,8 @@ Because the rest of the system should not care whether scenes are stored in:
 - an API
 
 The application should care about scene definitions. The repository takes responsibility for mapping those definitions to storage.
+
+This also makes testing easier: an `InMemorySceneRepository` can replace `SqliteSceneRepository` in unit tests, letting you verify application logic without touching a database.
 
 ### Repository as an Abstraction Boundary
 
@@ -891,15 +898,6 @@ Three important things become visible when you look at the rows this way:
 - `order_index` preserves action order explicitly
 - target data uses foreign-key ID columns depending on whether the action points to a specific device or to a device group
 
-One important caveat:
-
-- the `parameters_json` column is here to keep the lecture example compact
-- it is not especially query-friendly
-- it couples storage to serialized property names
-- it is brittle when those names change over time
-
-A stronger long-term relational design would usually move action parameters into related tables shaped around the device or action type.
-
 This is exactly why the repository abstraction matters. Higher-level code should work with a `DeviceScene`, not with this row choreography directly.
 
 ---
@@ -939,10 +937,14 @@ sequenceDiagram
     Client->>Repo: Save(scene)
     Repo->>Sqlite: Save(scene)
     Sqlite->>DB: insert/update scene + scene_action rows
+    Sqlite-->>Repo: done
+    Repo-->>Client: done
     Client->>Repo: GetById(scene.Id)
     Repo->>Sqlite: GetById(scene.Id)
     Sqlite->>DB: select rows
-    Sqlite-->>Client: DeviceScene
+    DB-->>Sqlite: rows
+    Sqlite-->>Repo: DeviceScene
+    Repo-->>Client: DeviceScene
 ```
 
 ### The Key Architectural Insight
@@ -1178,28 +1180,7 @@ CREATE TABLE IF NOT EXISTS scene_action (
 );
 ```
 
-### Why JSON for Parameters?
-
-The `parameters_json` column keeps the lecture example simple:
-
-- it avoids a third child table for action parameters
-- it preserves the idea that some operations carry extra data
-- it keeps the schema readable enough for lecture
-
-This is a pragmatic teaching choice, not a universal rule.
-
-For a stronger long-term schema, a smart-home system would often model these parameters in related tables specific to the device type or action type instead of relying on serialized JSON blobs.
-
-Why that is usually better:
-
-- relational columns are easier to query
-- relational columns are easier to constrain and validate
-- the schema is less brittle when property names change
-- the design is less dependent on serialization conventions
-
-So the right mental model for students is:
-
-> `parameters_json` is acceptable here as a lecture/demo shortcut, but it is not the ideal relational design to copy blindly into production systems.
+> **Note:** The foreign keys above reference tables (`devices`, `device_types`, `locations`, `operations`) that belong to the broader smart-home project schema but are not defined in this lecture. They are included here to show that columns like `target_device_id` and `operation_id` are typed identifiers with referential meaning, not arbitrary magic strings. The full project schema defines these tables; this lecture only focuses on the `scene` and `scene_action` tables.
 
 ### Rehydration Rule
 

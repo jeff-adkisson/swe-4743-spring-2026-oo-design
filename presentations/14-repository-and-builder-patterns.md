@@ -2,9 +2,11 @@
 
 ### Building and Persisting Smart Home Device Scenes Without Tangling Construction and Storage
 
-[Powerpoint Presentation](14-repository-and-builder-patterns.pptx) | [PDF](14-repository-and-builder-patterns.pdf) | [Video](14-repository-and-builder-patterns.mp4)
+[Powerpoint Presentation](14-repository-and-builder-patterns.pptx) | [PDF](14-repository-and-builder-patterns.pdf)
 
 ---
+
+![image-20260408075023115](14-repository-and-builder-patterns.assets/image-20260408075023115.png)
 
 This lecture continues the smart-home thread introduced in the [semester project](../project/README.md) and uses the **Device Scenes** feature as a running example.
 
@@ -69,6 +71,8 @@ flowchart LR
 
 ---
 ## 1. The Problem: Complex Construction and Persistent Scene Definitions
+
+![image-20260408075046122](14-repository-and-builder-patterns.assets/image-20260408075046122.png)
 
 ### Motivating Scenario
 
@@ -136,6 +140,8 @@ This also has predictable problems:
 - storage concerns spread to services and controllers
 - changing persistence details means editing many places
 
+![image-20260408075148730](14-repository-and-builder-patterns.assets/image-20260408075148730.png)
+
 ### The Design Goal
 
 We want one pattern for each problem:
@@ -190,6 +196,8 @@ The Builder pattern is a **creational design pattern** (GoF, 1994) used when obj
 The core idea:
 
 > Separate the process of constructing a complex object from the finished object itself.
+
+![image-20260408075217517](14-repository-and-builder-patterns.assets/image-20260408075217517.png)
 
 ### Canonical GoF Builder Roles
 
@@ -363,6 +371,8 @@ flowchart TB
 
 ### Running Example: `Evening Arrival`
 
+![image-20260408075502025](14-repository-and-builder-patterns.assets/image-20260408075502025.png)
+
 We will construct:
 
 - scene name: `Evening Arrival`
@@ -459,6 +469,8 @@ The Repository pattern provides a collection-like interface for retrieving and s
 The key idea:
 
 > Higher-level code should ask for domain objects, not assemble SQL and row mappings directly.
+
+![image-20260408075543448](14-repository-and-builder-patterns.assets/image-20260408075543448.png)
 
 ### The Boundary Rule
 
@@ -592,6 +604,8 @@ This is a direct application of dependency inversion:
 - low-level storage details implement that abstraction
 
 ### Keeping Repositories Small and Deep
+
+![image-20260408075611859](14-repository-and-builder-patterns.assets/image-20260408075611859.png)
 
 As systems grow, repositories often attract interface creep:
 
@@ -748,6 +762,8 @@ erDiagram
     }
 ```
 
+![image-20260408075639775](14-repository-and-builder-patterns.assets/image-20260408075639775.png)
+
 ### Why Two Tables?
 
 Because a scene has a one-to-many relationship with its actions.
@@ -809,6 +825,8 @@ sequenceDiagram
     DB-->>Repo: rows
     Repo-->>App: DeviceScene
 ```
+
+![image-20260408075657819](14-repository-and-builder-patterns.assets/image-20260408075657819.png)
 
 ### Why Ordering Must Be Explicit
 
@@ -905,6 +923,8 @@ This is exactly why the repository abstraction matters. Higher-level code should
 
 ### Putting the Patterns Together
 
+![image-20260408075720798](14-repository-and-builder-patterns.assets/image-20260408075720798.png)
+
 Builder and Repository solve different problems in the same use case:
 
 - `Builder` constructs the scene definition
@@ -966,6 +986,8 @@ That does **not** make Builder and Repository redundant. It means they operate a
 ---
 ## 7. Anti-Patterns and Failure Modes
 
+![image-20260408075800091](14-repository-and-builder-patterns.assets/image-20260408075800091.png)
+
 ### Builder Mistakes
 
 - using a builder for a trivial two-field object
@@ -1008,6 +1030,8 @@ then the patterns have not absorbed enough complexity.
 
 ---
 ## 8. Relationship to Other Patterns
+
+![image-20260408075829389](14-repository-and-builder-patterns.assets/image-20260408075829389.png)
 
 ### Builder vs Factory
 
@@ -1070,6 +1094,8 @@ Later lectures will extend the same [smart-home project](../project/README.md) d
 
 ---
 ## 9. Real-World Summary
+
+![image-20260408075912091](14-repository-and-builder-patterns.assets/image-20260408075912091.png)
 
 ### Practical Guidance
 

@@ -122,12 +122,19 @@ Design and implement a moderately complex, server-rendered Tea Shop web applicat
 - [HTML](presentations/12-state-machine-pattern_html/index.html)
 - [Lecture Material](presentations/12-state-machine-pattern.md)
 
+#### 13. Observer Pattern Section6plus
+- [PowerPoint](presentations/13-observer-pattern-section6plus.pptx)
+- [PDF](presentations/13-observer-pattern-section6plus.pdf)
+- [HTML](presentations/13-observer-pattern-section6plus_html/index.html)
+
 #### 13. Observer Pattern
 - [PowerPoint](presentations/13-observer-pattern.pptx)
 - [PDF](presentations/13-observer-pattern.pdf)
 - [HTML](presentations/13-observer-pattern_html/index.html)
 - [Lecture Material](presentations/13-observer-pattern.md)
 
-#### 14. Repository and Builder Patterns
-
+#### 14. Repository And Builder Patterns
+- [PowerPoint](presentations/14-repository-and-builder-patterns.pptx)
+- [PDF](presentations/14-repository-and-builder-patterns.pdf)
+- [HTML](presentations/14-repository-and-builder-patterns_html/index.html)
 - [Lecture Material](presentations/14-repository-and-builder-patterns.md)

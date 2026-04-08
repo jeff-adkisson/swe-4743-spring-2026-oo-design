@@ -2,7 +2,7 @@
 
 ### Building and Persisting Smart Home Device Scenes Without Tangling Construction and Storage
 
-##### [Powerpoint Presentation](14-repository-and-builder-patterns.pptx) | [PDF](14-repository-and-builder-patterns.pdf)
+##### [Powerpoint Presentation](14-repository-and-builder-patterns.pptx) | [PDF](14-repository-and-builder-patterns.pdf) | [Video](14-repository-and-builder-patterns.mp4)
 
 ---
 

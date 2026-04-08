@@ -2,7 +2,7 @@
 
 ### Building and Persisting Smart Home Device Scenes Without Tangling Construction and Storage
 
-[Powerpoint Presentation](14-repository-and-builder-patterns.pptx) | [PDF](14-repository-and-builder-patterns.pdf)
+##### [Powerpoint Presentation](14-repository-and-builder-patterns.pptx) | [PDF](14-repository-and-builder-patterns.pdf)
 
 ---
 
@@ -135,7 +135,7 @@ public void SaveScene(DeviceScene scene)
 
 This also has predictable problems:
 
-- application logic becomes coupled to SQLite
+- application logic becomes coupled to your persistence mechanism
 - tests become harder to isolate
 - storage concerns spread to services and controllers
 - changing persistence details means editing many places
@@ -293,6 +293,20 @@ That is not a betrayal of the pattern. It is a pragmatic simplification.
 
 The canonical GoF builder interface includes `Reset()` to allow the same builder instance to produce multiple products. In practice, fluent builders are typically single-use: you create one, call `Build()`, and discard it. If you need another product, create a new builder instance. The running example in this lecture follows that single-use convention.
 
+### How Builder Relates to SOLID and Deep Modules
+
+**SRP — Single Responsibility Principle.** Without Builder, construction logic scatters across every caller that creates a `DeviceScene`. Each caller repeats the same setup ritual, mixes validation with assembly, and becomes responsible for producing a valid object. The builder centralizes that responsibility: callers say *what* they want, the builder is responsible for *how* to assemble it correctly.
+
+**OCP — Open/Closed Principle.** New construction scenarios (a new target type, a new optional parameter) can often be handled by adding a method to the builder without modifying the existing construction steps or the callers that use them. The builder absorbs construction variation so that existing call sites remain stable.
+
+**LSP — Liskov Substitution Principle.** When the canonical GoF form uses an `ISceneBuilder` interface, any concrete builder can be substituted without breaking the director or calling code. The contract is the sequence of construction steps, not the implementation behind them.
+
+**ISP — Interface Segregation Principle.** The builder exposes only construction operations to its callers. It does not expose persistence, execution, or internal state management. Callers see a focused surface: `Named(...)`, `AddDeviceAction(...)`, `AddGroupAction(...)`, `Build()`. Nothing else leaks through.
+
+**DIP — Dependency Inversion Principle.** When a director or service depends on `ISceneBuilder` rather than `DeviceSceneBuilder`, higher-level code is decoupled from the concrete construction mechanism. This is more visible in the canonical GoF form than in a simple fluent builder, but the principle still applies: the abstraction defines the contract, not the implementation.
+
+**Ousterhout's deep modules.** A well-designed builder is a deep module. Its interface is small — a handful of named methods — but it absorbs meaningful complexity underneath: ordering logic, step-level validation, cross-field invariant checks, and the final assembly of an immutable product. Callers get a simple surface that hides construction depth, which is exactly the deep module ideal.
+
 ---
 ## 3. Implementation Walkthrough: Building a Device Scene
 
@@ -356,6 +370,21 @@ That makes a scene a better Builder example than a trivial DTO.
 
 ### Fluent Builder Flow
 
+The **fluent builder pattern** is a variation of the Builder pattern where object construction is expressed as a **chain of readable method calls**. Each builder step returns the builder itself, so object construction can be written as a readable chain of calls. It is called **fluent** because the API is designed to read almost like a sentence, with one call flowing into the next.
+
+For example:
+
+```
+var report = new ReportBuilder()
+    .WithTitle("Q1 Results")
+    .WithAuthor("Jeff")
+    .AddSection("Revenue")
+    .AddSection("Customer Retention")
+    .Build();
+```
+
+The variation from the original GoF builder pattern is returning the builder mechanism from every builder step.
+
 ```mermaid
 flowchart TB
     A[Start builder] --> B[Set scene name]
@@ -388,27 +417,153 @@ This example is useful because it includes:
 - parameterized actions
 - meaningful action order
 
-### Example Builder Sketch
+### Example Fluent Builder
 
-```csharp
-var scene = new DeviceSceneBuilder()
-    .Named("Evening Arrival")
-    .AddDeviceAction(
-        deviceId: porchLightId,
-        operation: "TurnOn")
-    .AddGroupAction(
-        deviceType: "Light",
-        location: "Living Room",
-        operation: "TurnOn")
-    .AddGroupAction(
-        deviceType: "Light",
-        location: "Living Room",
-        operation: "SetBrightness",
-        parameters: new Dictionary<string, string> { ["brightness"] = "40" })
-    .AddDeviceAction(
-        deviceId: frontDoorLockId,
-        operation: "Unlock")
-    .Build();
+```
+using System;
+using System.Collections.Generic;
+
+public static class Program
+{
+    public static void Main()
+    {
+        var porchLightId = "device-101";
+        var frontDoorLockId = "device-202";
+
+        var scene = new DeviceSceneBuilder()
+            .Named("Evening Arrival")
+            .AddDeviceAction(
+                deviceId: porchLightId,
+                operation: "TurnOn")
+            .AddGroupAction(
+                deviceType: "Light",
+                location: "Living Room",
+                operation: "TurnOn")
+            .AddGroupAction(
+                deviceType: "Light",
+                location: "Living Room",
+                operation: "SetBrightness",
+                parameters: new Dictionary<string, string> { ["brightness"] = "40" })
+            .AddDeviceAction(
+                deviceId: frontDoorLockId,
+                operation: "Unlock")
+            .Build();
+
+        Console.WriteLine($"{scene.Name} has {scene.Actions.Count} actions.");
+    }
+}
+
+public sealed class DeviceScene
+{
+    public string Name { get; }
+    public IReadOnlyList<SceneAction> Actions { get; }
+
+    public DeviceScene(string name, List<SceneAction> actions)
+    {
+        Name = name;
+        Actions = actions.AsReadOnly();
+    }
+}
+
+public sealed class SceneAction
+{
+    public string? DeviceId { get; init; }
+    public string? DeviceType { get; init; }
+    public string? Location { get; init; }
+    public required string Operation { get; init; }
+    public Dictionary<string, string> Parameters { get; init; } = new();
+}
+
+public sealed class DeviceSceneBuilder
+{
+    private string _name = "Unnamed Scene";
+    private readonly List<SceneAction> _actions = new();
+
+    public DeviceSceneBuilder Named(string name)
+    {
+        _name = name;
+        return this;
+    }
+
+    public DeviceSceneBuilder AddDeviceAction(
+        string deviceId,
+        string operation,
+        Dictionary<string, string>? parameters = null)
+    {
+        _actions.Add(new SceneAction
+        {
+            DeviceId = deviceId,
+            Operation = operation,
+            Parameters = parameters ?? new Dictionary<string, string>()
+        });
+
+        return this;
+    }
+
+    public DeviceSceneBuilder AddGroupAction(
+        string deviceType,
+        string location,
+        string operation,
+        Dictionary<string, string>? parameters = null)
+    {
+        _actions.Add(new SceneAction
+        {
+            DeviceType = deviceType,
+            Location = location,
+            Operation = operation,
+            Parameters = parameters ?? new Dictionary<string, string>()
+        });
+
+        return this;
+    }
+
+    public DeviceScene Build()
+    {
+        return new DeviceScene(_name, new List<SceneAction>(_actions));
+    }
+}
+```
+
+The fluent API style — method chaining that reads like a sentence — appears in many libraries beyond builders. For example, the FluentValidation C# package uses it for building validation rules:
+
+```
+public sealed class SceneActionValidator : AbstractValidator<SceneAction>
+{
+    public SceneActionValidator()
+    {
+        RuleFor(x => x.Operation)
+            .NotEmpty();
+
+        RuleFor(x => x)
+            .Must(x => x.IsDeviceAction ^ x.IsGroupAction)
+            .WithMessage("Each action must be either a device action or a group action, but not both.");
+
+        When(x => x.IsDeviceAction, () =>
+        {
+            RuleFor(x => x.DeviceId).NotEmpty();
+            RuleFor(x => x.DeviceType).Empty();
+            RuleFor(x => x.Location).Empty();
+        });
+
+        When(x => x.IsGroupAction, () =>
+        {
+            RuleFor(x => x.DeviceType).NotEmpty();
+            RuleFor(x => x.Location).NotEmpty();
+            RuleFor(x => x.DeviceId).Empty();
+        });
+
+        When(x => x.Operation == "SetBrightness", () =>
+        {
+            RuleFor(x => x.Parameters)
+                .Must(p => p.ContainsKey("brightness"))
+                .WithMessage("SetBrightness requires a 'brightness' parameter.");
+
+            RuleFor(x => x.Parameters["brightness"])
+                .Must(v => int.TryParse(v, out var n) && n >= 0 && n <= 100)
+                .WithMessage("Brightness must be an integer from 0 to 100.");
+        });
+    }
+}
 ```
 
 ### What the Builder Must Protect
@@ -458,6 +613,193 @@ sequenceDiagram
     Builder->>Builder: validate()
     Builder-->>Client: DeviceScene
 ```
+
+### Client-Server Builder: The Thin Client Hint Approach
+
+In a web application, the builder pattern often spans two layers. A TypeScript client guides the user through scene construction, while a C# server validates the finished scene before persisting it.
+
+This creates a practical tension: the construction rules must be enforced somewhere, but duplicating complex business logic across both layers is fragile and expensive to maintain.
+
+The **thin client hint** approach resolves this by splitting responsibilities:
+
+- **Client**: lightweight UX hints that prevent obviously invalid input
+- **Server**: authoritative validation of the complete scene before persistence
+
+```mermaid
+flowchart TB
+    subgraph Client ["Client (TypeScript)"]
+        UI["Scene Builder UI"] --> HINTS["Thin validation hints"]
+        HINTS --> JSON["Submit scene JSON"]
+    end
+
+    subgraph Server ["Server (C#)"]
+        API["API endpoint"] --> VALIDATE["FluentValidation"]
+        VALIDATE -->|invalid| ERR["422 + structured errors"]
+        VALIDATE -->|valid| BUILD["Build DeviceScene"]
+        BUILD --> REPO["ISceneRepository"]
+    end
+
+    JSON --> API
+    ERR -.-> UI
+```
+
+The key rule:
+
+> The client helps the user avoid mistakes. The server enforces correctness. Only the server is trusted.
+
+#### What the Client Owns
+
+The client builder is a [UX affordance](https://medium.com/theymakedesign/what-is-affordance-in-ux-7429d8646cf8), not a trust boundary. It provides immediate feedback using simple structural checks — the kind that do not require business logic or domain knowledge.
+
+```typescript
+interface SceneActionInput {
+  deviceId?: string;
+  deviceType?: string;
+  location?: string;
+  operation: string;
+  parameters?: Record<string, string>;
+}
+
+interface SceneInput {
+  name: string;
+  actions: SceneActionInput[];
+}
+
+function canSubmit(scene: SceneInput): string[] {
+  const hints: string[] = [];
+  if (!scene.name.trim()) {
+    hints.push("Scene name is required.");
+  }
+  if (scene.actions.length === 0) {
+    hints.push("At least one action is required.");
+  }
+  for (const action of scene.actions) {
+    if (!action.operation.trim()) {
+      hints.push("Each action must have an operation.");
+    }
+  }
+  return hints;
+}
+```
+
+These hints are **not** authoritative. They disable a submit button or show inline warnings. They do not duplicate server-side business rules like "SetBrightness requires a brightness parameter between 0 and 100."
+
+#### What the Server Owns
+
+The server is the **single source of truth** for all validation rules. In the following C# / FluentValidation example, the rules are declared once and applied to every incoming scene request.
+
+```csharp
+public class SceneActionInputValidator
+    : AbstractValidator<SceneActionInput>
+{
+    public SceneActionInputValidator()
+    {
+        RuleFor(a => a.Operation)
+            .NotEmpty()
+            .WithMessage("Operation is required.");
+
+        When(a => a.Operation == "SetBrightness", () =>
+        {
+            RuleFor(a => a.Parameters)
+                .Must(p => p != null
+                    && p.ContainsKey("brightness"))
+                .WithMessage(
+                    "SetBrightness requires a brightness parameter.");
+        });
+
+        RuleFor(a => a)
+            .Must(a => !string.IsNullOrEmpty(a.DeviceId)
+                || (!string.IsNullOrEmpty(a.DeviceType)
+                    && !string.IsNullOrEmpty(a.Location)))
+            .WithMessage(
+                "Each action must target a specific device "
+                + "or a device group.");
+    }
+}
+
+public class CreateSceneRequestValidator
+    : AbstractValidator<CreateSceneRequest>
+{
+    public CreateSceneRequestValidator()
+    {
+        RuleFor(r => r.Name)
+            .NotEmpty()
+            .WithMessage("Scene name is required.");
+
+        RuleFor(r => r.Actions)
+            .NotEmpty()
+            .WithMessage("At least one action is required.");
+
+        RuleForEach(r => r.Actions)
+            .SetValidator(new SceneActionInputValidator());
+    }
+}
+```
+
+When validation fails, the server returns structured errors that the client can display next to the relevant fields:
+
+```json
+{
+  "errors": [
+    {
+      "field": "Actions[2].Parameters",
+      "message": "SetBrightness requires a brightness parameter."
+    }
+  ]
+}
+```
+
+#### The Responsibility Split
+
+```mermaid
+flowchart TB
+
+
+    subgraph Server ["Server (authoritative)"]
+        S1["All client checks, repeated"]
+        S2["SetBrightness has brightness param?"]
+        S3["Each action targets device or group?"]
+        S4["Valid device IDs exist?"]
+        S5["Operation is a known operation?"]
+    end
+    
+        subgraph Client ["Client (UX hints)"]
+        C1["Name not blank?"]
+        C2["At least one action?"]
+        C3["Operation not empty?"]
+    end
+```
+
+The client checks are a **subset** of the server checks. They exist only to improve responsiveness. The server repeats every client check and adds the business rules that require domain knowledge or database access.
+
+> *Never trust data arriving from the client. Always validate what the client submits.*
+
+#### Why Not Duplicate All Rules on the Client?
+
+It is tempting to keep both sides in perfect sync. In practice, that fails because:
+
+- business rules change frequently and the client deployment may lag behind the server
+- some rules require data the client does not have (e.g., "does this device ID exist?")
+- complex cross-field rules are harder to express and test in two languages
+- the client is untrusted — even perfect client validation can be bypassed
+
+The thin client hint approach accepts a small UX tradeoff (some errors only appear after submit) in exchange for a much simpler, more maintainable architecture.
+
+#### The Deeper Lesson
+
+The Builder pattern and server-side validation solve **different problems**:
+
+- the **builder** guides construction — it is a UX and design pattern
+- the **validator** enforces trust — it is a security and correctness boundary
+
+They look similar because they share rules. But their purposes are different, and recognizing that distinction prevents teams from treating duplication as inevitable.
+
+### Companion Demos: Builder in Action
+
+The companion demos build the `Evening Arrival` scene using a fluent builder in both C# and Java. Both demos construct the same scene, validate it at build time, and print the finished `DeviceScene`. Run them to see the builder pattern in working code:
+
+- [C# demo](./14-repository-and-builder-pattern-demos/csharp-smart-home-scenes/README.md)
+- [Java demo](./14-repository-and-builder-pattern-demos/java-smart-home-scenes/README.md)
 
 ---
 ## 4. The Repository Pattern
@@ -576,9 +918,9 @@ classDiagram
     SqliteSceneRepository --> DeviceScene
 ```
 
-### Why Not Just Use SQLite Everywhere?
+### Why Hide SQLite behind the Repository Pattern?
 
-Because the rest of the system should not care whether scenes are stored in:
+The rest of the system should not care whether scenes are stored in:
 
 - SQLite
 - JSON
@@ -603,6 +945,27 @@ This is a direct application of dependency inversion:
 - higher-level code depends on an abstraction
 - low-level storage details implement that abstraction
 
+### How Repository Relates to SOLID and Deep Modules
+
+**SRP — Single Responsibility Principle.** The repository has one responsibility: provide a domain-shaped persistence boundary for an aggregate. It does not validate input (the builder or a validator does that), it does not execute scene behavior (that belongs to a different service), and it does not format data for screens (that is a query or presentation concern). When a repository starts absorbing unrelated work — query variation, reporting projections, caching policy — SRP is the signal that those concerns should move elsewhere.
+
+**OCP — Open/Closed Principle.** The `ISceneRepository` interface is stable. When the application needs a new persistence backend — JSON files, PostgreSQL, an API — a new implementation class is added without modifying the interface or any code that depends on it. The abstraction is closed for modification; the set of implementations is open for extension.
+
+**LSP — Liskov Substitution Principle.** Any implementation of `ISceneRepository` must honor the same contract: `Save` persists the full aggregate, `GetById` returns it faithfully or returns null, `Delete` removes it. An `InMemorySceneRepository` used in tests, a `SqliteSceneRepository` used in production, and a hypothetical `ApiSceneRepository` must all be interchangeable without surprising callers. If one implementation silently drops actions or ignores ordering, LSP is violated.
+
+**ISP — Interface Segregation Principle.** The repository interface exposes only aggregate lifecycle operations: `Save`, `GetById`, `Delete`, and `ListAll`. It does not expose SQL, connection management, transaction control, or query-builder internals. Callers depend on a narrow, domain-facing surface. When query-heavy read scenarios emerge, ISP argues for a separate `ISceneQueryService` rather than bloating the repository interface — a point we develop further in the next section.
+
+**DIP — Dependency Inversion Principle.** Application code depends on `ISceneRepository`, not on `SqliteSceneRepository`. The abstraction is owned by the domain layer; the implementation lives in the infrastructure layer. This is the classic DIP inversion: the higher-level module defines the interface, and the lower-level module conforms to it.
+
+```mermaid
+flowchart TB
+    DOMAIN["Domain / Application layer"] -->|defines| IFACE["ISceneRepository"]
+    INFRA["Infrastructure layer"] -->|implements| IFACE
+    INFRA --> DB[(SQLite)]
+```
+
+**Ousterhout's deep modules.** The repository is one of the clearest examples of a deep module in everyday application design. Its interface is small — four methods — but behind that surface it manages SQL, joins, row mapping, transaction coordination, target type discrimination, parameter deserialization, and ordering reconstruction. Callers see `Save(scene)` and `GetById(id)`. They never see the choreography underneath. A shallow repository, by contrast, would push mapping details, connection lifecycle, or query fragments upward into the callers — exactly the leakage the pattern exists to prevent.
+
 ### Keeping Repositories Small and Deep
 
 ![image-20260408075611859](14-repository-and-builder-patterns.assets/image-20260408075611859.png)
@@ -614,11 +977,11 @@ As systems grow, repositories often attract interface creep:
 - another screen-specific query
 - another reporting projection
 
-This is where repository design starts to drift, and three ideas become especially important:
+This is where the SOLID principles described above start to erode in practice. The three most relevant signals are:
 
-- `SRP`: a repository should have one main responsibility: provide a domain-shaped persistence boundary for an aggregate or domain concept
-- `OCP`: new read scenarios should not force constant edits to one ever-growing repository interface
-- **Ousterhout's deep modules**: a repository should expose a small, simple interface while hiding substantial storage and mapping complexity underneath
+- `SRP` erosion: the repository stops being a persistence boundary and starts becoming a grab bag of query methods
+- `OCP` erosion: every new screen or report forces a change to the same repository interface
+- **depth erosion** (Ousterhout): the interface grows wide and shallow instead of staying small and deep
 
 The practical goal is:
 
@@ -917,6 +1280,42 @@ Three important things become visible when you look at the rows this way:
 - target data uses foreign-key ID columns depending on whether the action points to a specific device or to a device group
 
 This is exactly why the repository abstraction matters. Higher-level code should work with a `DeviceScene`, not with this row choreography directly.
+
+### Built With Builder, Loaded From Repository
+
+A common question is whether the repository should push loaded data back through the builder when reconstructing a `DeviceScene` from the database.
+
+It should not. The builder and the repository produce the same type, but they serve different lifecycle stages:
+
+- The **builder** constructs a *new* scene from untrusted input. It enforces invariants, rejects invalid data, and guarantees that the finished product is well-formed.
+- The **repository** reconstructs a *previously validated* scene from trusted storage. The data was already validated when it was originally saved, so re-running construction guards is redundant.
+
+The repository maps rows directly onto the domain classes that make up `DeviceScene`. It does not need the builder's step-by-step ceremony because the data has already earned its way past those checks.
+
+```mermaid
+flowchart LR
+
+    subgraph Load["Loaded scene (trusted storage)"]
+        DB[(SQLite)] --> REPO[SqliteSceneRepository]
+        REPO -->|maps rows directly| SCENE2[DeviceScene]
+    end
+    
+        subgraph New["New scene (untrusted input)"]
+        INPUT[User / API input] --> BUILDER[DeviceSceneBuilder]
+        BUILDER -->|validates and builds| SCENE1[DeviceScene]
+    end
+```
+
+For example, this object dump shows a `DeviceScene` reconstructed by the repository — its properties are mapped from `scene` and `scene_action` rows without involving the builder:
+
+![image-20260408090340455](14-repository-and-builder-patterns.assets/image-20260408090340455.png)
+
+### Companion Demos: Repository in Action
+
+The companion demos extend the builder example by saving the `Evening Arrival` scene through a SQLite-backed repository, reloading it by id, and printing the rehydrated `DeviceScene`. Both C# and Java demos implement the same flow — build, save, load, print:
+
+- [C# demo](./14-repository-and-builder-pattern-demos/csharp-smart-home-scenes/README.md)
+- [Java demo](./14-repository-and-builder-pattern-demos/java-smart-home-scenes/README.md)
 
 ---
 ## 6. Unified End-to-End Flow

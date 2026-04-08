@@ -10,6 +10,7 @@
 }
 
 .mermaid svg {
+  width: fit-content;
   height: auto;
 }
 

@@ -33,7 +33,7 @@ The two patterns for today are:
 - `Builder` for object construction
 - `Repository` for persistence boundaries
 
-This lecture intentionally does **not** teach `Command` or `Composite`. Those patterns are important to the full Device Scenes project feature, but they are deferred to Lecture 15. Here, we focus only on scene definition construction and scene definition persistence.
+This lecture intentionally does **not** teach `Command` or `Composite`. Those patterns are important to the full Device Scenes project feature, but they are deferred to [Lecture 15](15-command-and-composite-patterns.md). Here, we focus only on scene definition construction and scene definition persistence.
 
 By the end of this lecture, students should be able to:
 
@@ -67,7 +67,7 @@ flowchart LR
 - [Appendix 1: SQLite Schema and Mapping Notes](#appendix-1-sqlite-schema-and-mapping-notes)
 - [Appendix 2: Builder vs Factory and Object Initializers](#appendix-2-builder-vs-factory-and-object-initializers)
 - [Appendix 3: Repository vs Unit of Work](#appendix-3-repository-vs-unit-of-work)
-- [Appendix 4: Where Lecture 15 Extends This Example](#appendix-4-where-lecture-15-extends-this-example)
+- [Appendix 4: Where Lecture 15 Extends This Example](#appendix-4-where-lecture-15-extends-this-example) — see [Lecture 15](15-command-and-composite-patterns.md)
 
 ---
 ## 1. The Problem: Complex Construction and Persistent Scene Definitions
@@ -176,7 +176,7 @@ flowchart TB
 
     EXEC["Scene execution engine"]:::future
 
-    SCENE -. later lecture .-> EXEC
+    SCENE -. "Lecture 15" .-> EXEC
 
     classDef future fill:#f5f5f5,stroke:#888,stroke-dasharray: 5 5;
 ```
@@ -1489,7 +1489,7 @@ This lecture stops at:
 - scene definition construction
 - scene definition storage
 
-Later lectures will extend the same [smart-home project](../project/README.md) domain into other pattern problems.
+[Lecture 15](15-command-and-composite-patterns.md) extends the same [smart-home project](../project/README.md) domain into Command and Composite pattern problems.
 
 ---
 ## 9. Real-World Summary
@@ -1714,7 +1714,7 @@ For this lecture, the important takeaway is:
 > Repository gives you a domain-facing persistence boundary. Unit of Work coordinates the transaction behind or around that boundary.
 
 ---
-## Appendix 4: Where Lecture 15 Extends This Example
+## Appendix 4: Where [Lecture 15](15-command-and-composite-patterns.md) Extends This Example
 
 Lecture 14 stops at:
 
@@ -1723,18 +1723,18 @@ Lecture 14 stops at:
 
 In the [smart-home project](../project/README.md), a scene is eventually more than stored data. It also becomes a behavior that can be applied to devices in order.
 
-That next step raises different pattern questions, which are intentionally deferred to Lecture 15.
+That next step raises different pattern questions, which are covered in [Lecture 15: Command and Composite Patterns](15-command-and-composite-patterns.md).
 
 For this lecture, the only mental model students need is:
 
 ```mermaid
 flowchart TB
     A[Build scene definition] --> B[Persist scene definition]
-    B -. next lecture extends here .-> C[Execute scene behavior]
+    B -. "Lecture 15 (Command + Composite)" .-> C[Execute scene behavior]
 ```
 
 The point is architectural staging:
 
 - first make the definition clean
 - then make the storage boundary clean
-- later address execution design
+- then address execution design — see [Lecture 15](15-command-and-composite-patterns.md)

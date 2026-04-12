@@ -1,0 +1,45 @@
+<div class="app-container">
+  <header class="app-header">
+    <h1>Smart Home Scene Executor</h1>
+    <p class="subtitle">Command + Composite Pattern Demo &mdash; Lecture 15</p>
+  </header>
+
+  <div class="app-layout">
+    <!-- Left column: Scene selection + actions -->
+    <aside class="sidebar">
+      <app-scene-list
+        [scenes]="scenes()"
+        [selectedSceneId]="selectedScene()?.id ?? null"
+        (selectScene)="onSelectScene($event)"
+      />
+
+      <div class="action-buttons">
+        <p-button
+          label="Execute Scene"
+          icon="pi pi-play"
+          [disabled]="!selectedScene()"
+          (onClick)="onExecuteScene()"
+          severity="success"
+        />
+        <p-button
+          label="Reset Devices"
+          icon="pi pi-refresh"
+          (onClick)="onResetDevices()"
+          severity="secondary"
+          [outlined]="true"
+        />
+      </div>
+    </aside>
+
+    <!-- Center column: Command tree + execution log -->
+    <main class="main-content">
+      <app-scene-tree [commandTree]="commandTree()" />
+      <app-execution-log [result]="executionResult()" />
+    </main>
+
+    <!-- Right column: Device dashboard -->
+    <aside class="device-panel">
+      <app-device-dashboard [devices]="devices()" />
+    </aside>
+  </div>
+</div>

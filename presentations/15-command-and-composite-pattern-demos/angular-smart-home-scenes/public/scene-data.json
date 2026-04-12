@@ -1,0 +1,165 @@
+{
+  "devices": [
+    {
+      "id": "device-porch-light",
+      "name": "Porch Light",
+      "type": "Light",
+      "location": "Porch",
+      "state": "off",
+      "brightness": 100
+    },
+    {
+      "id": "device-lr-overhead",
+      "name": "Living Room Overhead",
+      "type": "Light",
+      "location": "Living Room",
+      "state": "off",
+      "brightness": 100
+    },
+    {
+      "id": "device-lr-floor-lamp",
+      "name": "Living Room Floor Lamp",
+      "type": "Light",
+      "location": "Living Room",
+      "state": "off",
+      "brightness": 100
+    },
+    {
+      "id": "device-kitchen-lights",
+      "name": "Kitchen Under-Cabinet Lights",
+      "type": "Light",
+      "location": "Kitchen",
+      "state": "on",
+      "brightness": 80
+    },
+    {
+      "id": "device-bedroom-lamp",
+      "name": "Bedroom Lamp",
+      "type": "Light",
+      "location": "Bedroom",
+      "state": "off",
+      "brightness": 100
+    },
+    {
+      "id": "device-front-door",
+      "name": "Front Door Lock",
+      "type": "DoorLock",
+      "location": "Front Entry",
+      "state": "unlocked"
+    },
+    {
+      "id": "device-back-door",
+      "name": "Back Door Lock",
+      "type": "DoorLock",
+      "location": "Back Entry",
+      "state": "unlocked"
+    },
+    {
+      "id": "device-garage-door",
+      "name": "Garage Door Lock",
+      "type": "DoorLock",
+      "location": "Garage",
+      "state": "locked"
+    },
+    {
+      "id": "device-thermostat",
+      "name": "Main Thermostat",
+      "type": "Thermostat",
+      "location": "Hallway",
+      "state": "on",
+      "temperature": 72
+    },
+    {
+      "id": "device-lr-fan",
+      "name": "Living Room Ceiling Fan",
+      "type": "Fan",
+      "location": "Living Room",
+      "state": "off"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene-evening-arrival",
+      "name": "Evening Arrival",
+      "description": "Welcome home — lights on, door unlocked, living room dimmed.",
+      "actions": [
+        {
+          "deviceId": "device-porch-light",
+          "operation": "TurnOn"
+        },
+        {
+          "deviceType": "Light",
+          "location": "Living Room",
+          "operation": "TurnOn"
+        },
+        {
+          "deviceType": "Light",
+          "location": "Living Room",
+          "operation": "SetBrightness",
+          "parameters": { "brightness": "40" }
+        },
+        {
+          "deviceId": "device-front-door",
+          "operation": "Unlock"
+        }
+      ]
+    },
+    {
+      "id": "scene-movie-mode",
+      "name": "Movie Mode",
+      "description": "Dim living room, turn off kitchen, lock front door.",
+      "actions": [
+        {
+          "deviceType": "Light",
+          "location": "Living Room",
+          "operation": "SetBrightness",
+          "parameters": { "brightness": "20" }
+        },
+        {
+          "deviceType": "Light",
+          "location": "Kitchen",
+          "operation": "TurnOff"
+        },
+        {
+          "deviceId": "device-front-door",
+          "operation": "Lock"
+        }
+      ]
+    },
+    {
+      "id": "scene-lock-down",
+      "name": "Lock Down",
+      "description": "Lock all doors and turn off all lights.",
+      "actions": [
+        {
+          "deviceType": "DoorLock",
+          "operation": "Lock"
+        },
+        {
+          "deviceType": "Light",
+          "operation": "TurnOff"
+        }
+      ]
+    },
+    {
+      "id": "scene-good-night",
+      "name": "Good Night",
+      "description": "Lock all doors, turn off all lights, set thermostat to 68°F.",
+      "actions": [
+        {
+          "deviceType": "DoorLock",
+          "operation": "Lock"
+        },
+        {
+          "deviceType": "Light",
+          "operation": "TurnOff"
+        },
+        {
+          "deviceId": "device-thermostat",
+          "operation": "SetTemperature",
+          "parameters": { "temperature": "68" }
+        }
+      ]
+    }
+  ]
+}

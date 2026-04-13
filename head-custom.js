@@ -1,4 +1,4 @@
-import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.2/dist/mermaid.esm.min.mjs";
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.14.0/dist/mermaid.esm.min.mjs";
 
 const headCustomScript = document.querySelector('script[src*="head-custom.js"]');
 const homeUrl = headCustomScript?.dataset.homeUrl || "/";

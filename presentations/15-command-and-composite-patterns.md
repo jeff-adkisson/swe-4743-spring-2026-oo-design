@@ -202,9 +202,11 @@ For the smart-home scene, the roles map naturally:
 |---|---|
 | Command | `IDeviceCommand` |
 | ConcreteCommand | `TurnOnCommand`, `SetBrightnessCommand`, `UnlockCommand`, etc. |
-| Receiver | The device (Light, DoorLock, etc.) |
+| Receiver | The device's state machine context (from [Lecture 12](12-state-machine-pattern.md)) |
 | Invoker | `SceneExecutor` |
 | Client | The code that loads a scene definition and builds commands |
+
+**Important connection to [Lecture 12](12-state-machine-pattern.md):** The [semester project](../project/README.md) requires that every device is governed by a formal state machine. Commands do not mutate device properties directly — they request transitions through the device's state machine context. The state machine validates the transition, rejects invalid ones, and returns a `TransitionResult`. The command translates that into a `CommandResult`.
 
 ```mermaid
 classDiagram
@@ -223,44 +225,45 @@ classDiagram
     }
 
     class TurnOnCommand {
-        -device : IDevice
+        -device : DeviceContext
         +Execute() CommandResult
     }
 
     class TurnOffCommand {
-        -device : IDevice
+        -device : DeviceContext
         +Execute() CommandResult
     }
 
     class SetBrightnessCommand {
-        -device : IDevice
+        -device : DeviceContext
         -brightness : int
         +Execute() CommandResult
     }
 
     class UnlockCommand {
-        -device : IDevice
+        -device : DeviceContext
         +Execute() CommandResult
     }
 
-    class IDevice {
-        <<interface>>
+    class DeviceContext {
         +Id : string
         +Name : string
-        +TurnOn() void
-        +TurnOff() void
+        +AvailableActions : IReadOnlyList~Transition~
+        +Execute(action) TransitionResult
     }
 
     IDeviceCommand <|.. TurnOnCommand
     IDeviceCommand <|.. TurnOffCommand
     IDeviceCommand <|.. SetBrightnessCommand
     IDeviceCommand <|.. UnlockCommand
-    TurnOnCommand --> IDevice
-    TurnOffCommand --> IDevice
-    SetBrightnessCommand --> IDevice
-    UnlockCommand --> IDevice
+    TurnOnCommand --> DeviceContext
+    TurnOffCommand --> DeviceContext
+    SetBrightnessCommand --> DeviceContext
+    UnlockCommand --> DeviceContext
     IDeviceCommand --> CommandResult
 ```
+
+The receiver is the device's state machine `DeviceContext` from [Lecture 12](12-state-machine-pattern.md) — not a raw device object with setter methods. Commands request transitions; the state machine decides whether they are valid.
 
 ### Example: TurnOnCommand
 
@@ -279,55 +282,73 @@ public sealed record CommandResult(
 
 public sealed class TurnOnCommand : IDeviceCommand
 {
-    private readonly IDevice _device;
+    private readonly DeviceContext _device;
 
-    public TurnOnCommand(IDevice device)
+    public TurnOnCommand(DeviceContext device)
     {
         _device = device;
     }
 
     public CommandResult Execute()
     {
-        if (_device.IsOn)
-        {
-            return new CommandResult(
-                _device.Id, _device.Name, "TurnOn",
-                Success: true, Message: "Already on");
-        }
+        // Delegate to the device's state machine — not a direct property setter.
+        // The state machine validates the transition and returns a result.
+        var transition = _device.Execute(DeviceAction.PowerOn);
 
-        _device.TurnOn();
         return new CommandResult(
-            _device.Id, _device.Name, "TurnOn",
-            Success: true, Message: "Turned on");
+            _device.Id,
+            _device.Name,
+            "TurnOn",
+            Success: transition.Success,
+            Message: transition.Message);
     }
 }
 ```
+
+The command does not check `_device.IsOn` or call `_device.TurnOn()`. It asks the state machine to execute the `PowerOn` action. The state machine knows whether that transition is valid from the current state:
+
+- If the light is Off, the state machine transitions to On and returns success.
+- If the light is already On, the state machine returns a no-op result (self-transition or rejection, depending on how the student defines their transitions).
+
+This keeps the command thin — it translates a scene operation into a state machine action and wraps the result.
 
 ### Example: SetBrightnessCommand
 
 ```csharp
 public sealed class SetBrightnessCommand : IDeviceCommand
 {
-    private readonly IControllableLight _light;
+    private readonly DeviceContext _device;
     private readonly int _brightness;
 
-    public SetBrightnessCommand(IControllableLight light, int brightness)
+    public SetBrightnessCommand(DeviceContext device, int brightness)
     {
-        _light = light;
+        _device = device;
         _brightness = brightness;
     }
 
     public CommandResult Execute()
     {
-        _light.SetBrightness(_brightness);
+        // SetBrightness is a self-transition on the On state (On -> On).
+        // The state machine validates that the light is On before applying.
+        var transition = _device.Execute(
+            DeviceAction.SetBrightness,
+            new Dictionary<string, object> { ["brightness"] = _brightness });
+
         return new CommandResult(
-            _light.Id, _light.Name, $"SetBrightness({_brightness})",
-            Success: true, Message: $"Brightness set to {_brightness}%");
+            _device.Id,
+            _device.Name,
+            $"SetBrightness({_brightness})",
+            Success: transition.Success,
+            Message: transition.Success
+                ? $"Brightness set to {_brightness}%"
+                : transition.Message);
     }
 }
 ```
 
-Each command is a self-contained unit. It knows its receiver and its parameters. It can be tested, logged, and composed independently.
+If the light is Off, the state machine rejects the `SetBrightness` action because that transition is only valid from the On state. The command does not need to check — the state machine enforces the rule.
+
+Each command is a self-contained unit. It knows its receiver (the device's state machine context) and its parameters. It can be tested, logged, and composed independently.
 
 ![image-20260412211037575](15-command-and-composite-patterns.assets/image-20260412211037575.png)
 
@@ -657,7 +678,7 @@ public sealed class SceneResolver
         return root;
     }
 
-    private IReadOnlyList<IDevice> ResolveTargets(SceneAction action)
+    private IReadOnlyList<DeviceContext> ResolveTargets(SceneAction action)
     {
         if (!string.IsNullOrEmpty(action.DeviceId))
         {
@@ -670,14 +691,14 @@ public sealed class SceneResolver
     }
 
     private IDeviceCommand CreateCommand(
-        IDevice device, SceneAction action)
+        DeviceContext device, SceneAction action)
     {
         return action.Operation switch
         {
             "TurnOn" => new TurnOnCommand(device),
             "TurnOff" => new TurnOffCommand(device),
             "SetBrightness" => new SetBrightnessCommand(
-                (IControllableLight)device,
+                device,
                 int.Parse(action.Parameters["brightness"])),
             "Unlock" => new UnlockCommand(device),
             "Lock" => new LockCommand(device),
@@ -826,7 +847,7 @@ sequenceDiagram
     participant Resolver as SceneResolver
     participant Registry as DeviceRegistry
     participant Tree as CompositeCommand
-    participant Device as Devices
+    participant SM as Device State Machines
 
     API->>Repo: GetById(sceneId)
     Repo-->>API: DeviceScene
@@ -859,8 +880,8 @@ sequenceDiagram
 
     API->>Tree: Execute()
     loop For each child command
-        Tree->>Device: Execute individual command
-        Device-->>Tree: CommandResult
+        Tree->>SM: command.Execute() → state machine transition
+        SM-->>Tree: TransitionResult → CommandResult
     end
     Tree-->>API: Aggregate CommandResult
 ```
@@ -1122,6 +1143,7 @@ flowchart LR
 
 - **God command**: a single command class that handles many operations with internal branching — this is just a disguised switch statement
 - **Over-wrapping**: creating a `PrintHelloCommand` class to wrap `Console.WriteLine("Hello")` — the abstraction costs more than the code it replaces
+- **Bypassing the state machine**: a command that sets `device.State = "on"` directly instead of calling `device.Execute(DeviceAction.PowerOn)` — this skips validation, breaks transition rules, and defeats the purpose of having a state machine
 - **Stateless undo**: implementing `Undo()` without capturing the state needed to reverse the operation
 
 ### Composite Mistakes

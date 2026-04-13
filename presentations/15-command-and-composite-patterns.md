@@ -963,6 +963,8 @@ The companion demo implements the Command and Composite patterns in a working An
 
 - [Demo README and setup instructions](./15-command-and-composite-pattern-demos/angular-smart-home-scenes/README.md)
 
+![image-20260412211707781](15-command-and-composite-patterns.assets/image-20260412211707781.png)
+
 ### What the Demo Shows
 
 The demo brings together everything from Sections 2–4 in running TypeScript code:

@@ -948,6 +948,49 @@ public sealed class SceneExecutor
 }
 ```
 
+### Recording to Device Command History
+
+The [semester project](../project/README.md) requires that every device operation is recorded in a per-device audit log (Section 2.4.4). For scene execution specifically:
+
+> Scene execution is recorded in the device command history for each affected device.
+
+The Command pattern makes this straightforward. Every command already produces a `CommandResult` containing the device ID, the operation performed, and the outcome. The `SceneExecutor` can pass those results to the command history service after the composite finishes:
+
+```csharp
+public SceneExecutionResult Execute(Guid sceneId)
+{
+    var scene = _repository.GetById(sceneId)
+        ?? throw new InvalidOperationException(
+            $"Scene {sceneId} not found");
+
+    var commandTree = _resolver.Resolve(scene);
+    var result = commandTree.Execute();
+
+    // Record each leaf result in the device command history
+    foreach (var entry in FlattenResults(result))
+    {
+        _commandHistory.Record(new CommandHistoryEntry(
+            Timestamp: DateTime.UtcNow,
+            DeviceId: entry.DeviceId,
+            Operation: entry.Operation,
+            Source: $"Scene: {scene.Name}"));
+    }
+
+    return new SceneExecutionResult(
+        SceneName: scene.Name,
+        Result: result);
+}
+```
+
+This is one of the concrete reasons the project requires the Command pattern for scenes. Without it, audit logging would need to be wired into every conditional branch of a naive executor. With Command, each operation is already an object with a structured result — logging is a natural post-execution step.
+
+```mermaid
+flowchart LR
+    EXEC["Execute composite"] --> RESULTS["CommandResult per device"]
+    RESULTS --> LOG["Record in device command history"]
+    RESULTS --> RESPONSE["Return to API caller"]
+```
+
 ### How This Connects to [Lecture 14](14-repository-and-builder-patterns.md)
 
 The full scene lifecycle now spans four patterns across two lectures:

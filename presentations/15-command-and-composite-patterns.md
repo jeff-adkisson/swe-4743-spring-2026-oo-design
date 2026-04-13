@@ -57,8 +57,6 @@ By the end of this lecture, students should be able to:
 ---
 ## 1. The Problem: Executing a Scene Definition
 
-### Where [Lecture 14](14-repository-and-builder-patterns.md) Left Off
-
 [Lecture 14](14-repository-and-builder-patterns.md) produced a clean `DeviceScene` object — a name and an ordered list of `SceneAction` entries. Each action targets either a specific device or a device group and specifies an operation like `TurnOn`, `SetBrightness`, or `Unlock`.
 
 That definition is data. It describes *what should happen*. It does not describe *how to make it happen*.

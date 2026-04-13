@@ -138,3 +138,6 @@ Design and implement a moderately complex, server-rendered Tea Shop web applicat
 - [PDF](presentations/14-repository-and-builder-patterns.pdf)
 - [HTML](presentations/14-repository-and-builder-patterns_html/index.html)
 - [Lecture Material](presentations/14-repository-and-builder-patterns.md)
+
+#### 15. Command and Composite Patterns
+- [Lecture Material](presentations/15-command-and-composite-patterns.md)

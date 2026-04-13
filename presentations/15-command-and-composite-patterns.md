@@ -2,6 +2,8 @@
 
 ### Executing and Structuring Smart Home Device Scenes
 
+[Powerpoint Presentation](15-command-and-composite-patterns.pptx) | [PDF](15-command-and-composite-patterns.pdf) | [Video](15-command-and-composite-patterns.mp4)
+
 ---
 
 [Lecture 14](14-repository-and-builder-patterns.md) answered:
@@ -60,6 +62,8 @@ By the end of this lecture, students should be able to:
 [Lecture 14](14-repository-and-builder-patterns.md) produced a clean `DeviceScene` object — a name and an ordered list of `SceneAction` entries. Each action targets either a specific device or a device group and specifies an operation like `TurnOn`, `SetBrightness`, or `Unlock`.
 
 That definition is data. It describes *what should happen*. It does not describe *how to make it happen*.
+
+![image-20260412210742487](15-command-and-composite-patterns.assets/image-20260412210742487.png)
 
 ### The Naive Execution Approach
 
@@ -325,6 +329,10 @@ public sealed class SetBrightnessCommand : IDeviceCommand
 
 Each command is a self-contained unit. It knows its receiver and its parameters. It can be tested, logged, and composed independently.
 
+![image-20260412211037575](15-command-and-composite-patterns.assets/image-20260412211037575.png)
+
+![image-20260412211055605](15-command-and-composite-patterns.assets/image-20260412211055605.png)
+
 ### Modern Usage: Commands as Lambdas
 
 In modern C#, TypeScript, and Java, the Command pattern does not always require a full class hierarchy. When commands are simple and do not need undo, a lambda or delegate can serve the same role:
@@ -460,6 +468,8 @@ The Composite pattern is a **structural design pattern** (GoF, 1994) that compos
 The core idea:
 
 > Let a single object and a group of objects implement the same interface so that callers do not need to distinguish between them.
+
+![image-20260412211121970](15-command-and-composite-patterns.assets/image-20260412211121970.png)
 
 ### Canonical GoF Composite Roles
 
@@ -695,6 +705,8 @@ flowchart LR
 ```
 
 This tree representation is exactly what the companion Angular demo renders using PrimeNG's Tree component.
+
+![image-20260412211234570](15-command-and-composite-patterns.assets/image-20260412211234570.png)
 
 ### Common Real-World Usages
 
@@ -1144,6 +1156,8 @@ else
 
 then the Composite pattern has not done its job. The entire point is to eliminate that distinction.
 
+![image-20260412211350377](15-command-and-composite-patterns.assets/image-20260412211350377.png)
+
 ---
 ## 7. Relationship to Other Patterns
 
@@ -1206,6 +1220,8 @@ This combination is one of the GoF's original motivating examples for Composite:
 
 > "The Composite pattern lets you build up a macro command from simple commands."
 
+![image-20260412211206997](15-command-and-composite-patterns.assets/image-20260412211206997.png)
+
 ---
 ## 8. Real-World Summary
 
@@ -1230,6 +1246,8 @@ flowchart LR
     Q3 -->|No| Q4{"Is a flat list<br/>sufficient?"}
     Q4 -->|Yes| SKIP2["Skip Composite"]
 ```
+
+![image-20260412211420488](15-command-and-composite-patterns.assets/image-20260412211420488.png)
 
 ### Common Misconceptions
 
@@ -1531,6 +1549,10 @@ The practical rule:
 > Undo/redo is warranted for **user-facing interactive tools** where the user expects to experiment and reverse mistakes. It is rarely appropriate for backend service operations, where compensating transactions, event sourcing, or saga patterns are better answers to the reversal problem.
 
 If you find yourself adding `Undo()` to commands that send emails, charge credit cards, or write to external systems, reconsider. Those operations are not reversible in the undo/redo sense — they require domain-specific compensation logic that does not fit neatly into a history stack.
+
+![image-20260412211506514](15-command-and-composite-patterns.assets/image-20260412211506514.png)
+
+![image-20260412211513736](15-command-and-composite-patterns.assets/image-20260412211513736.png)
 
 ### Further Reading
 

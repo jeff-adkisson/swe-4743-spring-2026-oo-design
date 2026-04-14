@@ -6,18 +6,19 @@
 
 ---
 
-Every production outage has a root cause. Sometimes it is a missing feature or a broken algorithm, but surprisingly often the root cause is something small — a raw `string` where a type should have been, a default `ToString` that made a log unreadable, a hash code that silently shifted after insertion, or a swallowed exception that hid the real failure for months.
+Every production outage has a root cause. Sometimes it is a missing feature or a broken algorithm, but surprisingly often the cause — or the reason it took so long to diagnose — is something small: a raw `string` where a type should have been, a hash code that silently shifted after insertion, a swallowed exception that hid the real failure for months, or a default `ToString` that turned an incident into a three-hour debugging session because nobody could tell which object was in the failing log line.
 
-These are not exotic design problems. They are **tiny choices** that developers make dozens of times per day, usually on autopilot. When made well, the codebase stays clean, debuggable, and predictable. When made poorly, the consequences are disproportionately large: data corruption, phantom bugs, security leaks, and hours of wasted debugging time.
+These are not exotic design problems. They are **tiny choices** that developers make dozens of times per day, usually on autopilot. Some of them — primitive obsession, broken hash codes, swallowed exceptions — cause the bug itself. Others — like a missing `ToString` override — do not cause bugs, but they make every bug in your codebase harder to see, harder to log, and harder to fix. Either way, the consequences are disproportionately large: data corruption, phantom bugs, security leaks, and hours of wasted debugging time.
 
 This lecture examines four of these choices:
 
 ```mermaid
 flowchart LR
     A["Raw Primitives\n(Primitive Obsession)"] --> BUG["Production\nBug 💥"]
-    B["Missing ToString\nOverride"] --> BUG
     C["Broken Hash Code /\nEquality Contract"] --> BUG
     D["Swallowed or Leaked\nExceptions"] --> BUG
+    B["Missing ToString\nOverride"] --> SLOW["Slow, painful\ndebugging 🐌"]
+    BUG -.->|"made worse by"| SLOW
 ```
 
 Each topic is self-contained, but they reinforce each other. Value objects solve primitive obsession **and** give you a natural place for `ToString` and `GetHashCode`. Proper equality contracts prevent phantom collection bugs. Good exception handling keeps error information where it belongs — in the server log, not in the client response.
@@ -327,7 +328,7 @@ This costs nothing at runtime — the brand exists only in the type system.
 
 > **See it run**: [`Tests/ValueObjectTests.cs`](16-tiny-design-choices-demo/) — normalization at construction (`EmailAddress` lowercases its input), value-based equality between separate object references, the `Money.Add(usd, eur)` invariant rejecting currency mixing, and an immutable `DateRange` used safely as a `Dictionary` key.
 
-### The Bug
+### The Debugging Session That Didn't Have to Be Painful
 
 A developer is debugging an order processing failure. The log file reads:
 
@@ -335,7 +336,9 @@ A developer is debugging an order processing failure. The log file reads:
 [ERROR] Failed to process order: MyApp.Models.Order
 ```
 
-That is the **entire** error message. The default `ToString` returned the type name and nothing else. The developer now has to reproduce the failure, attach a debugger, and inspect the object manually. If this happened in production at 3 AM, that is not an option.
+That is the **entire** error message. The default `ToString` returned the type name and nothing else. The bug itself is somewhere else in the code — maybe a bad input, maybe a race condition — but the missing `ToString` override is what turned a five-minute investigation into a two-hour one. The developer now has to reproduce the failure, attach a debugger, and inspect the object manually. If this happened in production at 3 AM, that is not an option.
+
+> A missing `ToString` override does not cause defects. It amplifies the cost of every defect you already have, and it slows down the normal work of understanding your own running code.
 
 ### Why ToString Matters
 

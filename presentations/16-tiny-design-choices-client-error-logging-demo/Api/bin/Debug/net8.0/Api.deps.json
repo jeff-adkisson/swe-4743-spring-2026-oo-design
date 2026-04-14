@@ -1,0 +1,41 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "Api/1.0.0": {
+        "dependencies": {
+          "System.Threading.RateLimiting": "10.0.5"
+        },
+        "runtime": {
+          "Api.dll": {}
+        }
+      },
+      "System.Threading.RateLimiting/10.0.5": {
+        "runtime": {
+          "lib/net8.0/System.Threading.RateLimiting.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.526.15411"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Api/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "System.Threading.RateLimiting/10.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-dkjiWU3j6BjotVMRFnJEEAJtOBDNi7tNS9nTpijjUeJQKXMmucjtfZJ0mfOaR2py5xxzP/gkpVXOQpugEZZ/xQ==",
+      "path": "system.threading.ratelimiting/10.0.5",
+      "hashPath": "system.threading.ratelimiting.10.0.5.nupkg.sha512"
+    }
+  }
+}

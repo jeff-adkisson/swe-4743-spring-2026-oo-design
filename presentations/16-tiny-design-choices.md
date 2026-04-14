@@ -6,6 +6,8 @@
 
 ---
 
+![image-20260414144339310](16-tiny-design-choices.assets/image-20260414144339310.png)
+
 Every production outage has a root cause. Sometimes it is a missing feature or a broken algorithm, but surprisingly often the cause — or the reason it took so long to diagnose — is something small: a raw `string` where a type should have been, a hash code that silently shifted after insertion, a swallowed exception that hid the real failure for months, or a default `ToString` that turned an incident into a three-hour debugging session because nobody could tell which object was in the failing log line.
 
 These are not exotic design problems. They are **tiny choices** that developers make dozens of times per day, usually on autopilot. Some of them — primitive obsession, broken hash codes, swallowed exceptions — cause the bug itself. Others — like a missing `ToString` override — do not cause bugs, but they make every bug in your codebase harder to see, harder to log, and harder to fix. Either way, the consequences are disproportionately large: data corruption, phantom bugs, security leaks, and hours of wasted debugging time.
@@ -63,6 +65,8 @@ SendConfirmation(customer.Id, order.Id, customer.Email); // compiles fine, runs 
 
 The compiler cannot help. Every parameter is a `string`. The type system sees no difference between an email address, an order ID, and a customer ID. This is **primitive obsession**.
 
+![image-20260414144354520](16-tiny-design-choices.assets/image-20260414144354520.png)
+
 ### What Is Primitive Obsession?
 
 Primitive obsession is a code smell where domain concepts are represented using built-in primitive types (`string`, `int`, `double`) instead of small, purpose-built types. Symptoms include:
@@ -91,6 +95,8 @@ A **value object** is a small, immutable type that:
 4. **Is immutable** — once created, it cannot change
 
 > If it exists, it is valid. If two instances hold the same data, they are equal. If you need a different value, create a new instance.
+
+![image-20260414144436324](16-tiny-design-choices.assets/image-20260414144436324.png)
 
 ### EmailAddress — Three Languages
 
@@ -340,6 +346,8 @@ That is the **entire** error message. The default `ToString` returned the type n
 
 > A missing `ToString` override does not cause defects. It amplifies the cost of every defect you already have, and it slows down the normal work of understanding your own running code.
 
+![image-20260414144455149](16-tiny-design-choices.assets/image-20260414144455149.png)
+
 ### Why ToString Matters
 
 `ToString` (C#), `toString` (Java), and `toString` (TypeScript/JavaScript) are called in more places than most developers realize:
@@ -453,6 +461,8 @@ public override string ToString()
 
 > Never put secrets in ToString. Anything in ToString **will** end up in a log file eventually.
 
+![image-20260414144509386](16-tiny-design-choices.assets/image-20260414144509386.png)
+
 ### Connection to Value Objects
 
 Value objects from Section 1 especially benefit from good `ToString` overrides. When an `EmailAddress` appears in a log, you want to see `alice@example.com`, not `MyApp.ValueObjects.EmailAddress`. All of the value object examples in Section 1 included a `ToString` override for exactly this reason.
@@ -492,6 +502,8 @@ flowchart TB
 ```
 
 This is one of the most insidious bugs in object-oriented programming because it is completely silent. No exception, no warning, no crash — just wrong behavior.
+
+![image-20260414144528941](16-tiny-design-choices.assets/image-20260414144528941.png)
 
 ### What Is a Hash Code?
 
@@ -574,6 +586,10 @@ public int hashCode() { return Objects.hash(x, y); }
 ```
 
 These built-in methods handle null fields, use better bit-mixing algorithms, and are tested against real-world collision rates. The naive example above is for understanding only.
+
+![image-20260414144548710](16-tiny-design-choices.assets/image-20260414144548710.png)
+
+![image-20260414144635242](16-tiny-design-choices.assets/image-20260414144635242.png)
 
 #### How a Hash-Based Collection Uses the Hash Code
 
@@ -812,6 +828,8 @@ The exception was **swallowed**. The payment succeeded, the confirmation threw a
 
 > Swallowing an exception is not "handling" it. It is **hiding** it. And hidden bugs do not go away — they compound.
 
+![image-20260414144659127](16-tiny-design-choices.assets/image-20260414144659127.png)
+
 ### The Golden Rule
 
 Exceptions are for **exceptional** circumstances — situations that the normal flow of the program cannot or should not handle. They are not a control flow mechanism.
@@ -1005,6 +1023,8 @@ catch (e) { throw new Error("Processing failed", { cause: e }); }
 ```
 
 > When rethrowing, always pass the original exception as the inner exception or cause. The stack trace is the most valuable debugging information you have.
+
+![image-20260414144724479](16-tiny-design-choices.assets/image-20260414144724479.png)
 
 ### The `finally` Block: Guaranteed Cleanup
 
@@ -1324,7 +1344,11 @@ Worth reviewing because:
    The debugger now shows only the wrapper's stack — original failure location is gone.
 ```
 
+---
 
+## Summary
+
+![image-20260414145019755](16-tiny-design-choices.assets/image-20260414145019755.png)
 
 ---
 ## Appendix A: Language Comparison Quick Reference
@@ -1372,6 +1396,8 @@ Worth reviewing because:
 
 This appendix walks through a practical approach to forwarding client-side runtime errors to the server log. The example uses Angular for the SPA and ASP.NET Core for the API, but the pattern applies to any frontend/backend combination. A working demo of everything described below is available in the companion project: [Client-Side Error Logging Demo](16-tiny-design-choices-client-error-logging-demo/README.md).
 
+![image-20260414144754712](16-tiny-design-choices.assets/image-20260414144754712.png)
+
 ### The Blind Spot
 
 Section 4 covered how to sanitize server exceptions before returning them to clients. But there is an equally dangerous blind spot running in the opposite direction: **runtime errors that occur in the browser never appear in your server logs.** A `TypeError`, a failed API deserialization, or an unhandled promise rejection crashes the user's experience — and you never know it happened.
@@ -1412,6 +1438,14 @@ flowchart TB
         CTRL -->|"log as\nclient-side error"| LOG
     end
 ```
+
+#### Angular Demo UI
+
+![image-20260414144849485](16-tiny-design-choices.assets/image-20260414144849485.png)
+
+#### API Demo Log
+
+![image-20260414144918179](16-tiny-design-choices.assets/image-20260414144918179.png)
 
 ### Step 1: Capture Errors in Angular
 
@@ -1561,6 +1595,8 @@ public class ClientLogController : ControllerBase
 #### Rate Limiting
 
 **What is rate limiting?** A rate limiter is a server-side gatekeeper that counts how many requests arrive in a given time window and rejects anything above a configured threshold, typically with an HTTP 429 (Too Many Requests) response. The limiter sits in front of your endpoint and runs **before** the controller, so rejected requests consume almost no server resources.
+
+![image-20260414144942304](16-tiny-design-choices.assets/image-20260414144942304.png)
 
 **Why is it critical for a client-log endpoint?** An endpoint that writes to the server log on every request is a uniquely dangerous target if it is left open. Three realistic failure modes illustrate the risk:
 

@@ -144,3 +144,9 @@ Design and implement a moderately complex, server-rendered Tea Shop web applicat
 - [PDF](presentations/15-command-and-composite-patterns.pdf)
 - [HTML](presentations/15-command-and-composite-patterns_html/index.html)
 - [Lecture Material](presentations/15-command-and-composite-patterns.md)
+
+#### 16. Tiny Design Choices
+- [PowerPoint](presentations/16-tiny-design-choices.pptx)
+- [PDF](presentations/16-tiny-design-choices.pdf)
+- [HTML](presentations/16-tiny-design-choices_html/index.html)
+- [Lecture Material](presentations/16-tiny-design-choices.md)

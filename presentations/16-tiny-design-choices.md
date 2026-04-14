@@ -22,6 +22,8 @@ flowchart LR
 
 Each topic is self-contained, but they reinforce each other. Value objects solve primitive obsession **and** give you a natural place for `ToString` and `GetHashCode`. Proper equality contracts prevent phantom collection bugs. Good exception handling keeps error information where it belongs — in the server log, not in the client response.
 
+These choices sit alongside the architectural patterns from earlier lectures rather than replacing them. Value objects live in the domain layer from [Lecture 11](11-mvc-di-srv-domain.md), are constructed by the builders from [Lecture 14](14-repository-and-builder-patterns.md), cross the repository boundary also defined there, and serve as the parameters carried by commands in [Lecture 15](15-command-and-composite-patterns.md). A robust architecture depends on both: the big structural decisions **and** the tiny habits that keep the small pieces correct.
+
 > The difference between a junior developer and a senior one is not the patterns they know — it is the small habits they have internalized.
 
 ---
@@ -198,7 +200,9 @@ public record Money(BigDecimal amount, String currency) {
 
     @Override
     public String toString() {
-        return amount.setScale(2) + " " + currency;
+        // Always pass a RoundingMode — setScale(2) alone throws
+        // ArithmeticException when the amount has more than 2 decimal places.
+        return amount.setScale(2, RoundingMode.HALF_UP) + " " + currency;
     }
 }
 ```
@@ -231,13 +235,18 @@ export class Money {
 
 ```csharp
 // C#
-public sealed record DateRange(DateOnly Start, DateOnly End)
+public sealed record DateRange
 {
-    public DateRange
+    public DateOnly Start { get; }
+    public DateOnly End { get; }
+
+    public DateRange(DateOnly start, DateOnly end)
     {
-        if (Start > End)
+        if (start > end)
             throw new ArgumentException(
-                $"Start ({Start}) must not be after End ({End}).");
+                $"Start ({start}) must not be after End ({end}).");
+        Start = start;
+        End = end;
     }
 
     public bool Contains(DateOnly date) => date >= Start && date <= End;
@@ -245,6 +254,8 @@ public sealed record DateRange(DateOnly Start, DateOnly End)
     public override string ToString() => $"{Start} to {End}";
 }
 ```
+
+> C# records do not support a Java-style compact validation block. Validate in an explicit constructor and assign the properties yourself, or use a static factory method that throws before calling the generated constructor.
 
 ### Validation at the Boundary
 
@@ -314,8 +325,7 @@ This costs nothing at runtime — the brand exists only in the type system.
 - **OCP**: Adding a new validation rule (e.g., blocking disposable email domains) changes only the `EmailAddress` class, not every caller
 - **DIP**: Higher-level code depends on the abstraction (`EmailAddress`) rather than the raw primitive (`string`)
 
----
-## 2. Overriding ToString (and Its Equivalents)
+> **See it run**: [`Tests/ValueObjectTests.cs`](16-tiny-design-choices-demo/) — normalization at construction (`EmailAddress` lowercases its input), value-based equality between separate object references, the `Money.Add(usd, eur)` invariant rejecting currency mixing, and an immutable `DateRange` used safely as a `Dictionary` key.
 
 ### The Bug
 
@@ -444,6 +454,8 @@ public override string ToString()
 
 Value objects from Section 1 especially benefit from good `ToString` overrides. When an `EmailAddress` appears in a log, you want to see `alice@example.com`, not `MyApp.ValueObjects.EmailAddress`. All of the value object examples in Section 1 included a `ToString` override for exactly this reason.
 
+> **See it run**: [`Tests/ToStringTests.cs`](16-tiny-design-choices-demo/) — side-by-side demo of `Order` (overridden) vs `OrderWithoutToString` (default, shows only the type name), and how `$"Processing {order}"` string interpolation picks up the override automatically.
+
 ---
 ## 3. GetHashCode, hashCode, and the Equality Contract
 
@@ -537,7 +549,7 @@ public class Point {
 }
 ```
 
-**Why 31?** It is a small odd prime. Multiplying by a prime before adding the next field reduces the number of collisions — cases where two different objects land in the same bucket. The number 31 is a convention (Java's `String.hashCode()` uses it), but any small prime works.
+**Why 31?** It is a small odd prime. Multiplying by a prime before adding the next field reduces the number of collisions — cases where two different objects land in the same bucket. The number 31 is a convention (Java's `String.hashCode()` uses it), but any small prime works. A minor performance bonus: JIT compilers can rewrite `i * 31` as `(i << 5) - i` — a shift and a subtract — which is why 31 stuck as the traditional choice.
 
 **In practice, do not write your own hash function.** Use the built-in combiners:
 
@@ -759,15 +771,19 @@ flowchart TB
 
 ### Common Mistakes
 
+The first three mistakes are **correctness bugs** — they cause your program to return wrong answers. The last two are stylistic issues that cause confusion but rarely data corruption.
+
 1. **Overriding `Equals` without `GetHashCode`**: The compiler warns you (C#) or your IDE flags it (Java), but developers sometimes ignore the warning. This **will** break hash-based collections.
 
 2. **Including mutable fields in `GetHashCode`**: The opening bug of this section. Only include fields that do not change after construction.
 
-3. **Inconsistent `Equals` and `GetHashCode`**: If `Equals` uses `Id` and `Name`, but `GetHashCode` uses only `Id`, then two objects with the same `Id` but different `Name` will hash the same but not be equal. This is technically legal but causes confusing behavior and poor performance.
+3. **Treating hash codes as stable identifiers**: Hash codes for the same data are **not** guaranteed to be the same across different CPU architectures, runtime versions, or even different process runs. In .NET, `string.GetHashCode()` is deliberately randomized per process by default (since .NET Core). Java's `String.hashCode()` algorithm is contractually fixed, but most other types make no such promise. **Never use hash codes as database keys, cache keys persisted to disk, or any identifier that must survive beyond the current process.** They are ephemeral, in-memory optimization values — nothing more.
 
-4. **Forgetting operator overloads in C#**: If you override `Equals` but not `==`, then `a.Equals(b)` returns `true` but `a == b` returns `false` (reference comparison). This is a common source of test failures.
+4. **Inconsistent `Equals` and `GetHashCode`**: If `Equals` uses `Id` and `Name`, but `GetHashCode` uses only `Id`, then two objects with the same `Id` but different `Name` will hash the same but not be equal. This is technically legal but causes confusing behavior and poor performance.
 
-5. **Treating hash codes as stable identifiers**: Hash codes for the same data are **not** guaranteed to be the same across different CPU architectures, runtime versions, or even different process runs. In .NET, `string.GetHashCode()` is deliberately randomized per process by default (since .NET Core). Java's `String.hashCode()` algorithm is contractually fixed, but most other types make no such promise. **Never use hash codes as database keys, cache keys persisted to disk, or any identifier that must survive beyond the current process.** They are ephemeral, in-memory optimization values — nothing more.
+5. **Forgetting operator overloads in C#**: If you override `Equals` but not `==`, then `a.Equals(b)` returns `true` but `a == b` returns `false` (reference comparison). This is a common source of test failures.
+
+> **See it run**: [`Tests/HashCodeEqualityTests.cs`](16-tiny-design-choices-demo/) — the flagship "phantom lost object" bug in `BrokenCustomer_LostInHashSet_AfterMutation` prints the before/after hash codes and shows `set.Count == 1` while `set.Contains(alice) == false`. Compare `Models/Customer.cs` (correct, hash based on immutable `Id`) with `Models/BrokenCustomer.cs` (broken, hash includes mutable `Name`) to see the difference side-by-side.
 
 ---
 ## 4. Exception Handling Done Right
@@ -824,6 +840,13 @@ catch (Exception e) { }
 // ❌ TypeScript — exception swallowed
 try { process(order); }
 catch (e) { }
+
+// ✅ TypeScript — at minimum, log it and let it propagate if you cannot recover
+try { process(order); }
+catch (e) {
+    logger.error("Order processing failed", e);
+    throw e;
+}
 ```
 
 **Why it is dangerous**: The failure is completely invisible. No log, no alert, no trace. The system continues in a corrupted state.
@@ -918,6 +941,24 @@ catch (PaymentGatewayException e) { logger.error("Payment failed for order {}", 
 catch (InventoryException e) { logger.error("Stock unavailable for order {}", order.getId(), e); }
 ```
 
+```typescript
+// ❌ TypeScript — catches everything
+try { process(order); }
+catch (e) { logger.error("Processing failed", e); }
+
+// ✅ TypeScript — narrow the catch using instanceof
+try { process(order); }
+catch (e) {
+    if (e instanceof PaymentGatewayError) {
+        logger.error(`Payment failed for order ${order.id}`, e);
+    } else if (e instanceof InventoryError) {
+        logger.error(`Stock unavailable for order ${order.id}`, e);
+    } else {
+        throw e;  // let anything unexpected propagate
+    }
+}
+```
+
 **Why it is dangerous**: Catching `Exception` catches everything — including `NullPointerException`, `StackOverflowException`, and other bugs that you should **not** be suppressing.
 
 ### Anti-Pattern 4: Losing the Stack Trace
@@ -962,45 +1003,81 @@ catch (e) { throw new Error("Processing failed", { cause: e }); }
 
 > When rethrowing, always pass the original exception as the inner exception or cause. The stack trace is the most valuable debugging information you have.
 
-### Best Practice: Resource Cleanup
+### The `finally` Block: Guaranteed Cleanup
 
-All three languages have mechanisms for guaranteed cleanup:
+All three languages provide a `finally` block that runs **no matter what** happens inside the `try` or `catch`:
 
-**C#** — `using` statements (implements `IDisposable`):
+- Code in the `try` completed normally? → `finally` runs.
+- An exception was thrown and caught? → `finally` runs after the `catch`.
+- An exception was thrown and **not** caught? → `finally` runs on the way out, before the exception propagates.
+- The `catch` block itself threw a new exception? → `finally` still runs.
+- A `return` statement executed inside `try` or `catch`? → `finally` still runs before the method actually returns.
+
+```mermaid
+flowchart TB
+    TRY["try { ... }"] -->|"no exception"| FINALLY["finally { ... }"]
+    TRY -->|"exception thrown"| CATCH{"catch block\nmatches?"}
+    CATCH -->|"yes"| HANDLED["catch { ... }"] --> FINALLY
+    CATCH -->|"no"| FINALLY
+    FINALLY -->|"no active exception"| NORMAL["Normal return\nor continue"]
+    FINALLY -->|"active exception"| PROP["Exception propagates\nto caller"]
+
+    style FINALLY fill:#fff3e0
+```
+
+This guarantee is what makes `finally` essential for cleanup: closing file handles, releasing database connections, unlocking mutexes, restoring UI state. If you do this work at the end of the `try` block instead, you lose the guarantee — an exception will skip past it.
+
+#### The Bug `finally` Prevents
 
 ```csharp
-// The connection is automatically closed/disposed even if an exception is thrown
-using var connection = new SqliteConnection(connectionString);
-connection.Open();
-// use the connection...
+// ❌ C# — cleanup is skipped when Process throws
+var connection = Open();
+Process(connection);    // throws → next line never runs
+connection.Close();     // connection leaks forever
 ```
 
-**Java** — `try-with-resources` (implements `AutoCloseable`):
+```csharp
+// ✅ C# — cleanup runs whether Process throws or not
+var connection = Open();
+try
+{
+    Process(connection);
+}
+finally
+{
+    connection.Close();   // runs on every path out
+}
+```
+
+The same pattern in the other two languages:
 
 ```java
-// The connection is automatically closed even if an exception is thrown
-try (var connection = DriverManager.getConnection(connectionString)) {
-    // use the connection...
+// ✅ Java
+var connection = open();
+try {
+    process(connection);
+} finally {
+    connection.close();
 }
 ```
-
-**TypeScript** — `using` declarations (implements `Disposable`, stage 3 TC39 proposal, supported in TypeScript 5.2+):
 
 ```typescript
-// Modern approach — requires TypeScript 5.2+
-function readFile(path: string) {
-    using handle = openFile(path); // auto-disposed at end of scope
-    return handle.read();
-}
-
-// Traditional approach — try/finally
-const handle = openFile(path);
+// ✅ TypeScript
+const connection = open();
 try {
-    return handle.read();
+    process(connection);
 } finally {
-    handle.close();
+    connection.close();
 }
 ```
+
+#### Rules for `finally`
+
+1. **Do not throw from `finally`** unless you absolutely must. A `finally` block that throws **replaces** any in-flight exception, hiding the original failure. If cleanup can fail, catch inside the `finally` and log it.
+2. **Do not `return` from `finally`**. A `return` statement in a `finally` block silently swallows any in-flight exception — one of the most confusing bugs in the language. The compiler allows it; static analyzers (and your teammates) will yell at you.
+3. **Keep `finally` short and deterministic**. It is not the place for business logic. Only release what you acquired in the `try`.
+
+> `finally` runs. Always. Use it for anything that absolutely *must* happen — closing a resource, releasing a lock, restoring state — regardless of whether the work succeeded or blew up.
 
 ### Best Practice: Custom Exception Types
 
@@ -1047,6 +1124,8 @@ export class OrderProcessingError extends Error {
     }
 }
 ```
+
+> **Why assign `this.name`?** `Error` subclasses in JavaScript do **not** automatically set `name` to the subclass name — without the explicit assignment, stack traces and `toString()` output show `Error: ...` instead of `OrderProcessingError: ...`, making logs harder to scan and filter.
 
 ### Never Return Exceptions to Untrusted Clients
 
@@ -1134,36 +1213,26 @@ public class GlobalExceptionHandler {
 }
 ```
 
-### Structured Error Handling Alternatives
+**TypeScript — Express Error-Handling Middleware**:
 
-For expected failure cases (not truly exceptional situations), consider **Result types** that make success and failure explicit in the type system:
+```typescript
+import { ErrorRequestHandler } from "express";
 
-```csharp
-// C# — a simple Result type
-public record Result<T>
-{
-    public T? Value { get; }
-    public string? Error { get; }
-    public bool IsSuccess => Error is null;
+export const globalErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 
-    private Result(T? value, string? error) => (Value, Error) = (value, error);
+    // Log the full exception server-side
+    console.error(`Unhandled exception for ${req.method} ${req.path}`, err);
 
-    public static Result<T> Ok(T value) => new(value, null);
-    public static Result<T> Fail(string error) => new(default, error);
-}
+    // Return a sanitized response to the client
+    res.status(500).json({
+        error: "An internal error occurred. Please try again later.",
+        code: "INTERNAL_ERROR",
+    });
+};
 
-// Usage:
-public Result<Order> CreateOrder(Cart cart)
-{
-    if (cart.Items.Count == 0)
-        return Result<Order>.Fail("Cart is empty");
-
-    var order = new Order(cart);
-    return Result<Order>.Ok(order);
-}
+// In your Express app setup — must be registered AFTER all routes:
+// app.use(globalErrorHandler);
 ```
-
-Result types make failure **visible** in the type signature. The caller cannot forget to check for failure because the type system forces it.
 
 ### Connection to Value Objects
 
@@ -1175,6 +1244,8 @@ flowchart LR
     BOUNDARY -->|"valid"| DOMAIN["Domain layer\n(no validation exceptions\nneeded)"]
     BOUNDARY -->|"invalid"| REJECT["Return 400\n(structured error)"]
 ```
+
+> **See it run**: [`Tests/ExceptionHandlingTests.cs`](16-tiny-design-choices-demo/) — paired anti-pattern vs. correct tests. `Bad_UsingExceptionsForControlFlow` times 10,000 throw/catches to show the measurable cost of exceptions-as-branching. `Bad_LosingStackTrace` vs. `Good_PreservingStackTrace` prints the `InnerException` in both cases so you can see what gets lost. `CustomException_CarriesDomainContext` shows structured data on a custom exception (`OrderId`) so the caller does not have to parse a message string.
 
 ---
 ## 5. Connecting the Dots
@@ -1209,6 +1280,48 @@ flowchart TB
 6. **Client-side errors are invisible unless you log them back to the server.** Section 4 covers sanitizing server errors sent to clients, but the reverse problem is equally important: runtime errors in the browser never reach your server logs unless you explicitly capture and forward them. [Appendix B](#appendix-b-logging-client-side-errors-on-the-server) walks through a practical Angular + ASP.NET Core approach.
 
 > Professional code validates at the boundary, communicates through ToString, respects the equality contract, and reserves exceptions for the truly exceptional.
+
+### Seeing It All Run — the Companion Unit Test Demo
+
+The four topics in this lecture are easier to **internalize** by watching them fail and succeed than by reading about them. The companion project — [Tiny Design Choices Demo (xUnit)](16-tiny-design-choices-demo/) — is a small .NET 10 test suite where every test writes a short, narrated story to the console as it runs. You see the actual exception type and message when a value object rejects bad input. You see hash code values before and after a mutation, alongside the paradox of a `HashSet` that reports `Count == 1` but `Contains(x) == false`. You see the measured cost of using exceptions for control flow (10,000 throw/catches timed in milliseconds).
+
+Worth reviewing because:
+
+- **Every test is a runnable example of a concept from this lecture**, not an abstract unit test. Read the test name, the source, and the output together — each one is a ~20-line walkthrough.
+- **The phantom "lost object" bug** is made concrete. `BrokenCustomer` and `Customer` sit side-by-side in the `Models/` folder so you can diff a correct implementation against a broken one.
+- **The whole suite runs in under half a second** (34 tests total), so you can scan all four topics in one sitting rather than studying them in isolation.
+- **The README walks you through a suggested reading order** — which files to open first and how to filter the output down to a single story at a time.
+
+> If you only read the lecture, you will have concepts. If you also run the tests with `--logger "console;verbosity=detailed"`, you will have muscle memory. Pick a topic that felt abstract, run just those tests, and watch the output.
+
+#### Sample Unit Test Demo Console Output
+
+```
+  Passed TinyDesignChoicesDemo.Tests.ExceptionHandlingTests.CustomException_CarriesDomainContext [< 1 ms]
+  Standard Output Messages:
+ Custom exceptions carry structured domain data the caller can act on.
+   ex.Message = "Payment gateway timeout"
+   ex.OrderId = "ORD-42"   ← no string parsing required
+ A generic Exception would force the caller to parse the message — fragile and error-prone.
+
+
+  Passed TinyDesignChoicesDemo.Tests.HashCodeEqualityTests.Customer_SameHashCodeWhenEqual [< 1 ms]
+  Standard Output Messages:
+ Contract: equal objects MUST have equal hash codes.
+   a.GetHashCode() = 1
+   b.GetHashCode() = 1
+   Match? True
+
+
+  Passed TinyDesignChoicesDemo.Tests.ExceptionHandlingTests.Bad_LosingStackTrace [< 1 ms]
+  Standard Output Messages:
+ ❌ Anti-pattern: wrapping an exception without passing it as inner.
+   Outer:           ApplicationException: Wrapped: Original error
+   InnerException:  (null — original trace LOST)
+   The debugger now shows only the wrapper's stack — original failure location is gone.
+```
+
+
 
 ---
 ## Appendix A: Language Comparison Quick Reference
@@ -1246,17 +1359,15 @@ flowchart TB
 
 | Feature | C# | Java | TypeScript |
 |---|---|---|---|
-| Resource cleanup | `using` / `IDisposable` | `try-with-resources` / `AutoCloseable` | `using` (TS 5.2+) / `try-finally` |
 | Checked exceptions | No | Yes (controversial) | No |
 | Chained cause | `new Ex(msg, innerException)` | `new Ex(msg, cause)` | `new Error(msg, { cause })` (ES2022) |
 | Rethrow preserving stack | `throw;` (no argument) | `throw e;` (rethrows same object) | `throw e;` |
 | Global handler (web) | `IExceptionHandler` middleware | `@ControllerAdvice` | Express error middleware |
-| Result type | Custom or `OneOf` library | Custom or `vavr.Either` | Discriminated union |
 
 ---
 ## Appendix B: Logging Client-Side Errors on the Server
 
-This appendix walks through a practical approach to forwarding client-side runtime errors to the server log. The example uses Angular for the SPA and ASP.NET Core for the API, but the pattern applies to any frontend/backend combination. A working demo of everything described below is available in the companion project: [Client-Side Error Logging Demo](16-tiny-design-choices-client-error-logging-demo/).
+This appendix walks through a practical approach to forwarding client-side runtime errors to the server log. The example uses Angular for the SPA and ASP.NET Core for the API, but the pattern applies to any frontend/backend combination. A working demo of everything described below is available in the companion project: [Client-Side Error Logging Demo](16-tiny-design-choices-client-error-logging-demo/README.md).
 
 ### The Blind Spot
 
@@ -1284,7 +1395,7 @@ flowchart TB
 The fix is straightforward: capture client-side errors, package them with enough context to be actionable, and forward them to a lightweight server endpoint that writes them to the same log infrastructure.
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph "Browser"
         APP["Angular App"]
         ERR["Runtime Error"]
@@ -1446,6 +1557,29 @@ public class ClientLogController : ControllerBase
 
 #### Rate Limiting
 
+**What is rate limiting?** A rate limiter is a server-side gatekeeper that counts how many requests arrive in a given time window and rejects anything above a configured threshold, typically with an HTTP 429 (Too Many Requests) response. The limiter sits in front of your endpoint and runs **before** the controller, so rejected requests consume almost no server resources.
+
+**Why is it critical for a client-log endpoint?** An endpoint that writes to the server log on every request is a uniquely dangerous target if it is left open. Three realistic failure modes illustrate the risk:
+
+1. **The buggy client bomb.** An error inside an Angular component's `ngOnInit` throws on every render. If that component is on a dashboard that auto-refreshes every few seconds, a single user can generate thousands of identical error reports per minute. Without rate limiting, each report is a log write, disk I/O, and possibly an alert page to the on-call engineer. One user's broken component can DDoS your own logging pipeline.
+
+2. **The runaway loop.** An error handler that itself throws (for example, trying to read `error.message` on a value that is not an `Error` instance) re-enters the global handler, which tries to report **that** error, which throws again. Without rate limiting, this infinite loop is bounded only by network speed and the user's CPU.
+
+3. **The malicious attacker.** The endpoint is public by design — the browser can reach it without authentication, because it has to work even when the user is logged out. An attacker who discovers `/api/client-log` can script millions of POSTs to exhaust disk space on the log volume, fill up log-aggregation service quotas (which are billed per GB), or trigger alerting rules so loudly that real incidents get lost in the noise. This is a classic application-layer DDoS.
+
+```mermaid
+flowchart LR
+    subgraph "Without rate limiting"
+        C1["Buggy client\n(or attacker)"] -->|"10,000 req/sec"| A1["API writes\n10,000 log\nentries/sec"]
+        A1 --> D1["💥 Disk full\n💸 Cloud bill\n🚨 Alert storm"]
+    end
+    subgraph "With rate limiting"
+        C2["Buggy client\n(or attacker)"] -->|"10,000 req/sec"| RL["Rate limiter\n10/min cap"]
+        RL -->|"10/min\nallowed"| A2["API writes\n10 entries/min"]
+        RL -->|"rest rejected"| R["HTTP 429"]
+    end
+```
+
 A basic fixed-window rate limiter prevents abuse without blocking legitimate error reports:
 
 ```csharp
@@ -1468,7 +1602,9 @@ builder.Services.AddRateLimiter(options =>
 app.UseRateLimiter();
 ```
 
-This allows 10 error reports per minute per client. In a real production system, you might partition by IP address or authenticated user.
+This allows 10 error reports per minute. In a real production system, you would **partition** the limiter so one noisy client does not use up the quota for everyone else — the usual partition key is the client IP address for anonymous traffic and the authenticated user ID when available. You would also typically return a `Retry-After` header so well-behaved clients back off automatically.
+
+> Any endpoint a browser can reach without authentication needs a rate limiter. The client-log endpoint is a double hazard: it is unauthenticated **and** it writes to your log pipeline on every successful request. Assume it will be abused, and cap it before it hurts you.
 
 ### Step 3: Include Context That Makes Errors Actionable
 

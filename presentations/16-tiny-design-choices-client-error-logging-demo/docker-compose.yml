@@ -1,0 +1,18 @@
+services:
+  api:
+    build:
+      context: ./Api
+    container_name: client-error-demo-api
+    ports:
+      - "5280:8080"        # browser calls http://localhost:5280/api/client-log
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
+  client:
+    build:
+      context: ./client
+    container_name: client-error-demo-client
+    ports:
+      - "8080:80"          # browser loads http://localhost:8080
+    depends_on:
+      - api

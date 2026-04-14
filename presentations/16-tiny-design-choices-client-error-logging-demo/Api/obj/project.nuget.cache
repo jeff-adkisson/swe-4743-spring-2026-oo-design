@@ -1,13 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "3GrfI+ryqDc=",
+  "dgSpecHash": "8Dr4ujPwxWI=",
   "success": true,
   "projectFilePath": "/Users/jeff/ksu/swe-4743-spring-2026-oo-design/presentations/16-tiny-design-choices-client-error-logging-demo/Api/Api.csproj",
-  "expectedPackageFiles": [
-    "/Users/jeff/.nuget/packages/system.threading.ratelimiting/10.0.5/system.threading.ratelimiting.10.0.5.nupkg.sha512",
-    "/Users/jeff/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.22/microsoft.aspnetcore.app.ref.8.0.22.nupkg.sha512",
-    "/Users/jeff/.nuget/packages/microsoft.netcore.app.host.osx-arm64/8.0.22/microsoft.netcore.app.host.osx-arm64.8.0.22.nupkg.sha512",
-    "/Users/jeff/.nuget/packages/microsoft.netcore.app.ref/8.0.22/microsoft.netcore.app.ref.8.0.22.nupkg.sha512"
-  ],
+  "expectedPackageFiles": [],
   "logs": []
 }

@@ -5,11 +5,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// CORS — allow the Angular dev server
+// CORS — allow the Angular dev server (ng serve) and the Dockerized client (nginx)
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins("http://localhost:4200", "http://localhost:8080")
               .AllowAnyHeader()
               .AllowAnyMethod());
 });

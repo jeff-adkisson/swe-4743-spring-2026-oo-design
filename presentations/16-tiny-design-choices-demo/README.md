@@ -131,11 +131,7 @@ The file also defines `OrderProcessingException` and a minimal `Result<T>` recor
 
 ## Suggested Reading Order
 
-1. Start with the lecture: [16-tiny-design-choices.md](../16-tiny-design-choices.md)
-2. Read `ValueObjects/EmailAddress.cs` — the cleanest example of the pattern
-3. Run `dotnet test` and watch all 36 tests pass
-4. Open `Models/Customer.cs` and `Models/BrokenCustomer.cs` side by side, then read `HashCodeEqualityTests.cs` to see the phantom bug in action
-5. Scan `ExceptionHandlingTests.cs` to see the anti-patterns and their fixes as runnable assertions
+Start with the lecture ([16-tiny-design-choices.md](../16-tiny-design-choices.md)), then come back here — each section's "See it run" callout points to the specific test file that matches the topic.
 
 ## Project Layout
 

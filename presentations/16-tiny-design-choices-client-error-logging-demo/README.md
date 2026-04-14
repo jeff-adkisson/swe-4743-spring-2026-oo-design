@@ -4,6 +4,8 @@ Lecture 16, Appendix B — Tiny Design Choices, Massive Consequences
 
 Demonstrates how runtime errors in an Angular SPA can be captured, packaged with context, and forwarded to an ASP.NET Core API for server-side logging.
 
+**What you'll see:** You will click a button that throws a `TypeError`, and watch the error report travel from the browser to the server log — the Angular UI renders the exact JSON payload that was posted, and the API console prints a `[CLIENT-SIDE ERROR]` log entry with the user, URL, component, and stack trace.
+
 ## Architecture
 
 ```mermaid

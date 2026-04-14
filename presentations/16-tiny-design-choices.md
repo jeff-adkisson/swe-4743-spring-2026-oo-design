@@ -332,7 +332,7 @@ This costs nothing at runtime — the brand exists only in the type system.
 - **OCP**: Adding a new validation rule (e.g., blocking disposable email domains) changes only the `EmailAddress` class, not every caller
 - **DIP**: Higher-level code depends on the abstraction (`EmailAddress`) rather than the raw primitive (`string`)
 
-> **See it run**: [`Tests/ValueObjectTests.cs`](16-tiny-design-choices-demo/) — normalization at construction (`EmailAddress` lowercases its input), value-based equality between separate object references, the `Money.Add(usd, eur)` invariant rejecting currency mixing, and an immutable `DateRange` used safely as a `Dictionary` key.
+> **See it run**: [companion xUnit demo](16-tiny-design-choices-demo/README.md) — `Tests/ValueObjectTests.cs` covers normalization at construction (`EmailAddress` lowercases its input), value-based equality between separate object references, the `Money.Add(usd, eur)` invariant rejecting currency mixing, and an immutable `DateRange` used safely as a `Dictionary` key.
 
 ### The Debugging Session That Didn't Have to Be Painful
 
@@ -467,7 +467,7 @@ public override string ToString()
 
 Value objects from Section 1 especially benefit from good `ToString` overrides. When an `EmailAddress` appears in a log, you want to see `alice@example.com`, not `MyApp.ValueObjects.EmailAddress`. All of the value object examples in Section 1 included a `ToString` override for exactly this reason.
 
-> **See it run**: [`Tests/ToStringTests.cs`](16-tiny-design-choices-demo/) — side-by-side demo of `Order` (overridden) vs `OrderWithoutToString` (default, shows only the type name), and how `$"Processing {order}"` string interpolation picks up the override automatically.
+> **See it run**: [companion xUnit demo](16-tiny-design-choices-demo/README.md) — `Tests/ToStringTests.cs` gives a side-by-side demo of `Order` (overridden) vs `OrderWithoutToString` (default, shows only the type name), and how `$"Processing {order}"` string interpolation picks up the override automatically.
 
 ---
 ## 3. GetHashCode, hashCode, and the Equality Contract
@@ -802,7 +802,7 @@ The first three mistakes are **correctness bugs** — they cause your program to
 
 5. **Forgetting operator overloads in C#**: If you override `Equals` but not `==`, then `a.Equals(b)` returns `true` but `a == b` returns `false` (reference comparison). This is a common source of test failures.
 
-> **See it run**: [`Tests/HashCodeEqualityTests.cs`](16-tiny-design-choices-demo/) — the flagship "phantom lost object" bug in `BrokenCustomer_LostInHashSet_AfterMutation` prints the before/after hash codes and shows `set.Count == 1` while `set.Contains(alice) == false`. Compare `Models/Customer.cs` (correct, hash based on immutable `Id`) with `Models/BrokenCustomer.cs` (broken, hash includes mutable `Name`) to see the difference side-by-side.
+> **See it run**: [companion xUnit demo](16-tiny-design-choices-demo/README.md) — the flagship "phantom lost object" bug in `Tests/HashCodeEqualityTests.cs::BrokenCustomer_LostInHashSet_AfterMutation` prints the before/after hash codes and shows `set.Count == 1` while `set.Contains(alice) == false`. Compare `Models/Customer.cs` (correct, hash based on immutable `Id`) with `Models/BrokenCustomer.cs` (broken, hash includes mutable `Name`) to see the difference side-by-side.
 
 ---
 ## 4. Exception Handling Done Right
@@ -1268,7 +1268,7 @@ flowchart LR
     BOUNDARY -->|"invalid"| REJECT["Return 400\n(structured error)"]
 ```
 
-> **See it run**: [`Tests/ExceptionHandlingTests.cs`](16-tiny-design-choices-demo/) — paired anti-pattern vs. correct tests. `Bad_UsingExceptionsForControlFlow` times 10,000 throw/catches to show the measurable cost of exceptions-as-branching. `Bad_LosingStackTrace` vs. `Good_PreservingStackTrace` prints the `InnerException` in both cases so you can see what gets lost. `CustomException_CarriesDomainContext` shows structured data on a custom exception (`OrderId`) so the caller does not have to parse a message string.
+> **See it run**: [companion xUnit demo](16-tiny-design-choices-demo/README.md) — `Tests/ExceptionHandlingTests.cs` has paired anti-pattern vs. correct tests. `Bad_UsingExceptionsForControlFlow` times 10,000 throw/catches to show the measurable cost of exceptions-as-branching. `Bad_LosingStackTrace` vs. `Good_PreservingStackTrace` prints the `InnerException` in both cases so you can see what gets lost. `CustomException_CarriesDomainContext` shows structured data on a custom exception (`OrderId`) so the caller does not have to parse a message string.
 
 ---
 ## 5. Connecting the Dots
@@ -1306,7 +1306,7 @@ flowchart TB
 
 ### Seeing It All Run — the Companion Unit Test Demo
 
-The four topics in this lecture are easier to **internalize** by watching them fail and succeed than by reading about them. The companion project — [Tiny Design Choices Demo (xUnit)](16-tiny-design-choices-demo/) — is a small .NET 10 test suite where every test writes a short, narrated story to the console as it runs. You see the actual exception type and message when a value object rejects bad input. You see hash code values before and after a mutation, alongside the paradox of a `HashSet` that reports `Count == 1` but `Contains(x) == false`. You see the measured cost of using exceptions for control flow (10,000 throw/catches timed in milliseconds).
+The four topics in this lecture are easier to **internalize** by watching them fail and succeed than by reading about them. The companion project — [Tiny Design Choices Demo (xUnit)](16-tiny-design-choices-demo/README.md) — is a small .NET 10 test suite where every test writes a short, narrated story to the console as it runs. You see the actual exception type and message when a value object rejects bad input. You see hash code values before and after a mutation, alongside the paradox of a `HashSet` that reports `Count == 1` but `Contains(x) == false`. You see the measured cost of using exceptions for control flow (10,000 throw/catches timed in milliseconds).
 
 Worth reviewing because:
 

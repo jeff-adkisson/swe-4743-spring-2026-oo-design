@@ -874,6 +874,110 @@ catch (e) {
 
 **The fix**: At minimum, log the exception. Better yet, only catch what you can actually handle.
 
+#### Crashing Is Often the Correct Response — "Fail Fast, Fail Safe"
+
+![Windows' Infamous 'Blue Screen of Death' Will Soon Turn Black - SecurityWeek](https://www.securityweek.com/wp-content/uploads/2025/06/Windows-BSOD-scaled.jpg)
+
+The instinct to catch every exception and "keep the program running" feels responsible, but it is often the exact opposite of what serious systems do. Look at the layers beneath your application:
+
+- When a process in any modern OS **dereferences a null or invalid pointer**, the CPU raises a hardware trap. The OS kernel catches it, terminates the offending process, and — if the fault is inside kernel-mode code — takes the whole machine down with a **blue screen (Windows)**, **pink screen (VMware ESXi)**, or **kernel panic / black screen (Linux, macOS)**.
+- That looks dramatic, but it is **a deliberate safety decision.** The kernel has just discovered it is operating on corrupted state: memory it does not own, a data structure whose invariants have been violated, a pointer that means nothing. The kernel cannot reason about what else has been corrupted. Continuing to run might write bad data to the filesystem, corrupt in-flight network traffic, or propagate the damage to other processes that are still healthy.
+- **Stopping is the safe choice.** A crashed process gets restarted. Corrupted data on disk might never be fully recovered.
+
+```mermaid
+flowchart LR
+    FAULT["Memory access\nviolation detected"] --> CHOICE{"Keep running\nor halt?"}
+    CHOICE -->|"Keep running"| BAD["Corrupted state writes\nto disk, network, peers\n→ data loss, cascading bugs"]
+    CHOICE -->|"Halt + restart"| GOOD["BSOD / kernel panic\n→ clean reboot,\n   no corrupted data written"]
+
+    style BAD fill:#ffe5e5
+    style GOOD fill:#e5f5e5
+```
+
+This principle is called **fail-fast** (detect problems immediately) paired with **fail-safe** (when you fail, fail in a way that cannot cause harm). It scales directly with the criticality of the system:
+
+- **Consumer software**: crashing is annoying but acceptable — you lose unsaved work, not lives.
+- **Financial systems**: a crashed trade engine is vastly better than one silently writing wrong prices to the ledger.
+- **Medical devices**: the FDA requires infusion pumps, pacemakers, and imaging systems to **halt and alarm** rather than continue with uncertain state. A stopped ventilator has a nurse at the bedside in seconds; a ventilator delivering the wrong volume does not.
+- **Avionics**: the DO-178C standard requires safety-critical aviation code to have deterministic failure modes. If a flight control computer cannot trust its inputs, it fails over to a redundant unit or reverts to direct mechanical linkages — it never "keeps trying" with bad data.
+- **Military / weapons systems**: the same principle, with the additional consequence that "wrong" can mean catastrophic.
+
+The more critical the system, the more aggressively it should refuse to keep running on uncertain state.
+
+> An application that catches every exception is making a decision the operating system would never make: "I don't know what's wrong, but let's continue anyway." For anything more consequential than a photo-editing app, that decision is reckless. **Crashing is not a failure mode; it is a feature — the feature that prevents bad data from being written.**
+
+When you write `catch (Exception) { }` in business code, you are overriding the runtime's "I don't know if state is safe" detector. Ask yourself: am I more confident about the system's state than the runtime is? Usually the honest answer is no.
+
+![How to Fix Kernel Panic Error on Mac?](https://images.wondershare.com/recoverit/fix-kernel-panic-mac-1.jpg)
+
+#### A Cautionary Tale: `On Error Resume Next`
+
+No tour of exception anti-patterns would be complete without the infamous Visual Basic statement that shipped in VB, VBA, VBScript, and classic ASP from the early 1990s through the 2000s:
+
+```vb
+On Error Resume Next
+
+OpenDatabase "accounting.mdb"
+ReadCustomerRecords
+PostTransactions
+CloseDatabase
+```
+
+Translation for modern eyes: *"If any line in this procedure throws an error, pretend it didn't happen, silently skip to the next line, and keep going."* It is `catch (Exception) { }` hoisted to a procedure-wide default — the most aggressive exception-swallowing mechanism ever built into a mainstream language.
+
+**Why did it exist?**
+
+- **End-user programmers.** VB was designed for business analysts and office workers — people automating Excel, Access, and Outlook. Microsoft's goal was to let a non-programmer glue tools together without learning what an exception was. If Excel threw "cell not found," the script should just continue.
+- **Forward compatibility.** VBA macros often targeted Office versions the author would never see. If a method disappeared in Office 2003, `On Error Resume Next` let a script written for Office 97 "survive" by silently skipping the missing calls.
+- **No alternative in the language.** Classic VB had no structured `try/catch` until Visual Basic .NET in 2002. The only built-in error handling was line-labeled `On Error GoTo` and the infamous "resume next."
+
+**It *could* have been used safely — but usually wasn't**
+
+The feature was not inherently evil. VB exposed a global `Err` object, and the disciplined pattern was to (1) enable `On Error Resume Next` only around a single volatile call, (2) check `Err.Number` immediately after, and (3) restore normal propagation with `On Error GoTo 0`:
+
+```vb
+On Error Resume Next              ' narrow window: next line only
+Set wb = Workbooks.Open(path)
+If Err.Number <> 0 Then
+    LogError "Open failed: " & Err.Description
+    Err.Clear
+    On Error GoTo 0              ' restore default error propagation
+    Exit Sub
+End If
+On Error GoTo 0                  ' always re-enable, no matter what
+```
+
+Used this way, `On Error Resume Next` is essentially an early form of the Go / Rust error-return idiom: suppress the automatic crash for one specific call, inspect the result code, and deal with it explicitly. In careful hands it was fine.
+
+The problem was that almost nobody used it this way. Most real-world code looked like the original example — one `On Error Resume Next` at the top of a 300-line procedure, no `Err.Number` checks, no `On Error GoTo 0` to turn it back off. A well-intentioned "I'll just silence this one flaky call" became a procedure-wide blindfold, and every error raised in every subsequent line vanished.
+
+**The damage it did**
+
+- **Corrupted spreadsheets and databases.** A reconciliation macro that hit an error on row 47 would silently skip that row and keep posting. Nobody noticed until the books didn't balance at month-end — and by then, hundreds of rows had run against a partially-processed dataset. Financial departments burned months of auditor time tracing bugs that were literally uncatchable because the error message had been thrown away at the source.
+- **Security holes in classic ASP.** Production web sites used `On Error Resume Next` to "harden" pages against unexpected inputs. What it actually did was hide SQL injection attempts, authentication failures, and deserialization errors — the server logged nothing and kept serving requests with whatever partial state remained. Multiple major breaches in the late-90s / early-2000s web traced back to ASP pages that had converted "this request is malicious" into a 200 OK.
+- **The "it works on my machine" effect at industrial scale.** Because errors were invisible, developers could not distinguish a working script from one that had silently skipped half its work. Bug reports became unreproducible. QA could not tell when a script was broken. An entire generation of enterprise VBA tooling accumulated silent corruption no one could debug.
+- **A cultural legacy.** Ask any programmer who worked on classic VB / VBA / ASP in the 1990s about `On Error Resume Next` and watch their eye twitch. It is arguably the single most destructive default in the history of mainstream programming languages.
+
+> `On Error Resume Next` is what you get when you take the `catch (Exception) { }` anti-pattern and make it the **default** for an entire procedure. If the lesson of Anti-Pattern 1 feels abstract, this is the historical proof: a real language shipped this feature, and the industry spent two decades cleaning up after it.
+
+The modern descendants of this idea still exist, and they carry the same risk. If you see any of the following in a code review, treat it with the same suspicion:
+
+- `try { ... } catch { /* ignored */ }` at the top of a method
+- Promise chains ending in `.catch(() => {})`
+- Global exception handlers that log and swallow every error without classification
+- `@SuppressWarnings("all")` or blanket `# noqa`
+
+The syntax is different. The mistake is identical.
+
+> Why include this piece of history? One, it's still around causing mischief. Two, and more importantly, this language feature was produced by expert engineers. You *always* need to have your guard up and your wits about you when building systems, even when using language features provided by "experts". Always code with intention and choose your path forward. Never allow so-called best practices (which are often found to be invalid or dangerous in hindsight) to blindly guide you.
+>
+> To illustrate this further, here are some amusing examples from history of "good ideas at the time" now seen to be harmful:
+>
+> - Doctors once appeared in ads endorsing cigarettes for stress, digestion, or throat comfort.
+> - Early 20th century optimism turned radiation into a lifestyle accessory. People sold radioactive water, beauty products, and health tonics before the glow wore off in every sense.
+> - Heroin, cocaine, and opiates were found in everyday remedies (and drinks, such as Coca-Cola).
+> - Lead was routinely found in cosmetics, paints, pipes, and remedies for ages. It was versatile, durable, and catastrophically bad for brains.
+
 ### Anti-Pattern 2: Exceptions as Control Flow
 
 ```csharp

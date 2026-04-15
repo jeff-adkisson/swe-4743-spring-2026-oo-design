@@ -969,15 +969,6 @@ The modern descendants of this idea still exist, and they carry the same risk. I
 
 The syntax is different. The mistake is identical.
 
-> Why include this piece of history? One, it's still around causing mischief. Two, and more importantly, this language feature was produced by expert engineers. You *always* need to have your guard up and your wits about you when building systems, even when using language features provided by "experts". Always code with intention and choose your path forward. Never allow so-called best practices (which are often found to be invalid or dangerous in hindsight) to blindly guide you.
->
-> To illustrate this further, here are some amusing examples from history of "good ideas at the time" now seen to be harmful:
->
-> - Doctors once appeared in ads endorsing cigarettes for stress, digestion, or throat comfort.
-> - Early 20th century optimism turned radiation into a lifestyle accessory. People sold radioactive water, beauty products, and health tonics before the glow wore off in every sense.
-> - Heroin, cocaine, and opiates were found in everyday remedies (and drinks, such as Coca-Cola).
-> - Lead was routinely found in cosmetics, paints, pipes, and remedies for ages. It was versatile, durable, and catastrophically bad for brains.
-
 ### Anti-Pattern 2: Exceptions as Control Flow
 
 ```csharp

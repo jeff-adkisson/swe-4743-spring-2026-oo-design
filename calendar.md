@@ -449,4 +449,8 @@ Students refactor a small web-style codebase to replace primitive-heavy models w
 
 ### Wednesday, May 6
 
+*Class has ended, in Finals week, no helpdesk*
+
+### Friday, May 8
+
 **Semester Project Due by 11:59 PM EST**
